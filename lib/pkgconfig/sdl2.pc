@@ -1,6 +1,6 @@
 # sdl pkg-config source file
 
-prefix=/opt/local/x86_64-w64-mingw32
+prefix=C:/Program Files (x86)/SDL2
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
@@ -10,6 +10,6 @@ Description: Simple DirectMedia Layer is a cross-platform multimedia library des
 Version: 2.26.2
 Requires:
 Conflicts:
-Libs: -L${libdir}  -lmingw32 -lSDL2main -lSDL2 -mwindows 
-Libs.private:  -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
+Libs: -L${libdir}   -lmingw32 -mwindows -lSDL2main -lSDL2 
+Libs.private:  -lmingw32 -mwindows -lSDL2main -lSDL2  -lm -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8
 Cflags: -I${includedir} -I${includedir}/SDL2  -Dmain=SDL_main
