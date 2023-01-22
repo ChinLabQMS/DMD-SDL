@@ -1,39 +1,32 @@
-#OBJS specifies which files to compile as part of the project
-OBJS = win_test
+SOURCE = win_test
+OUTPUT = win_gray win_vert_line win_hori_line
 
-#CC specifies which compiler we're using
-CC = g++
-
-#SOURCE_DIR specifies the source files directory
 SOURCE_DIR = src
-
-#OUTPUT_DIR specifies the output files directory
+SOURCE_NAME = $(SOURCE_DIR)/$(SOURCE).cpp
 OUTPUT_DIR = bin
+OUTPUT_NAME = $(patsubst %, $(OUTPUT_DIR)/%, $(OUTPUT))
 
-#INCLUDE_PATHS specifies the additional include paths we'll need
+CC = g++
 INCLUDE_PATHS = -I./include
-
-#LIBRARY_PATHS specifies the additional library paths we'll need
 LIBRARY_PATHS = -L./lib
-
-#COMPILER_FLAGS specifies the additional compilation options we're using
 COMPILER_FLAGS_DEBUG = -g -Wall -mwindows -mconsole
 COMPILER_FLAGS_RELEASE = -w -Wl,-subsystem, windows -mwindows
+LINKER_FLAGS = -lSDL3 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8
 
-#LINKER_FLAGS specifies the libraries we're linking against
-# Need to link all dependencies for static library
-STATIC_LIBS = -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8
-LINKER_FLAGS = -lSDL3 $(STATIC_LIBS)
-
-OBJS_NAME = $(patsubst %, $(OUTPUT_DIR)/%, $(OBJS))
-
-#This is the target that compiles our executable
 debug: COMPILER_FLAGS = $(COMPILER_FLAGS_DEBUG) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
-debug: $(OBJS)
+debug: $(OUTPUT)
 
 release: COMPILER_FLAGS = $(COMPILER_FLAGS_RELEASE) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
-release: $(OBJS)
+release: $(OUTPUT)
 
-% : $(SOURCE_DIR)/%.cpp
-	$(CC) $< $(COMPILER_FLAGS) -o $(OUTPUT_DIR)/$@
+win_gray:
+	$(CC) $(SOURCE_NAME) $(COMPILER_FLAGS) -D TYPE=1 -o $(OUTPUT_DIR)/$@
+	$(OUTPUT_DIR)/$@
+
+win_hori_line:
+	$(CC) $(SOURCE_NAME) $(COMPILER_FLAGS) -D TYPE=2 -o $(OUTPUT_DIR)/$@
+	$(OUTPUT_DIR)/$@
+
+win_vert_line:
+	$(CC) $(SOURCE_NAME) $(COMPILER_FLAGS) -D TYPE=3 -o $(OUTPUT_DIR)/$@
 	$(OUTPUT_DIR)/$@
