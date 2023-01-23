@@ -2,21 +2,17 @@
 #include <iostream>
 
 #ifndef TYPE
-#define TYPE 2
+#define TYPE 7
 #endif
 
 const int LINE_STEP = 100;
-const int RED = 0xAA;
-const int GREEN = 0xAA;
-const int BLUE = 0xAA;
 
 SDL_Window* window = NULL;
 SDL_Surface* screenSurface = NULL;
 SDL_Rect rect;
 
-int main( int argc, char* args[] ){
-
-    // Set DPI awareness to avoid OS scaling
+int initWindow(){
+// Set DPI awareness to avoid OS scaling
     SDL_SetHint( SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitor" );	
 
 	//Initialize SDL
@@ -57,10 +53,26 @@ int main( int argc, char* args[] ){
     std::cout << "Screen surface format:\n\tw = " << screenSurface->w << "\n\th = " 
                 << screenSurface->h << "\n\tpixel format = " << SDL_GetPixelFormatName( screenSurface->format->format ) 
                 << "\n\tbits per pixel = " << unsigned(screenSurface->format->BitsPerPixel) << std::endl;
+    
+    return 0;
+}
+
+int quitWindow(){
+    //Destroy window
+	SDL_DestroyWindow( window );
+
+	//Quit SDL subsystems
+	SDL_Quit();
+    
+    return 0;
+}
+
+int main( int argc, char* args[] ){
+    initWindow();
 
     #if TYPE == 1
         //Fill the surface
-        SDL_FillSurfaceRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, RED, GREEN, BLUE ) );
+        SDL_FillSurfaceRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xAA, 0xAA, 0xAA ) );
     #else
         //Fill the surface with BLACK
         if (SDL_FillSurfaceRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0x00, 0x00, 0x00 ) ) < 0)
@@ -70,18 +82,37 @@ int main( int argc, char* args[] ){
         Uint32* data = (Uint32*) screenSurface->pixels;
 
         #if TYPE == 2 or TYPE == 4
-        //Add BLACK horizontal lines to the surface
+        //Add WHITE horizontal lines to the surface
         for ( int row = 0; row < rect.h; row += LINE_STEP )
             for (int col = 0; col < rect.w; col++ )
                 data[ row * rect.w + col ] = WHITE;
         #endif
 
         #if TYPE == 3 or TYPE == 4
-        //Add BLACK vertical lines to the surface
+        //Add WHITE vertical lines to the surface
         for ( int row = 0; row < rect.h; row++ )
             for (int col = 0; col < rect.w; col += LINE_STEP )
                 data[ row * rect.w + col ] = WHITE;
         #endif
+
+        #if TYPE == 5 or TYPE == 7
+        //Add thick WHITE horizontal lines to the surface
+        for ( int row = 0; row < rect.h; row += LINE_STEP )
+            for (int col = 0; col < rect.w; col++ ){
+                data[ row * rect.w + col ] = WHITE;
+                data[ (row+1) * rect.w + col ] = WHITE;
+            }
+        #endif
+
+        #if TYPE == 6 or TYPE == 7
+        //Add thick WHITE vertical lines to the surface
+        for ( int row = 0; row < rect.h; row++ )
+            for (int col = 0; col < rect.w; col += LINE_STEP ){
+                data[ row * rect.w + col ] = WHITE;
+                data[ row * rect.w + col + 1 ] = WHITE;
+            }
+        #endif
+
     #endif
         
     //Update the surface
@@ -94,11 +125,7 @@ int main( int argc, char* args[] ){
     //Hack to get window to stay up
     SDL_Event e; bool quit = false; while( quit == false ){ while( SDL_PollEvent( &e ) ){ if( e.type == SDL_QUIT ) quit = true; } }
 
-	//Destroy window
-	SDL_DestroyWindow( window );
-
-	//Quit SDL subsystems
-	SDL_Quit();
+	quitWindow();
 
 	return 0;
 }
