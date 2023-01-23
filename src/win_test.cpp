@@ -2,7 +2,7 @@
 #include <iostream>
 
 #ifndef TYPE
-#define TYPE 1
+#define TYPE 2
 #endif
 
 const int LINE_STEP = 100;
@@ -62,25 +62,25 @@ int main( int argc, char* args[] ){
         //Fill the surface
         SDL_FillSurfaceRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, RED, GREEN, BLUE ) );
     #else
-        //Fill the surface with WHITE
-        if (SDL_FillSurfaceRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) ) < 0)
+        //Fill the surface with BLACK
+        if (SDL_FillSurfaceRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0x00, 0x00, 0x00 ) ) < 0)
             std::cout << "Could not fill the window! SDL_Error: " << SDL_GetError() << std::endl;
 
-        #if TYPE == 2
-        //Add BLACK horizontal lines to the surface
-        Uint32 BLACK = SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0x00 );
+        Uint32 WHITE = SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF );
         Uint32* data = (Uint32*) screenSurface->pixels;
+
+        #if TYPE == 2 or TYPE == 4
+        //Add BLACK horizontal lines to the surface
         for ( int row = 0; row < rect.h; row += LINE_STEP )
             for (int col = 0; col < rect.w; col++ )
-                data[ row * rect.w + col ] = BLACK;
+                data[ row * rect.w + col ] = WHITE;
+        #endif
 
-        #elif TYPE == 3
+        #if TYPE == 3 or TYPE == 4
         //Add BLACK vertical lines to the surface
-        Uint32 BLACK = SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0x00 );
-        Uint32* data = (Uint32*) screenSurface->pixels;
         for ( int row = 0; row < rect.h; row++ )
             for (int col = 0; col < rect.w; col += LINE_STEP )
-                data[ row * rect.w + col ] = BLACK;
+                data[ row * rect.w + col ] = WHITE;
         #endif
     #endif
         

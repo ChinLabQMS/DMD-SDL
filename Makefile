@@ -1,5 +1,5 @@
 SOURCE = win_test
-OUTPUT = win_gray win_vert_line win_hori_line
+OUTPUT = win_gray win_vert_line win_hori_line win_cross_line
 
 SOURCE_DIR = src
 SOURCE_NAME = $(SOURCE_DIR)/$(SOURCE).cpp
@@ -29,4 +29,8 @@ win_hori_line:
 
 win_vert_line:
 	$(CC) $(SOURCE_NAME) $(COMPILER_FLAGS) -D TYPE=3 -o $(OUTPUT_DIR)/$@
+	$(OUTPUT_DIR)/$@
+
+win_cross_line:
+	$(CC) $(SOURCE_NAME) $(COMPILER_FLAGS) -D TYPE=4 -o $(OUTPUT_DIR)/$@
 	$(OUTPUT_DIR)/$@
