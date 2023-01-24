@@ -1,4 +1,4 @@
-OUTPUT = win_gray win_hori_line win_vert_line win_cross_line win_hori_line2 win_vert_line2 win_cross_line2
+OUTPUT = win_gray win_hori_line win_vert_line win_cross_line win_hori_line2 win_vert_line2 win_cross_line2 win_black_white
 
 OUTPUT_DIR = bin
 OUTPUT_NAME = $(patsubst %, $(OUTPUT_DIR)/%, $(OUTPUT))
@@ -36,3 +36,6 @@ $(OUTPUT_DIR)/win_vert_line2: src/win_test.cpp
 
 $(OUTPUT_DIR)/win_cross_line2: src/win_test.cpp
 	$(CC) $< $(COMPILER_FLAGS) -D TYPE=7 -o $@
+
+$(OUTPUT_DIR)/win_black_white: src/win_test.cpp
+	$(CC) $< $(COMPILER_FLAGS) -D TYPE=8 -o $@
