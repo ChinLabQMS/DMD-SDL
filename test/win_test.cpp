@@ -91,7 +91,7 @@ int initWindow(){
     SDL_HideCursor();
 
     //Create a 2D rendering context for the surface
-    renderer = SDL_CreateRenderer(window, NULL, SDL_RENDERER_PRESENTVSYNC);
+    renderer = SDL_CreateRenderer(window, NULL, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     if (!renderer){
         std::cout << "Unable to create renderer! SDL_Error: " << SDL_GetError() << std::endl;
         return -1;

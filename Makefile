@@ -1,5 +1,6 @@
 TEST = win_gray win_black win_white win_red win_hori_line win_vert_line\
 		win_hori_line2 win_vert_line2 win_black_white
+WLIB = win_lib
 
 # Compiler settings
 CC = g++

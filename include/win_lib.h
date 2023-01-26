@@ -7,6 +7,8 @@ private:
     SDL_Texture* texture;
 
 public:
-    
-
+    Window();
+    void setWindowPattern(const int mode);
+    void setWindowPattern(const char* file);
+    void shutdown();
 };
