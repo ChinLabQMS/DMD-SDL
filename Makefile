@@ -1,5 +1,6 @@
-TEST = win_gray win_black win_white win_red win_hori_line win_vert_line\
-		win_hori_line2 win_vert_line2 win_black_white
+TEST = gray black white red horizline vertline horizline2 vertline2 blackwhite 
+TEST_SRC = test/test.cpp
+
 WLIB = win_lib
 
 # Compiler settings
@@ -17,29 +18,29 @@ test: $(patsubst %, $(OUTPUT_DIR)/%, $(TEST))
 release: COMPILER_FLAGS = $(COMPILER_FLAGS_RELEASE) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
 release:
 
-$(OUTPUT_DIR)/win_gray: test/win_test.cpp
+$(OUTPUT_DIR)/gray: $(TEST_SRC)
 	$(CC) $< $(COMPILER_FLAGS) -D TYPE=1 -o $@
 
-$(OUTPUT_DIR)/win_black: test/win_test.cpp
+$(OUTPUT_DIR)/black: $(TEST_SRC)
 	$(CC) $< $(COMPILER_FLAGS) -D TYPE=2 -o $@
 
-$(OUTPUT_DIR)/win_white: test/win_test.cpp
+$(OUTPUT_DIR)/white: $(TEST_SRC)
 	$(CC) $< $(COMPILER_FLAGS) -D TYPE=3 -o $@
 
-$(OUTPUT_DIR)/win_red: test/win_test.cpp
+$(OUTPUT_DIR)/red: $(TEST_SRC)
 	$(CC) $< $(COMPILER_FLAGS) -D TYPE=4 -o $@
 
-$(OUTPUT_DIR)/win_hori_line: test/win_test.cpp
+$(OUTPUT_DIR)/horizline: $(TEST_SRC)
 	$(CC) $< $(COMPILER_FLAGS) -D TYPE=5 -o $@
 
-$(OUTPUT_DIR)/win_vert_line: test/win_test.cpp
+$(OUTPUT_DIR)/vertline: $(TEST_SRC)
 	$(CC) $< $(COMPILER_FLAGS) -D TYPE=6 -o $@
 
-$(OUTPUT_DIR)/win_hori_line2: test/win_test.cpp
+$(OUTPUT_DIR)/horizline2: $(TEST_SRC)
 	$(CC) $< $(COMPILER_FLAGS) -D TYPE=7 -o $@
 
-$(OUTPUT_DIR)/win_vert_line2: test/win_test.cpp
+$(OUTPUT_DIR)/vertline2: $(TEST_SRC)
 	$(CC) $< $(COMPILER_FLAGS) -D TYPE=8 -o $@
 
-$(OUTPUT_DIR)/win_black_white: test/win_test.cpp
+$(OUTPUT_DIR)/blackwhite: $(TEST_SRC)
 	$(CC) $< $(COMPILER_FLAGS) -D TYPE=9 -o $@
