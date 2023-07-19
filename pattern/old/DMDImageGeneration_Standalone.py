@@ -1,5 +1,3 @@
-# Modified from Misha's code on an old DMD model
-
 #Python Imaging Library
 #https://pillow.readthedocs.io/en/5.1.x/
 #Provides an easy way to work with different image formats
@@ -36,14 +34,13 @@ def convertImageToDMDArray(image):
             
     return DMDImg 
 
-if __name__ == '__main__':
-    #Specify the path where the template is and load the template
-    path = "C:/Users/Admin/Desktop/DifferentProjects/DMDContrast/"
-    image = Image.open(path+'DMDLayoutTemplate.bmp')
+#Specify the path where the template is and load the template
+path = "C:/Users/Admin/Desktop/DifferentProjects/DMDContrast/"
+image = Image.open(path+'DMDLayoutTemplate.bmp')
 
-    #Convert the template to a DMD Image
-    dmdImg = convertImageToDMDArray(image)
+#Convert the template to a DMD Image
+dmdImg = convertImageToDMDArray(image)
 
-    #Show the converted DMD pattern and save it to your directory
-    dmdImg.show()
-    dmdImg.save(path+"DMDExample1.bmp")
+#Show the converted DMD pattern and save it to your directory
+dmdImg.show()
+dmdImg.save(path+"DMDExample1.bmp")
