@@ -47,16 +47,6 @@ def generateTemplate(color=1):
     template.save(f'DMD_template_{DMD_ROWS}x{DMD_COLS}.bmp')
     return template.convert("1")
 
-def generatePattern(row=DMD_ROWS//2, col=DMD_COLS//2):
-    real_row, real_col = realSpaceRow(row, col), realSpaceCol(row, col)
-    real_image = generateTemplate(color=0)
-    
-    # for radius in [10, 20, 50, 100, 200]:
-    #     real_image = circle_bright(real_image, real_col, real_row, radius=radius)
-    #     dmd_image = convertImageToDMDArray(real_image)
-    #     dmd_image.show()
-    #     dmd_image.save(f'DMD_pattern_circle_bright_{2*radius}.bmp')
-
 def convertImageToDMDArray(image):
     pixels = image.load()
 
@@ -73,20 +63,19 @@ def convertImageToDMDArray(image):
 
 if __name__ == '__main__':
     # generateTemplate()
-    generatePattern()
 
-    # root = Tk()
-    # root.withdraw()
-    # file_path = askopenfilename(title='Select Modified BMP Image Template', filetypes=[('BMP Files', '*.bmp')])
-    # directory, filename = os.path.split(file_path)
-    # filename_new = 'DMD_pattern_' + os.path.splitext(filename)[0] + '.bmp'
+    root = Tk()
+    root.withdraw()
+    file_path = askopenfilename(title='Select Modified BMP Image Template', filetypes=[('BMP Files', '*.bmp')])
+    directory, filename = os.path.split(file_path)
+    filename_new = 'DMD_pattern_' + os.path.splitext(filename)[0] + '.bmp'
 
-    # image = Image.open(file_path)
-    # image = image.convert('1')
+    image = Image.open(file_path)
+    image = image.convert('1')
 
-    # #Convert the template to a DMD Image
-    # dmd_image = convertImageToDMDArray(image)
+    #Convert the template to a DMD Image
+    dmd_image = convertImageToDMDArray(image)
 
-    # #Show the converted DMD pattern and save it to your directory
-    # dmd_image.show()
-    # dmd_image.save(os.path.join(directory, filename_new))
+    #Show the converted DMD pattern and save it to your directory
+    dmd_image.show()
+    dmd_image.save(os.path.join(directory, filename_new))
