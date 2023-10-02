@@ -1,4 +1,5 @@
 .asv
-.vscode
 .DS_Store
+/bin
+/resources
 __pycache__

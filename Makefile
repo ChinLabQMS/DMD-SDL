@@ -1,8 +1,6 @@
 TEST = gray black white red horizline vertline horizline2 vertline2 blackwhite 
 TEST_SRC = test/test.cpp
 
-WLIB = win_lib
-
 # Compiler settings
 CC = g++
 OUTPUT_DIR = bin
