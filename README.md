@@ -1,6 +1,8 @@
 # DMD-SDL
 Binary pattern streaming app developed with SDL3. Note that we are using a development version of SDL to utilize the high DPI windows support functionality. SDL3 is complied to a static library stored in [lib/libSDL3.a](lib/libSDL3.a).
 
+Note that the code is specifically for Windows.
+
 The code is developed to control Digital micromirror device (DMD, LightCrafter4500EVM from Texas Instrument) to realize real-time optical tweezer generation.
 
 # Test code

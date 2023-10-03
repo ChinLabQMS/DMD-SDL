@@ -1,4 +1,5 @@
-.asv
+*.asv
+*.exe
 .DS_Store
 /bin
 /resources
