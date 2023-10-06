@@ -9,7 +9,7 @@
                 "-g", "-Wall", "-mwindows", "-mconsole",
                 "-I./include",
                 "-L./lib",
-                "-lSDL3", "-luser32", "-lgdi32", "-lwinmm", "-limm32", "-lole32", "-loleaut32", "-lversion", "-luuid", "-ladvapi32", "-lsetupapi", "-lshell32", "-ldinput8",                
+                "-lSDL3", "-lnfd", "-luser32", "-lgdi32", "-lwinmm", "-limm32", "-lole32", "-loleaut32", "-lversion", "-luuid", "-ladvapi32", "-lsetupapi", "-lshell32", "-ldinput8", 
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ],

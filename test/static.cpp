@@ -1,10 +1,10 @@
-#include <SDL3/SDL.h>
-#include <windows.h>
-#include <commdlg.h>
+#include "SDL3/SDL.h"
+#include "nfd.h"
+
+#include <filesystem>
 #include <iostream>
 #include <vector>
 #include <string>
-#include <filesystem>
 
 const int LINE_STEP = 100;
 const int FRAME_SAMPLE = 60;
@@ -16,36 +16,20 @@ SDL_Window* window = NULL;
 SDL_Surface* surface = NULL;
 SDL_Renderer* renderer = NULL;
 
-void openBmpFileDialog(std::vector<std::string>& selectedFiles)
-{
-    OPENFILENAMEA ofn; // Use ANSI version
+std::string openBmpFileDialog() {
+    nfdchar_t* outPath = nullptr;
+    nfdresult_t result = NFD_OpenDialog("bmp", INITIAL_DIR.c_str(), &outPath);
 
-    char szFile[MAX_PATH] = "";
-
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.lpstrFile = szFile;
-    ofn.lpstrFile[0] = '\0';
-    ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = "Bitmap Images (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
-    ofn.nFilterIndex = 1;
-    ofn.lpstrTitle = "Select .bmp Files";
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT;
-    ofn.lpstrInitialDir = INITIAL_DIR.c_str(); // Set initial directory
-
-    if (GetOpenFileNameA(&ofn) == TRUE) // Use ANSI version
-    {
-        char* p = szFile;
-        selectedFiles.push_back(p);
-
-        while (*p != '\0')
-        {
-            p += strlen(p) + 1;
-            if (*p != '\0')
-            {
-                selectedFiles.push_back(p);
-            }
-        }
+    if (result == NFD_OKAY) {
+        std::string bmpFilePath(outPath);
+        free(outPath);
+        return bmpFilePath;
+    } else if (result == NFD_CANCEL) {
+        std::cout << "File dialog canceled by the user." << std::endl;
+        return "";
+    } else {
+        std::cerr << "File dialog error: " << NFD_GetError() << std::endl;
+        return "";
     }
 }
 
@@ -79,7 +63,7 @@ int initWindow(){
 
     //Create a full screen window
     window = SDL_CreateWindow("Project window", 
-                rect.x, rect.y, rect.w, rect.h, SDL_WINDOW_FULLSCREEN);
+                rect.x, rect.y, rect.w, rect.h, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALWAYS_ON_TOP);
     if(!window){
         std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         return -1;
@@ -106,59 +90,53 @@ int initWindow(){
 
 int main()
 {
-    std::vector<std::string> selectedFiles;
-
-    openBmpFileDialog(selectedFiles);
+    std::string file = openBmpFileDialog();
     
     initWindow();
 
-    if (!selectedFiles.empty())
+    if (!file.empty())
     {
         std::cout << "Selected files:" << std::endl;
-        for (const std::string& file : selectedFiles)
-        {
-            std::cout << file << std::endl;
+        std::cout << file << std::endl;
             
-            SDL_Surface* image = SDL_LoadBMP(file.c_str());
-            if (!image){
-                std::cout << "Unable to load image! SDL_Error: " << SDL_GetError() << std::endl;
-                return -1;
-            }
+        SDL_Surface* image = SDL_LoadBMP(file.c_str());
+        if (!image){
+            std::cout << "Unable to load image! SDL_Error: " << SDL_GetError() << std::endl;
+            return -1;
+        }
 
-            // Create a texture from the loaded image
-            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, image);
-            SDL_DestroySurface(image);
-            if (!texture) {
-                std::cerr << "Texture creation failed: " << SDL_GetError() << std::endl;
-                return 1;
-            }
+        // Create a texture from the loaded image
+        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, image);
+        SDL_DestroySurface(image);
+        if (!texture) {
+            std::cerr << "Texture creation failed: " << SDL_GetError() << std::endl;
+            return 1;
+        }
 
-            bool quit = false;
-            SDL_Event event;
+        bool quit = false;
+        SDL_Event event;
 
-            while (!quit) {
-                // Clear the renderer
-                SDL_RenderClear(renderer);
+        while (!quit) {
+            // Clear the renderer
+            SDL_RenderClear(renderer);
 
-                // Copy the texture to the renderer
-                SDL_RenderTexture(renderer, texture, NULL, NULL);
+            // Copy the texture to the renderer
+            SDL_RenderTexture(renderer, texture, NULL, NULL);
 
-                // Present the renderer
-                SDL_RenderPresent(renderer);
+            // Present the renderer
+            SDL_RenderPresent(renderer);
 
-                while (SDL_PollEvent(&event) != 0) {
-                    if (event.type == SDL_QUIT) {
+            while (SDL_PollEvent(&event) != 0) {
+                if (event.type == SDL_QUIT) {
+                    quit = true;
+                } else if (event.type == SDL_KEYDOWN) {
+                    if (event.key.keysym.sym == SDLK_ESCAPE) {
                         quit = true;
-                    } else if (event.type == SDL_KEYDOWN) {
-                        if (event.key.keysym.sym == SDLK_ESCAPE) {
-                            quit = true;
-                        }
                     }
                 }
-                
             }
-
         }
+        
         // Clean up and quit
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
