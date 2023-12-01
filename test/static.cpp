@@ -8,6 +8,8 @@
 
 const int LINE_STEP = 100;
 const int FRAME_SAMPLE = 60;
+const int TARGET_SCREEN_WIDTH = 912;
+const int TARGET_SCREEN_HEIGHT = 1140;
 
 // Set the initial directory (change this to your desired path)
 const std::string INITIAL_DIR = std::filesystem::absolute("../resources").string();
@@ -49,17 +51,31 @@ int initWindow(){
 
     //Get display mode
     SDL_DisplayMode mode;
-    SDL_GetDesktopDisplayMode(count - 1, & mode);
-    std::cout << "Display mode of #" << count - 1 << " Display:\n\tw = " << mode.w
+    SDL_Rect rect;
+    bool found = false;
+    for (int i = 0; i < count; i++)
+    {
+        //Get monitor bounds
+        SDL_GetDisplayBounds(i, & rect);
+
+        if (rect.w == TARGET_SCREEN_WIDTH && rect.h == TARGET_SCREEN_HEIGHT)
+        {
+            SDL_GetDesktopDisplayMode(i, & mode);
+            std::cout << "Display mode of #" << i << " Display:\n\tw = " << mode.w
                 << "\n\th = " << mode.h << "\n\trefreshrate = "
                 << mode.refresh_rate << "\n\tpixel format = " 
                 << SDL_GetPixelFormatName(mode.format) <<std::endl;
-
-    //Get monitor bounds
-    SDL_Rect rect;
-    SDL_GetDisplayBounds(count - 1, & rect);
-    std::cout << "Display bound of #" << count - 1 << " Display:\n\tx = " << rect.x << "\n\ty = " << rect.y 
-                << "\n\tw = " << rect.w << "\n\th = " << rect.h << std::endl;
+            
+            found = true;
+            break;
+        }
+    }
+    
+    if (!found)
+    {
+        std::cout << "No display with target resolution found!\n";
+        return -1;
+    }
 
     //Create a full screen window
     window = SDL_CreateWindow("Project window", 
@@ -68,12 +84,6 @@ int initWindow(){
         std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         return -1;
     }
-
-    //Get window surface
-    surface = SDL_GetWindowSurface(window);
-    std::cout << "Screen surface format:\n\tw = " << surface->w << "\n\th = " 
-                << surface->h << "\n\tpixel format = " << SDL_GetPixelFormatName(surface->format->format) 
-                << "\n\tbits per pixel = " << unsigned(surface->format->BitsPerPixel) << std::endl;
     
     //Hide cursor on window
     SDL_HideCursor();

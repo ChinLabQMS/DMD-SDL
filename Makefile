@@ -15,30 +15,3 @@ test: $(patsubst %, $(OUTPUT_DIR)/%, $(TEST))
 
 release: COMPILER_FLAGS = $(COMPILER_FLAGS_RELEASE) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
 release:
-
-$(OUTPUT_DIR)/gray: $(TEST_SRC)
-	$(CC) $< $(COMPILER_FLAGS) -D TYPE=1 -o $@
-
-$(OUTPUT_DIR)/black: $(TEST_SRC)
-	$(CC) $< $(COMPILER_FLAGS) -D TYPE=2 -o $@
-
-$(OUTPUT_DIR)/white: $(TEST_SRC)
-	$(CC) $< $(COMPILER_FLAGS) -D TYPE=3 -o $@
-
-$(OUTPUT_DIR)/red: $(TEST_SRC)
-	$(CC) $< $(COMPILER_FLAGS) -D TYPE=4 -o $@
-
-$(OUTPUT_DIR)/horizline: $(TEST_SRC)
-	$(CC) $< $(COMPILER_FLAGS) -D TYPE=5 -o $@
-
-$(OUTPUT_DIR)/vertline: $(TEST_SRC)
-	$(CC) $< $(COMPILER_FLAGS) -D TYPE=6 -o $@
-
-$(OUTPUT_DIR)/horizline2: $(TEST_SRC)
-	$(CC) $< $(COMPILER_FLAGS) -D TYPE=7 -o $@
-
-$(OUTPUT_DIR)/vertline2: $(TEST_SRC)
-	$(CC) $< $(COMPILER_FLAGS) -D TYPE=8 -o $@
-
-$(OUTPUT_DIR)/blackwhite: $(TEST_SRC)
-	$(CC) $< $(COMPILER_FLAGS) -D TYPE=9 -o $@
