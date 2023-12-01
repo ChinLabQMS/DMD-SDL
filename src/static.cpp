@@ -13,7 +13,6 @@ const int TARGET_SCREEN_HEIGHT = 1140;
 const std::string INITIAL_DIR = std::filesystem::absolute("../resources").string();
 
 SDL_Window* window = NULL;
-SDL_Surface* surface = NULL;
 SDL_Renderer* renderer = NULL;
 
 std::string openBmpFileDialog() {
@@ -110,6 +109,11 @@ int main()
         SDL_Surface* image = SDL_LoadBMP(file.c_str());
         if (!image){
             std::cout << "Unable to load image! SDL_Error: " << SDL_GetError() << std::endl;
+            return -1;
+        }
+        if (image->w != TARGET_SCREEN_WIDTH || image->h != TARGET_SCREEN_HEIGHT)
+        {
+            std::cout << "Loaded BMP image resolution does not match target resolution!\n";
             return -1;
         }
 
