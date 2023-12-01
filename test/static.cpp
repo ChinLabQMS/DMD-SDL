@@ -6,8 +6,6 @@
 #include <vector>
 #include <string>
 
-const int LINE_STEP = 100;
-const int FRAME_SAMPLE = 60;
 const int TARGET_SCREEN_WIDTH = 912;
 const int TARGET_SCREEN_HEIGHT = 1140;
 
