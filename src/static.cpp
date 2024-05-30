@@ -15,7 +15,7 @@ const std::string INITIAL_DIR = std::filesystem::absolute("../resources").string
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 
-std::string openBmpFileDialog() {
+std::string openFileDialog() {
     nfdchar_t* outPath = nullptr;
     nfdresult_t result = NFD_OpenDialog("bmp", INITIAL_DIR.c_str(), &outPath);
 
@@ -97,7 +97,7 @@ int initWindow(){
 
 int main()
 {
-    std::string file = openBmpFileDialog();
+    std::string file = openFileDialog();
     
     initWindow();
 
@@ -152,7 +152,7 @@ int main()
         // Clean up and quit
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
-        SDL_Quit(); 
+        SDL_Quit();
 
     }
     else
