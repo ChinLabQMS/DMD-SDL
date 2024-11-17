@@ -44,6 +44,7 @@ static void SDLCALL callbackBMP(void* userdata, const char* const* filelist, int
     SDL_RenderClear(renderer);
     SDL_RenderTexture(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
+    SDL_DestroyRenderer(renderer);
 }
 
 void initSDL()
