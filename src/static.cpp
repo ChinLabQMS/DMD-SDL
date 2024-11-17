@@ -1,164 +1,127 @@
 #include "SDL3/SDL.h"
-#include "nfd.h"
 
-#include <filesystem>
-#include <iostream>
-#include <vector>
-#include <string>
+const int TARGET_DISPLAY_WIDTH = 1080; //912;
+const int TARGET_DISPLAY_HEIGHT = 1920; // 1140;
 
-const int TARGET_SCREEN_WIDTH = 912;
-const int TARGET_SCREEN_HEIGHT = 1140;
+static const SDL_DialogFileFilter filters[] = {
+    { "BMP images",  "bmp" },
+    { "All files",   "*" }
+};
 
-// Set the initial directory (change this to your desired path)
-const std::string INITIAL_DIR = std::filesystem::absolute("../resources").string();
-
-SDL_Window* window = NULL;
-SDL_Renderer* renderer = NULL;
-
-std::string openBmpFileDialog() {
-    nfdchar_t* outPath = nullptr;
-    nfdresult_t result = NFD_OpenDialog("bmp", INITIAL_DIR.c_str(), &outPath);
-
-    if (result == NFD_OKAY) {
-        std::string bmpFilePath(outPath);
-        free(outPath);
-        return bmpFilePath;
-    } else if (result == NFD_CANCEL) {
-        std::cout << "File dialog canceled by the user." << std::endl;
-        return "";
-    } else {
-        std::cerr << "File dialog error: " << NFD_GetError() << std::endl;
-        return "";
-    }
-}
-
-int initWindow(){
-    // Set DPI awareness to avoid OS scaling
-    SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitor");
-
-	//Initialize SDL
-	SDL_Init(SDL_INIT_VIDEO);
-
-    int count = SDL_GetNumVideoDisplays();
-    if (count < 1){
-        std::cout << "No second display connected!\n";
-        return -1;
-    }
-    else std::cout << "Number of displays connected: " << count << std::endl;
-
-    //Get display mode
-    SDL_DisplayMode mode;
-    SDL_Rect rect;
-    bool found = false;
-    for (int i = 0; i < count; i++)
-    {
-        //Get monitor bounds
-        SDL_GetDisplayBounds(i, & rect);
-
-        if (rect.w == TARGET_SCREEN_WIDTH && rect.h == TARGET_SCREEN_HEIGHT)
-        {
-            SDL_GetDesktopDisplayMode(i, & mode);
-            std::cout << "Display mode of #" << i << " Display:\n\tw = " << mode.w
-                << "\n\th = " << mode.h << "\n\trefreshrate = "
-                << mode.refresh_rate << "\n\tpixel format = " 
-                << SDL_GetPixelFormatName(mode.format) <<std::endl;
-            
-            found = true;
-            break;
-        }
-    }
-    
-    if (!found)
-    {
-        std::cout << "No display with target resolution found!\n";
-        return -1;
-    }
-
-    //Create a full screen window
-    window = SDL_CreateWindow("Project window", 
-                rect.x, rect.y, rect.w, rect.h, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALWAYS_ON_TOP);
-    if(!window){
-        std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-        return -1;
-    }
-    
-    //Hide cursor on window
-    SDL_HideCursor();
-
-    //Create a 2D rendering context for the surface
-    renderer = SDL_CreateRenderer(window, NULL, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
-    if (!renderer){
-        std::cout << "Unable to create renderer! SDL_Error: " << SDL_GetError() << std::endl;
-        return -1;
-    }
-
-    return 0;
-}
-
-int main()
+static void SDLCALL callbackBMP(void* userdata, const char* const* filelist, int filter)
 {
-    std::string file = openBmpFileDialog();
+    if (!filelist) {
+        SDL_Log("An error occured: %s", SDL_GetError());
+        return;
+    } else if (!*filelist) {
+        SDL_Log("The user did not select any file.");
+        return;
+    }
+    SDL_Log("Full path to selected file: '%s'", *filelist);
+    SDL_Surface *bitmap_surface = SDL_LoadBMP(*filelist);
+    if (!bitmap_surface) {
+        SDL_Log("Unable to load bitmap: %s", SDL_GetError());
+        return;
+    }
+    if (bitmap_surface->w != TARGET_DISPLAY_WIDTH || bitmap_surface->h != TARGET_DISPLAY_HEIGHT) {
+        SDL_Log("Bitmap resolution does not match the target display resolution.");
+        SDL_DestroySurface(bitmap_surface);
+        return;
+    }
     
-    initWindow();
+    SDL_Window *window = (SDL_Window*) userdata;
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
+    if (!renderer) {
+        SDL_Log("Unable to create renderer: %s", SDL_GetError());
+        return;
+    }
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, bitmap_surface);
+    SDL_DestroySurface(bitmap_surface);
+    if (!texture) {
+        SDL_Log("Unable to create texture: %s", SDL_GetError());
+        return;
+    }
+    SDL_RenderClear(renderer);
+    SDL_RenderTexture(renderer, texture, NULL, NULL);
+    SDL_RenderPresent(renderer);
+}
 
-    if (!file.empty())
-    {
-        std::cout << "Selected files:" << std::endl;
-        std::cout << file << std::endl;
-            
-        SDL_Surface* image = SDL_LoadBMP(file.c_str());
-        if (!image){
-            std::cout << "Unable to load image! SDL_Error: " << SDL_GetError() << std::endl;
-            return -1;
+void initSDL()
+{
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        SDL_Log("Unable to initialize SDL: \t%s", SDL_GetError());
+        exit(1);
+    }
+}
+
+SDL_Window* initWindow()
+{
+    // Get the number of displays connected and find the target display
+    int num_displays;
+    SDL_DisplayID *displays = SDL_GetDisplays(&num_displays);
+    SDL_DisplayID display = SDL_GetPrimaryDisplay();
+    SDL_Log("Number of display connected: %d, Primary display: #%d", num_displays, display);
+    for (int i = 0; i < num_displays; i++) {
+        const SDL_DisplayMode *mode = SDL_GetDesktopDisplayMode(displays[i]);
+        if (mode->w == TARGET_DISPLAY_WIDTH && mode->h == TARGET_DISPLAY_HEIGHT) {
+            display = displays[i];
+            SDL_Log("--->>>  Display with target resolution found: #%d   <<<---", display);
         }
-        if (image->w != TARGET_SCREEN_WIDTH || image->h != TARGET_SCREEN_HEIGHT)
-        {
-            std::cout << "Loaded BMP image resolution does not match target resolution!\n";
-            return -1;
-        }
+        SDL_Log("Display mode of #%d Display:\n\tw = %d\n\th = %d\n\trefreshrate = %f\n\tpixel format = %s",
+                mode->displayID, mode->w, mode->h, mode->refresh_rate, SDL_GetPixelFormatName(mode->format));
+    }
+    SDL_Rect rect;
+    SDL_GetDisplayBounds(display, &rect);
 
-        // Create a texture from the loaded image
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, image);
-        SDL_DestroySurface(image);
-        if (!texture) {
-            std::cerr << "Texture creation failed: " << SDL_GetError() << std::endl;
-            return 1;
-        }
+    // Create a window on the target display
+    SDL_PropertiesID props = SDL_CreateProperties();
+    SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "Pattern window");
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, rect.x);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, rect.y);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, rect.w);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, rect.h);
+    SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_ALWAYS_ON_TOP_BOOLEAN, true);
+    SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
+    SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
+    SDL_Window *window = SDL_CreateWindowWithProperties(props);
+    if (window) {
+        int w, h;
+        SDL_GetWindowSize(window, &w, &h);
+        SDL_Log("Window created successfully, width = %d, height = %d", w, h);
+        SDL_HideCursor();
+    }
+    else {
+        SDL_Log("Window could not be created: %s", SDL_GetError());
+        exit(1);
+    }
 
-        bool quit = false;
-        SDL_Event event;
+    // Clean up
+    SDL_DestroyProperties(props);
+    SDL_free(displays);
+    return window;
+}
 
-        while (!quit) {
-            // Clear the renderer
-            SDL_RenderClear(renderer);
+int main(int argc, char* argv[])
+{
+    initSDL();
+    SDL_Window *window = initWindow();
 
-            // Copy the texture to the renderer
-            SDL_RenderTexture(renderer, texture, NULL, NULL);
+    void* userdata = window;
+    SDL_ShowOpenFileDialog(callbackBMP, userdata, NULL, filters, 2, NULL, false);
 
-            // Present the renderer
-            SDL_RenderPresent(renderer);
-
-            while (SDL_PollEvent(&event) != 0) {
-                if (event.type == SDL_QUIT) {
-                    quit = true;
-                } else if (event.type == SDL_KEYDOWN) {
-                    if (event.key.keysym.sym == SDLK_ESCAPE) {
-                        quit = true;
-                    }
-                }
+    // Event loop
+    SDL_Event event;
+    bool running = true;
+    while (running) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT) {
+                running = false;
             }
+
         }
-        
-        // Clean up and quit
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        SDL_Quit(); 
-
-    }
-    else
-    {
-        std::cout << "No files selected." << std::endl;
     }
 
+    SDL_DestroyWindow(window);
+    SDL_Quit();
     return 0;
 }

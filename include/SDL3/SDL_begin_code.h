@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,12 +19,12 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+/* WIKI CATEGORY: BeginCode */
+
 /**
- *  \file SDL_begin_code.h
- *
- *  This file sets things up for C dynamic library function definitions,
- *  static inlined functions, and structures aligned at 4-byte alignment.
- *  If you don't like ugly C preprocessor code, don't look at this file. :)
+ * SDL_begin_code.h sets things up for C dynamic library function definitions,
+ * static inlined functions, and structures aligned at 4-byte alignment.
+ * If you don't like ugly C preprocessor code, don't look at this file. :)
  */
 
 /* This shouldn't be nested -- included it around code only. */
@@ -36,6 +36,8 @@
 #ifndef SDL_DEPRECATED
 #  if defined(__GNUC__) && (__GNUC__ >= 4)  /* technically, this arrived in gcc 3.1, but oh well. */
 #    define SDL_DEPRECATED __attribute__((deprecated))
+#  elif defined(_MSC_VER)
+#    define SDL_DEPRECATED __declspec(deprecated)
 #  else
 #    define SDL_DEPRECATED
 #  endif
@@ -50,25 +52,25 @@
 #endif
 
 /* Some compilers use a special export keyword */
-#ifndef DECLSPEC
-# if defined(__WIN32__) || defined(__WINRT__) || defined(__CYGWIN__) || defined(__GDK__)
+#ifndef SDL_DECLSPEC
+# if defined(SDL_PLATFORM_WINDOWS)
 #  ifdef DLL_EXPORT
-#   define DECLSPEC __declspec(dllexport)
+#   define SDL_DECLSPEC __declspec(dllexport)
 #  else
-#   define DECLSPEC
+#   define SDL_DECLSPEC
 #  endif
 # else
 #  if defined(__GNUC__) && __GNUC__ >= 4
-#   define DECLSPEC __attribute__ ((visibility("default")))
+#   define SDL_DECLSPEC __attribute__ ((visibility("default")))
 #  else
-#   define DECLSPEC
+#   define SDL_DECLSPEC
 #  endif
 # endif
 #endif
 
 /* By default SDL uses the C calling convention */
 #ifndef SDLCALL
-#if (defined(__WIN32__) || defined(__WINRT__) || defined(__GDK__)) && !defined(__GNUC__)
+#if defined(SDL_PLATFORM_WINDOWS) && !defined(__GNUC__)
 #define SDLCALL __cdecl
 #else
 #define SDLCALL
@@ -99,7 +101,7 @@
 #endif /* Compiler needs structure packing set */
 
 #ifndef SDL_INLINE
-#if defined(__GNUC__)
+#ifdef __GNUC__
 #define SDL_INLINE __inline__
 #elif defined(_MSC_VER) || defined(__BORLANDC__) || \
       defined(__DMC__) || defined(__SC__) || \
@@ -118,7 +120,7 @@
 #endif /* SDL_INLINE not defined */
 
 #ifndef SDL_FORCE_INLINE
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #define SDL_FORCE_INLINE __forceinline
 #elif ( (defined(__GNUC__) && (__GNUC__ >= 4)) || defined(__clang__) )
 #define SDL_FORCE_INLINE __attribute__((always_inline)) static __inline__
@@ -128,7 +130,7 @@
 #endif /* SDL_FORCE_INLINE not defined */
 
 #ifndef SDL_NORETURN
-#if defined(__GNUC__)
+#ifdef __GNUC__
 #define SDL_NORETURN __attribute__((noreturn))
 #elif defined(_MSC_VER)
 #define SDL_NORETURN __declspec(noreturn)
@@ -137,8 +139,18 @@
 #endif
 #endif /* SDL_NORETURN not defined */
 
+#ifdef __clang__
+#if __has_feature(attribute_analyzer_noreturn)
+#define SDL_ANALYZER_NORETURN __attribute__((analyzer_noreturn))
+#endif
+#endif
+
+#ifndef SDL_ANALYZER_NORETURN
+#define SDL_ANALYZER_NORETURN
+#endif
+
 /* Apparently this is needed by several Windows compilers */
-#if !defined(__MACH__)
+#ifndef __MACH__
 #ifndef NULL
 #ifdef __cplusplus
 #define NULL 0
@@ -153,7 +165,7 @@
     (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202000L)
 #define SDL_FALLTHROUGH [[fallthrough]]
 #else
-#if defined(__has_attribute)
+#if defined(__has_attribute) && !defined(__SUNPRO_C) && !defined(__SUNPRO_CC)
 #define SDL_HAS_FALLTHROUGH __has_attribute(__fallthrough__)
 #else
 #define SDL_HAS_FALLTHROUGH 0
@@ -169,13 +181,26 @@
 #endif /* C++17 or C2x */
 #endif /* SDL_FALLTHROUGH not defined */
 
+#ifndef SDL_NODISCARD
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || \
+    (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L)
+#define SDL_NODISCARD [[nodiscard]]
+#elif ( (defined(__GNUC__) && (__GNUC__ >= 4)) || defined(__clang__) )
+#define SDL_NODISCARD __attribute__((warn_unused_result))
+#elif defined(_MSC_VER) && (_MSC_VER >= 1700)
+#define SDL_NODISCARD _Check_return_
+#else
+#define SDL_NODISCARD
+#endif /* C++17 or C23 */
+#endif /* SDL_NODISCARD not defined */
+
 #ifndef SDL_MALLOC
-#if defined(__GNUC__)
+#if defined(__GNUC__) && (__GNUC__ >= 3)
 #define SDL_MALLOC __attribute__((malloc))
-/* FIXME
+/** FIXME
 #elif defined(_MSC_VER)
 #define SDL_MALLOC __declspec(allocator) __desclspec(restrict)
-*/
+**/
 #else
 #define SDL_MALLOC
 #endif
