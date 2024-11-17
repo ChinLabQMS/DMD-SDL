@@ -1,7 +1,7 @@
 #include "SDL3/SDL.h"
 
-const int TARGET_DISPLAY_WIDTH = 1080; //912;
-const int TARGET_DISPLAY_HEIGHT = 1920; // 1140;
+const int TARGET_DISPLAY_WIDTH = 912;
+const int TARGET_DISPLAY_HEIGHT = 1140;
 
 static const SDL_DialogFileFilter filters[] = {
     { "BMP images",  "bmp" },
