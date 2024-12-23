@@ -33,9 +33,7 @@ mingw32-make
 ```
 6. The libraries should be built in the `SDL3_build/` directory. Default name should be `libSDL3.a`. You can copy this libraray file to the `lib` directory in the `DMD-SDL` project root directory.
 
-## Building the project
-
-### static.cpp
+## Create a window and render a static pattern
 Create an opaque window with target size, and open a file selection dialog to select a BMP file, then render a static pattern loaded from BMP to the window.
 
 To build an executable for `static.cpp`, run the following command in the project root directory:

@@ -14,6 +14,6 @@ COMPILER_FLAGS_RELEASE = $(CFLAGS_RELEASE) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(L
 
 all: static
 
-static: $(SRC_DIR)/static.cpp
-	$(CC) $(SRC_DIR)/static.cpp -o $(OUTPUT_DIR)/static_debug.exe $(COMPILER_FLAGS_DEBUG)
-	$(CC) $(SRC_DIR)/static.cpp -o $(OUTPUT_DIR)/static.exe $(COMPILER_FLAGS_RELEASE)
+static: $(SRC_DIR)/static.cpp $(SRC_DIR)/PatternWindow.cpp
+	$(CC) $(SRC_DIR)/static.cpp $(SRC_DIR)/PatternWindow.cpp -o $(OUTPUT_DIR)/static_debug.exe $(COMPILER_FLAGS_DEBUG)
+	$(CC) $(SRC_DIR)/static.cpp $(SRC_DIR)/PatternWindow.cpp -o $(OUTPUT_DIR)/static.exe $(COMPILER_FLAGS_RELEASE)
