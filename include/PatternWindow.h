@@ -3,11 +3,11 @@
 
 #include "SDL3/SDL.h"
 
-#ifndef DEBUG
-#define DEBUG 1
+#ifndef TEST
+#define TEST 1
 #endif
 
-#if DEBUG
+#if TEST
 const int TARGET_DISPLAY_WIDTH = 1080;
 const int TARGET_DISPLAY_HEIGHT = 1920;
 #else
@@ -15,23 +15,29 @@ const int TARGET_DISPLAY_WIDTH = 912;
 const int TARGET_DISPLAY_HEIGHT = 1140;
 #endif
 
-class PatternWindow {
+class BaseWindow {
     public:
-        PatternWindow(int w, int h);
-        ~PatternWindow();
-        void init();
+        BaseWindow();    
+        ~BaseWindow();
+        virtual void printf(const char* format, ...);
+        void open();
         void close();
-        void pause(int time_ms);
-        void loadTexture(const char* filename);
-        void projectTexture();
-        void selectFileAndProject(const char* default_location);
-    private:
+        bool isWindowCreated();
+        void displayColor(int r, int g, int b);
+        void projectFromFile(const char* filename);
+        void selectAndProject(const char* default_location);
+    protected:
         SDL_Window *window;
         SDL_Renderer *renderer;
-        SDL_Texture *texture;
-        SDL_Surface *bitmap_surface;
         SDL_DisplayID display;
+        SDL_DisplayMode *display_mode;
         int target_width, target_height, window_width, window_height;
+        void init();
+};
+
+class PatternWindow : public BaseWindow {
+    public:
+        PatternWindow();
 };
 
 #endif // PATTERNWINDOW_H

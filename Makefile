@@ -5,15 +5,24 @@ OUTPUT_DIR = bin
 CC = g++
 INCLUDE_PATHS = -I./include
 LIBRARY_PATHS = -L./lib
-CFLAGS_DEBUG = -g -Wall -mwindows -mconsole -DDEBUG
-CFLAGS_RELEASE = -w -mwindows -mconsole -DDEBUG=0
+CFLAGS_TEST = -Wall
+CFLAGS_STANDARD = -Wall -DTEST=0
 LINKER_FLAGS = -lSDL3 -lm -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8
 
-COMPILER_FLAGS_DEBUG = $(CFLAGS_DEBUG) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
-COMPILER_FLAGS_RELEASE = $(CFLAGS_RELEASE) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
+COMPILER_FLAGS_TEST = $(CFLAGS_TEST) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
+COMPILER_FLAGS_STANDARD = $(CFLAGS_STANDARD) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
 
-all: static
+all: static black_white
 
-static: $(SRC_DIR)/static.cpp $(SRC_DIR)/PatternWindow.cpp
-	$(CC) $(SRC_DIR)/static.cpp $(SRC_DIR)/PatternWindow.cpp -o $(OUTPUT_DIR)/static_debug.exe $(COMPILER_FLAGS_DEBUG)
-	$(CC) $(SRC_DIR)/static.cpp $(SRC_DIR)/PatternWindow.cpp -o $(OUTPUT_DIR)/static.exe $(COMPILER_FLAGS_RELEASE)
+$(OUTPUT_DIR)/%_test.exe: $(SRC_DIR)/%.cpp $(SRC_DIR)/PatternWindow.cpp
+	@echo "Building target: $@"
+	$(CC) $^ -o $@ $(COMPILER_FLAGS_TEST)
+
+$(OUTPUT_DIR)/%.exe: $(SRC_DIR)/%.cpp $(SRC_DIR)/PatternWindow.cpp
+	@echo "Building target: $@"
+	$(CC) $^ -o $@ $(COMPILER_FLAGS_STANDARD)
+
+static: $(OUTPUT_DIR)/static_test.exe $(OUTPUT_DIR)/static.exe
+black_white: $(OUTPUT_DIR)/black_white_test.exe $(OUTPUT_DIR)/black_white.exe
+
+.PHONY: all static black_white

@@ -6,12 +6,13 @@
             "command": "g++",
             "args": [
                 "${file}",
-                "-g", "-Wall", "-mwindows", "-mconsole",
+                "${fileDirname}\\PatternWindow.cpp",
+                "-g", "-Wall",
                 "-I./include",
                 "-L./lib",
                 "-lSDL3", "-lm", "-lkernel32", "-luser32", "-lgdi32", "-lwinmm", "-limm32", "-lole32", "-loleaut32", "-lversion", "-luuid", "-ladvapi32", "-lsetupapi", "-lshell32", "-ldinput8",
                 "-o",
-                "${workspaceFolder}\\bin\\${fileBasenameNoExtension}.exe"
+                "${workspaceFolder}\\bin\\${fileBasenameNoExtension}_test.exe"
             ],
             "options": {
                 "cwd": "${fileDirname}/../"
