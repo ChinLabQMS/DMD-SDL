@@ -20,7 +20,9 @@ class BaseWindow {
         BaseWindow();    
         ~BaseWindow();
         virtual void printf(const char* format, ...);
-        void open();
+        void setDisplayIndex(int id);
+        int getDisplayIndex();
+        void open(int id = -1);
         void close();
         bool isWindowCreated();
         void displayColor(int r, int g, int b);
@@ -29,15 +31,17 @@ class BaseWindow {
     protected:
         SDL_Window *window;
         SDL_Renderer *renderer;
-        SDL_DisplayID display;
+        SDL_DisplayID *displays;
+        SDL_DisplayID display_id;
         SDL_DisplayMode *display_mode;
-        int target_width, target_height, window_width, window_height;
+        int target_width, target_height, window_width, window_height, num_displays, display_index;
         void init();
 };
 
 class PatternWindow : public BaseWindow {
     public:
         PatternWindow();
+        ~PatternWindow();
 };
 
 #endif // PATTERNWINDOW_H

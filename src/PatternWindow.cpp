@@ -5,12 +5,14 @@ BaseWindow::BaseWindow() {
     window = NULL;
     renderer = NULL;
     display_mode = NULL;
+    displays = NULL;
     target_width = TARGET_DISPLAY_WIDTH;
     target_height = TARGET_DISPLAY_HEIGHT;
 }
 
 BaseWindow::~BaseWindow() {
     close();
+    SDL_free(displays);
     SDL_Quit();
 }
 
@@ -27,50 +29,67 @@ void BaseWindow::init() {
         SDL_Quit();
         exit(1);
     }
-    display = SDL_GetPrimaryDisplay();
+    else printf("SDL initialized successfully.");
 
     // Get the number of displays connected and find the target display
-    int num_displays;
     bool found = false;
-    SDL_DisplayID *displays = SDL_GetDisplays(&num_displays);
-    printf("Number of display connected: %d, Primary display ID: #%d", num_displays, display);
+    display_id = SDL_GetPrimaryDisplay();
+    displays = SDL_GetDisplays(&num_displays);
+    printf("Number of display connected: %d, Primary display ID: #%d", num_displays, display_id);
     if (num_displays == 0) {
-        printf("No display connected.");
         SDL_Quit();
         exit(2);
     }
-    display = displays[num_displays - 1];
-    display_mode = (SDL_DisplayMode*) SDL_GetDesktopDisplayMode(display);
     for (int i = 0; i < num_displays; i++) {
         const SDL_DisplayMode *mode = SDL_GetDesktopDisplayMode(displays[i]);
         if (mode->w == target_width && mode->h == target_height) {
-            display = displays[i];
+            display_index = i;
+            display_id = displays[i];
             display_mode = (SDL_DisplayMode*) mode;
             found = true;
-            printf("--->>>  Display with target resolution (%d, %d) found: #%d  <<<---", 
-                    target_width, target_height, display);
             if (i == 0)
-                printf("--->>>  The target display is the primary display.  <<<---");
+                printf("Display with target resolution (%d, %d) found, display ID: #%d.", 
+                        target_width, target_height, display_id);
             else
-                printf("--->>>  The target display is NOT the primary display, VSYNC might not work properly.  <<<---");
+                printf("Display with target resolution (%d, %d) found, display ID: #%d, but is not the primary display, VSYNC might not work as expected.", 
+                        target_width, target_height, display_id);
         }
-        printf("Display mode of #%d Display:\n\tw = %d\n\th = %d\n\trefreshrate = %f\n\tpixel format = %s",
-                mode->displayID, mode->w, mode->h, mode->refresh_rate, SDL_GetPixelFormatName(mode->format));
     }
     if (!found) {
-        printf("No display with target resolution (%d, %d) found. Use the last display.", 
-                target_width, target_height);
+        display_index = num_displays - 1;
+        display_id = displays[num_displays - 1];
+        display_mode = (SDL_DisplayMode*) SDL_GetDesktopDisplayMode(display_id);
+        printf("No display with target resolution (%d, %d) found. Default to the last display, resolution (%d, %d).", 
+                target_width, target_height, display_mode->w, display_mode->h);
     }
-    SDL_free(displays);
 }
 
-void BaseWindow::open() {
+void BaseWindow::setDisplayIndex(int idx) {
+    if (window) {
+        printf("Window already created, can not set the display index.");
+        return;
+    }
+    if ((idx >= 0) & (idx < num_displays)) {
+        display_id = displays[idx];
+        display_mode = (SDL_DisplayMode*) SDL_GetDesktopDisplayMode(display_id);
+        printf("Set displayID to #%d, resolution: (%d, %d), refresh rate: %f, pixel format: %s",
+                display_id, display_mode->w, display_mode->h, display_mode->refresh_rate, SDL_GetPixelFormatName(display_mode->format));
+    }
+}
+
+int BaseWindow::getDisplayIndex() {
+    return display_index;
+}
+
+void BaseWindow::open(int idx) {
     if (window) {
         printf("Window already created.");
         return;
     }
+    setDisplayIndex(idx);
+
     SDL_Rect rect;
-    SDL_GetDisplayBounds(display, &rect);
+    SDL_GetDisplayBounds(display_id, &rect);
 
     // Create a window on the target display
     SDL_PropertiesID props = SDL_CreateProperties();
@@ -91,7 +110,7 @@ void BaseWindow::open() {
         SDL_RaiseWindow(window);
 
         SDL_GetWindowSize(window, &window_width, &window_height);
-        printf("Window created successfully, width = %d, height = %d.", window_width, window_height);
+        printf("Window created successfully, resolution: (%d, %d).", window_width, window_height);
         SDL_HideCursor();
 
         SDL_PropertiesID props = SDL_CreateProperties();
@@ -194,6 +213,10 @@ void BaseWindow::selectAndProject(const char* default_location) {
     SDL_ShowOpenFileDialog(callbackStaticFileSelect, this, NULL, filters, 2, default_location, false);
 }
 
-PatternWindow::PatternWindow(){
+PatternWindow::PatternWindow() {
     init();
+}
+
+PatternWindow::~PatternWindow() {
+    printf("Quitting SDL...");
 }

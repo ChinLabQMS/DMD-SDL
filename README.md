@@ -66,3 +66,6 @@ To test, run the following command in MATLAB command window:
 PatternWindowMex
 ```
 A black window should appear. To close the window, run the command again.
+
+Alternatively, you can use the [compile_mex.m](/mex/compile_mex.m) MATLAB script for compilation, 
+or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/mex) folder.
