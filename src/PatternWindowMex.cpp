@@ -10,12 +10,12 @@ class MexFunction : public matlab::mex::Function, public BaseWindow {
     ArrayFactory factory;
 
 public:
-    MexFunction() {
-        init();
+    MexFunction(bool verbose = true) {
+        init(verbose);
     }
 
     ~MexFunction() {
-        printf("Quitting SDL...");
+        printf("Mex object destroyed.");
     }
     
     // Overloaded printf function to display messages in MATLAB console
@@ -29,8 +29,14 @@ public:
         matlab->feval(u"fprintf", 0, std::vector<Array>({ factory.createScalar("\n") }));
     }
 
-    void error(const char* message) {
-        matlab->feval(u"error", 0, std::vector<Array>({ factory.createScalar(message) }));
+    // Overloaded printf function to display messages in MATLAB console
+    void error(const char* format, ...) {
+        char buffer[256];
+        va_list args;
+        va_start(args, format);
+        vsprintf(buffer, format, args);
+        va_end(args);
+        matlab->feval(u"error", 0, std::vector<Array>({ factory.createScalar(buffer) }));
     }
 
     StructArray getDisplayModes() {
@@ -100,7 +106,7 @@ public:
         }
         // Check first argument: First input must be scalar string that specifies the function to call
         if (inputs[0].getType() != ArrayType::MATLAB_STRING || inputs[0].getNumberOfElements() != 1){
-            matlab->feval(u"error", 0, std::vector<Array>({ factory.createScalar("First input must be scalar string") }));
+            error("First input must be a scalar string.");
         }
     }
 };

@@ -20,14 +20,15 @@ class BaseWindow {
         BaseWindow();    
         ~BaseWindow();
         virtual void printf(const char* format, ...);
-        void setDisplayIndex(int id);
+        virtual void error(const char* format, ...);
+        void setDisplayIndex(int idx, bool verbose = true);
         int getDisplayIndex();
-        void open(int id = -1);
-        void close();
+        void open(int idx = -1, bool verbose = true);
+        void close(bool verbose = true);
         bool isWindowCreated();
         void displayColor(int r, int g, int b);
-        void projectFromFile(const char* filename);
-        void selectAndProject(const char* default_location);
+        void projectFromFile(const char* filename, int idx = -1, bool verbose = true);
+        void selectAndProject(const char* default_location, bool verbose = true);
     protected:
         SDL_Window *window;
         SDL_Renderer *renderer;
@@ -35,12 +36,12 @@ class BaseWindow {
         SDL_DisplayID display_id;
         SDL_DisplayMode *display_mode;
         int target_width, target_height, window_width, window_height, num_displays, display_index;
-        void init();
+        void init(bool verbose = true);
 };
 
 class PatternWindow : public BaseWindow {
     public:
-        PatternWindow();
+        PatternWindow(bool verbose = true);
         ~PatternWindow();
 };
 
