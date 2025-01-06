@@ -10,8 +10,9 @@ class MexFunction : public matlab::mex::Function, public BaseWindow {
     ArrayFactory factory;
 
 public:
-    MexFunction(bool verbose = true) {
-        init(verbose);
+    MexFunction() {
+        init(false);
+        printf("Mex object created.");
     }
 
     ~MexFunction() {
@@ -53,48 +54,91 @@ public:
         return display_modes;
     }
 
+    void lock() {
+        if (!LockState) {
+            mexLock();
+            LockState = true;
+        }
+    }
+
+    void unlock() {
+        if (LockState) {
+            mexUnlock();
+            LockState = false;
+        }
+    }
+
+    bool getLockState() {
+        return LockState;
+    }
+
     void operator()(ArgumentList outputs, ArgumentList inputs) {
         checkArguments(outputs, inputs);
         if (inputs.size() == 0) {
             // Toggles window state
-            if (!(isWindowCreated())) {
+            if (!isWindowCreated()) {
                 open();
+            } else {
+                close();
             }
-            else
-                close();
-            return;
         }
-        if (inputs.size() == 1) {
+        else if (inputs.size() == 1) {
             StringArray func = inputs[0];
-            if (func[0] == "open")
+            if (func[0] == "open") {
                 open();
-            else if (func[0] == "close")
+            } else if (func[0] == "close") {
                 close();
-            else if (func[0] == "isWindowCreated")
+            } else if (func[0] == "lock") {
+                lock();
+            } else if (func[0] == "unlock") {
+                unlock();
+            } else if (func[0] == "isWindowCreated") {
                 outputs[0] = factory.createScalar(isWindowCreated());
-            else if (func[0] == "getDisplayModes")
+            } else if (func[0] == "getDisplayModes") {
                 outputs[0] = getDisplayModes();
-            else if (func[0] == "getDisplayIndex")
+            } else if (func[0] == "getDisplayIndex") {
                 outputs[0] = factory.createScalar(getDisplayIndex());
-            else
+            } else if (func[0] == "getStaticMode") {
+                outputs[0] = factory.createScalar(getStaticMode());
+            } else if (func[0] == "getLockState") {
+                outputs[0] = factory.createScalar(getLockState());
+            } else if (func[0] == "getStaticPatternPath") {
+                outputs[0] = factory.createCharArray(getStaticPatternPath());
+            } else {
                 error("Invalid function name with one input.");
+            }
         }
-        if (inputs.size() == 2) {
+        else if (inputs.size() == 2) {
             StringArray func = inputs[0];
-            if (func[0] == "open")
+            if (func[0] == "open") {
                 open(inputs[1][0]);
-            else if (func[0] == "setDisplayIndex")
+            } else if (func[0] == "close") {
+                close(inputs[1][0]);
+            } else if (func[0] == "setDisplayIndex") {
                 setDisplayIndex(inputs[1][0]);
-            else if (func[0] == "displayColor") {
+            } else if (func[0] == "displayColor") {
                 TypedArray<double> color = inputs[1];
                 displayColor(color[0], color[1], color[2]);
-            }
-            else if (func[0] == "projectFromFile") {
+            } else if (func[0] == "setStaticPatternPath") {
                 StringArray filename = inputs[1];
-                projectFromFile(std::string(filename[0]).c_str());
+                setStaticPatternPath(std::string(filename[0]).c_str());
+            } else {
+                error("Invalid function name with two inputs.");
+            }
+        }
+        else if (inputs.size() == 3) {
+            StringArray func = inputs[0];
+            if (func[0] == "setDisplayIndex") {
+                setDisplayIndex(inputs[1][0], inputs[2][0]);
+            } else if (func[0] == "setStaticPatternPath") {
+                StringArray filename = inputs[1];
+                setStaticPatternPath(std::string(filename[0]).c_str(), inputs[2][0]);
+            } else if (func[0] == "selectAndProject") {
+                StringArray default_location = inputs[1];
+                selectAndProject(std::string(default_location[0]).c_str(), inputs[2][0]);
             }
             else {
-                error("Invalid function name with two inputs.");
+                error("Invalid function name with three inputs.");
             }
         }
     }
@@ -109,4 +153,7 @@ public:
             error("First input must be a scalar string.");
         }
     }
+
+    private:
+        bool LockState = false;
 };

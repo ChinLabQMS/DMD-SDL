@@ -17,25 +17,27 @@ const int TARGET_DISPLAY_HEIGHT = 1140;
 
 class BaseWindow {
     public:
-        BaseWindow();    
         ~BaseWindow();
         virtual void printf(const char* format, ...);
         virtual void error(const char* format, ...);
         void setDisplayIndex(int idx, bool verbose = true);
         int getDisplayIndex();
-        void open(int idx = -1, bool verbose = true);
+        bool getStaticMode();
+        void setStaticPatternPath(const char* filename, bool verbose = true);
+        const char* getStaticPatternPath();
+        void open(bool verbose = true);
         void close(bool verbose = true);
         bool isWindowCreated();
-        void displayColor(int r, int g, int b);
-        void projectFromFile(const char* filename, int idx = -1, bool verbose = true);
+        void displayColor(int r, int g, int b, bool verbose = true);
         void selectAndProject(const char* default_location, bool verbose = true);
     protected:
-        SDL_Window *window;
-        SDL_Renderer *renderer;
-        SDL_DisplayID *displays;
-        SDL_DisplayID display_id;
-        SDL_DisplayMode *display_mode;
-        int target_width, target_height, window_width, window_height, num_displays, display_index;
+        SDL_Window *Window = NULL;
+        SDL_Renderer *Renderer = NULL;
+        SDL_DisplayID *Displays = NULL;
+        SDL_DisplayID DisplayID;
+        SDL_DisplayMode *DisplayMode;
+        int WindowWidth, WindowHeight, NumDisplays, DisplayIndex;
+        char *StaticPatternPath = NULL;
         void init(bool verbose = true);
 };
 
