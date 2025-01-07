@@ -4,6 +4,10 @@
 BaseWindow::~BaseWindow() {
     close();
     SDL_free(Displays);
+    SDL_free(StaticPatternPath);
+    SDL_free(DefaultPatternPath);
+    StaticPatternPath = NULL;
+    DefaultPatternPath = NULL;
     SDL_Quit();
 }
 
@@ -27,7 +31,6 @@ void BaseWindow::init(bool verbose) {
         SDL_Quit();
         exit(1);
     }
-
     // Get the number of displays connected and find the target display
     bool found = false;
     DisplayID = SDL_GetPrimaryDisplay();
@@ -54,6 +57,10 @@ void BaseWindow::init(bool verbose) {
                             TARGET_DISPLAY_WIDTH, TARGET_DISPLAY_HEIGHT, DisplayIndex);
             }
         }
+        // Get default path for opening file dialog
+        std::string path(SDL_GetBasePath());
+        DefaultPatternPath = (char*) SDL_malloc(256);
+        snprintf(DefaultPatternPath, 256, (path.substr(0, path.length() - 4) + "resources\\").c_str());
     }
     if (!found) {
         DisplayIndex = NumDisplays - 1;
@@ -90,48 +97,50 @@ bool BaseWindow::getStaticMode() {
 
 bool getAbsoluteExistingFilePath(const char* filename, char* filepath) {
     if (SDL_GetPathInfo(filename, NULL)) {
-        sprintf(filepath, "%s", filename);
+        snprintf(filepath, 256, "%s", filename);
         return true;
-    }
-    else {
+    } else {
         std::string path = SDL_GetBasePath();
         // Assumming the binary is in the /bin directory
         path = path.substr(0, path.length() - 4) + filename;
         if (SDL_GetPathInfo(path.c_str(), NULL)) {
-            sprintf(filepath, "%s", path.c_str());            
+            snprintf(filepath, 256, "%s", path.c_str());
             return true;
-        }
-        else {
+        } else {
             return false;}
     }
 }
 
 // Load pattern from a BMP file and display it on the window
 void BaseWindow::setStaticPatternPath(const char* filename, 
-                                    bool verbose) {
-    if (!Window) {
-        open(verbose);
-    }
+                                      bool verbose) {
+    if (!filename)
+        return;
     char filepath[256];
     if (!getAbsoluteExistingFilePath(filename, filepath)) {
         error("File does not exist: %s", filename);
         return;
     }
-    SDL_Surface *bitmap_surface = SDL_LoadBMP(filepath);
+    SDL_free(StaticPatternPath);
+    StaticPatternPath = (char*) SDL_malloc(256);
+    snprintf(StaticPatternPath, 256, "%s", filepath);
+    if (!Window) {
+        return;
+    }
+    SDL_Surface *bitmap_surface = SDL_LoadBMP(StaticPatternPath);
     if (bitmap_surface) {
-        if (bitmap_surface->w != WindowWidth || bitmap_surface->h != WindowHeight)
-            if (verbose)
-                printf("Pattern size (%d, %d) does not match window size (%d, %d)!",
-                        bitmap_surface->w, bitmap_surface->h, WindowWidth, WindowHeight);
+        if ((bitmap_surface->w != WindowWidth || bitmap_surface->h != WindowHeight) && (verbose)) {
+            printf("Pattern size (%d, %d) does not match window size (%d, %d)!",
+                    bitmap_surface->w, bitmap_surface->h, WindowWidth, WindowHeight);
+        }
         SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer, bitmap_surface);
         SDL_RenderClear(Renderer);
         SDL_RenderTexture(Renderer, texture, NULL, NULL);
         SDL_RenderPresent(Renderer);
         SDL_DestroyTexture(texture);
         SDL_DestroySurface(bitmap_surface);
-        StaticPatternPath = (char*) filepath;
         if (verbose)
-            printf("Pattern projected successfully from path:\n\t%s.", filename);
+            printf("Pattern projected successfully from path:\n\t%s.", StaticPatternPath);
     }
     else
         printf("Surface could not be created from BMP file: %s", SDL_GetError());
@@ -180,12 +189,14 @@ void BaseWindow::open(bool verbose) {
         Renderer = SDL_CreateRendererWithProperties(props);
         SDL_DestroyProperties(props);
         if (Renderer) {
-            displayColor(0, 0, 0);
-        }
-        else {
+            if (!StaticPatternPath) {
+                displayColor(0, 0, 0);
+            } else {
+                setStaticPatternPath(StaticPatternPath, verbose);
+            }
+        } else {
             error("Renderer could not be created: %s", SDL_GetError());}
-    }
-    else {
+    } else {
         error("Window could not be created: %s", SDL_GetError());}
 }
 
@@ -195,9 +206,8 @@ void BaseWindow::close(bool verbose) {
         SDL_DestroyWindow(Window);
         Window = NULL;
         Renderer = NULL;
-        StaticPatternPath = NULL;
-        if (verbose)
-            printf("Window closed.");
+        if (verbose) {
+            printf("Window closed.");}
     }
 }
 
@@ -233,12 +243,16 @@ static void SDLCALL callbackStaticFileSelect(void* userdata, const char* const* 
 
 // Select files from the file system
 void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
+    if (!default_location) {
+        default_location = DefaultPatternPath;
+    }
     if (verbose) {
         if (default_location)
             printf("Default location (static pattern): %s", default_location);
         else
             printf("Default location (static pattern): NULL");
     }
+    
     SDL_ShowOpenFileDialog(callbackStaticFileSelect, this, NULL, filters, 2, default_location, false);
 }
 

@@ -28,8 +28,8 @@ class BaseWindow {
         void open(bool verbose = true);
         void close(bool verbose = true);
         bool isWindowCreated();
-        void displayColor(int r, int g, int b, bool verbose = true);
-        void selectAndProject(const char* default_location, bool verbose = true);
+        void displayColor(int r = 0, int g = 0, int b = 0, bool verbose = true);
+        void selectAndProject(const char* default_location = NULL, bool verbose = true);
     protected:
         SDL_Window *Window = NULL;
         SDL_Renderer *Renderer = NULL;
@@ -37,7 +37,7 @@ class BaseWindow {
         SDL_DisplayID DisplayID;
         SDL_DisplayMode *DisplayMode;
         int WindowWidth, WindowHeight, NumDisplays, DisplayIndex;
-        char *StaticPatternPath = NULL;
+        char *StaticPatternPath = NULL, *DefaultPatternPath = NULL;
         void init(bool verbose = true);
 };
 

@@ -72,6 +72,10 @@ public:
         return LockState;
     }
 
+    std::u16string getMexName() {
+        return getFunctionName();
+    }
+
     void operator()(ArgumentList outputs, ArgumentList inputs) {
         checkArguments(outputs, inputs);
         if (inputs.size() == 0) {
@@ -102,8 +106,12 @@ public:
                 outputs[0] = factory.createScalar(getStaticMode());
             } else if (func[0] == "getLockState") {
                 outputs[0] = factory.createScalar(getLockState());
+            } else if (func[0] == "getMexName") {
+                outputs[0] = factory.createCharArray(getMexName());
             } else if (func[0] == "getStaticPatternPath") {
                 outputs[0] = factory.createCharArray(getStaticPatternPath());
+            } else if (func[0] == "displayColor") {
+                displayColor();
             } else {
                 error("Invalid function name with one input.");
             }
@@ -133,11 +141,7 @@ public:
             } else if (func[0] == "setStaticPatternPath") {
                 StringArray filename = inputs[1];
                 setStaticPatternPath(std::string(filename[0]).c_str(), inputs[2][0]);
-            } else if (func[0] == "selectAndProject") {
-                StringArray default_location = inputs[1];
-                selectAndProject(std::string(default_location[0]).c_str(), inputs[2][0]);
-            }
-            else {
+            } else {
                 error("Invalid function name with three inputs.");
             }
         }
