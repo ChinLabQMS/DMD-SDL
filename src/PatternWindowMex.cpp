@@ -140,7 +140,7 @@ public:
                 setDisplayIndex(inputs[1][0], inputs[2][0]);
             } else if (func[0] == "setStaticPatternPath") {
                 StringArray filename = inputs[1];
-                setStaticPatternPath(std::string(filename[0]).c_str(), inputs[2][0]);
+                setStaticPatternPath(std::string(filename[0]).c_str(), (bool) inputs[2][0]);
             } else {
                 error("Invalid function name with three inputs.");
             }
