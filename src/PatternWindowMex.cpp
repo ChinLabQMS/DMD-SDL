@@ -12,11 +12,6 @@ class MexFunction : public matlab::mex::Function, public BaseWindow {
 public:
     MexFunction() {
         init(false);
-        printf("Mex object created.");
-    }
-
-    ~MexFunction() {
-        printf("Mex object destroyed.");
     }
     
     // Overloaded printf function to display messages in MATLAB console
@@ -110,6 +105,8 @@ public:
                 outputs[0] = factory.createCharArray(getMexName());
             } else if (func[0] == "getStaticPatternPath") {
                 outputs[0] = factory.createCharArray(getStaticPatternPath());
+            } else if (func[0] == "isWindowMinimized") {
+                outputs[0] = factory.createScalar(isWindowMinimized());
             } else if (func[0] == "displayColor") {
                 displayColor();
             } else {

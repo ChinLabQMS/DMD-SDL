@@ -215,6 +215,13 @@ bool BaseWindow::isWindowCreated() {
     return Window != NULL;
 }
 
+bool BaseWindow::isWindowMinimized() {
+    if (!Window) {
+        return false;
+    }
+    return SDL_GetWindowFlags(Window) & SDL_WINDOW_MINIMIZED;
+}
+
 void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     if (!Window) {
         open(verbose);
