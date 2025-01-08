@@ -25,6 +25,7 @@ class BaseWindow {
         bool getStaticMode();
         void setStaticPatternPath(const char* filename, bool verbose = true);
         const char* getStaticPatternPath();
+        SDL_Surface* getStaticPatternSurface();
         void open(bool verbose = true);
         void close(bool verbose = true);
         bool isWindowCreated();
@@ -35,6 +36,7 @@ class BaseWindow {
         SDL_Window *Window = NULL;
         SDL_Renderer *Renderer = NULL;
         SDL_DisplayID *Displays = NULL;
+        SDL_Surface *StaticPatternSurface = NULL;
         SDL_DisplayID DisplayID;
         SDL_DisplayMode *DisplayMode;
         int WindowWidth, WindowHeight, NumDisplays, DisplayIndex;

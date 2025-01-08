@@ -1,4 +1,5 @@
 #include <string>
+#include <iostream>
 #include "PatternWindow.h"
 
 #ifdef TEST
@@ -12,6 +13,14 @@ int main(int argc, char* argv[]){
     window.open();
     window.setStaticPatternPath(INIT_FILE_PATH);
     
+    SDL_Surface *surface = window.getStaticPatternSurface();
+    void *pixels = surface->pixels;
+
+    std::cout << "First 100 pixels: ";
+    for (int i = 0; i < 100; i++) {
+        std::cout << ((uint8_t*) pixels)[i] << " ";
+    }
+
     // Event loop
     SDL_Event event;
     while (1) {

@@ -138,7 +138,8 @@ void BaseWindow::setStaticPatternPath(const char* filename,
         SDL_RenderTexture(Renderer, texture, NULL, NULL);
         SDL_RenderPresent(Renderer);
         SDL_DestroyTexture(texture);
-        SDL_DestroySurface(bitmap_surface);
+        SDL_DestroySurface(StaticPatternSurface);
+        StaticPatternSurface = bitmap_surface;
         if (verbose)
             printf("Pattern projected successfully from path:\n\t%s.", StaticPatternPath);
     }
@@ -148,6 +149,10 @@ void BaseWindow::setStaticPatternPath(const char* filename,
 
 const char* BaseWindow::getStaticPatternPath() {
     return StaticPatternPath;
+}
+
+SDL_Surface* BaseWindow::getStaticPatternSurface() {
+    return StaticPatternSurface;
 }
 
 void BaseWindow::open(bool verbose) {
@@ -204,8 +209,10 @@ void BaseWindow::close(bool verbose) {
     if (Window) {
         SDL_DestroyRenderer(Renderer);
         SDL_DestroyWindow(Window);
+        SDL_DestroySurface(StaticPatternSurface);
         Window = NULL;
         Renderer = NULL;
+        StaticPatternSurface = NULL;
         if (verbose) {
             printf("Window closed.");}
     }
