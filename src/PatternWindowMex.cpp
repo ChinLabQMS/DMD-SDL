@@ -108,6 +108,10 @@ public:
             } else if (func[0] == "getStaticPatternPath") {
                 outputs[0] = factory.createCharArray(getStaticPatternPath());
             } else if (func[0] == "getStaticPattern") {
+                SDL_Surface *surface = getStaticPatternSurface();
+                if (!surface) {
+                    error("Static pattern not set.");
+                }
                 uint32_t *pixels = (uint32_t*) getStaticPatternSurface()->pixels;
                 TypedArray<uint32_t> pattern = factory.createArray(
                     { (uint32_t) WindowHeight, (uint32_t) WindowWidth }, 

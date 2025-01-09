@@ -10,7 +10,6 @@ const char* INIT_FILE_PATH = "..\\resources\\solid\\green.bmp";
 
 int main(int argc, char* argv[]){
     PatternWindow window;
-    window.setDisplayIndex(2);
     window.open();
     window.setStaticPatternPath(INIT_FILE_PATH);
     

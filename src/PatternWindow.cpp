@@ -224,11 +224,13 @@ void BaseWindow::setStaticPatternPath(const char* filepath,
         SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer, bitmap_surface);
         SDL_RenderClear(Renderer);
         SDL_RenderTexture(Renderer, texture, NULL, NULL);
-        SDL_RenderPresent(Renderer);
         SDL_DestroyTexture(texture);
+        SDL_DestroySurface(bitmap_surface);
+        bitmap_surface = SDL_RenderReadPixels(Renderer, NULL);
         SDL_DestroySurface(StaticPatternSurface);
         StaticPatternSurface = SDL_ConvertSurface(bitmap_surface, SDL_PIXELFORMAT_ARGB8888);
         SDL_DestroySurface(bitmap_surface);
+        SDL_RenderPresent(Renderer);
         if (verbose)
             printf("Pattern projected successfully from path:\n\t%s.", StaticPatternPath);
     }
