@@ -5,9 +5,9 @@ BaseWindow::~BaseWindow() {
     close();
     SDL_free(Displays);
     SDL_free(StaticPatternPath);
-    SDL_free(DefaultPatternPath);
+    SDL_free(BaseDirectory);
     StaticPatternPath = NULL;
-    DefaultPatternPath = NULL;
+    BaseDirectory = NULL;
     SDL_Quit();
 }
 
@@ -23,136 +23,6 @@ void BaseWindow::error(const char *format, ...) {
     va_start(args, format);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR, format, args);
     va_end(args);
-}
-
-void BaseWindow::init(bool verbose) {
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        error("Unable to initialize SDL: \t%s", SDL_GetError());
-        SDL_Quit();
-        exit(1);
-    }
-    // Get the number of displays connected and find the target display
-    bool found = false;
-    DisplayID = SDL_GetPrimaryDisplay();
-    Displays = SDL_GetDisplays(&NumDisplays);
-    if (verbose)
-        printf("Number of display connected: %d", NumDisplays);
-    if (NumDisplays == 0) {
-        SDL_Quit();
-        exit(2);
-    }
-    for (int i = 0; i < NumDisplays; i++) {
-        const SDL_DisplayMode *mode = SDL_GetDesktopDisplayMode(Displays[i]);
-        if (mode->w == TARGET_DISPLAY_WIDTH && mode->h == TARGET_DISPLAY_HEIGHT) {
-            DisplayIndex = i;
-            DisplayID = Displays[i];
-            DisplayMode = (SDL_DisplayMode*) mode;
-            found = true;
-            if (verbose) {
-                if (i == 0)
-                    printf("Display (primary) with target resolution (%d, %d) found.", 
-                            TARGET_DISPLAY_WIDTH, TARGET_DISPLAY_HEIGHT);
-                else
-                    printf("Display (non-primary) with target resolution (%d, %d) found, display index (0-start): #%d.",
-                            TARGET_DISPLAY_WIDTH, TARGET_DISPLAY_HEIGHT, DisplayIndex);
-            }
-        }
-        // Get default path for opening file dialog
-        std::string path(SDL_GetBasePath());
-        DefaultPatternPath = (char*) SDL_malloc(256);
-        snprintf(DefaultPatternPath, 256, (path.substr(0, path.length() - 4) + "resources\\").c_str());
-    }
-    if (!found) {
-        DisplayIndex = NumDisplays - 1;
-        DisplayID = Displays[NumDisplays - 1];
-        DisplayMode = (SDL_DisplayMode*) SDL_GetDesktopDisplayMode(DisplayID);
-        if (verbose)
-            printf("No display with target resolution (%d, %d) found. Default to the last display, resolution (%d, %d).", 
-                    TARGET_DISPLAY_WIDTH, TARGET_DISPLAY_HEIGHT, DisplayMode->w, DisplayMode->h);
-    }
-}
-
-void BaseWindow::setDisplayIndex(int idx, bool verbose) {
-    if ((idx >= 0) & (idx < NumDisplays) & (idx != DisplayIndex)) {
-        DisplayIndex = idx;
-        DisplayID = Displays[idx];
-        DisplayMode = (SDL_DisplayMode*) SDL_GetDesktopDisplayMode(DisplayID);
-        if (verbose)
-            printf("Set display index to %d, resolution: (%d, %d), refresh rate: %f, pixel format: %s",
-                DisplayIndex, DisplayMode->w, DisplayMode->h, DisplayMode->refresh_rate, 
-                SDL_GetPixelFormatName(DisplayMode->format));
-        if (Window) {
-            close(verbose);
-            open(verbose);
-        }
-    }
-}
-
-int BaseWindow::getDisplayIndex() {
-    return DisplayIndex;}
-
-bool BaseWindow::getStaticMode() {
-    return StaticPatternPath != NULL;
-}
-
-bool getAbsoluteExistingFilePath(const char* filename, char* filepath) {
-    if (SDL_GetPathInfo(filename, NULL)) {
-        snprintf(filepath, 256, "%s", filename);
-        return true;
-    } else {
-        std::string path = SDL_GetBasePath();
-        // Assumming the binary is in the /bin directory
-        path = path.substr(0, path.length() - 4) + filename;
-        if (SDL_GetPathInfo(path.c_str(), NULL)) {
-            snprintf(filepath, 256, "%s", path.c_str());
-            return true;
-        } else {
-            return false;}
-    }
-}
-
-// Load pattern from a BMP file and display it on the window
-void BaseWindow::setStaticPatternPath(const char* filename, 
-                                      bool verbose) {
-    if (!filename)
-        return;
-    char filepath[256];
-    if (!getAbsoluteExistingFilePath(filename, filepath)) {
-        error("File does not exist: %s", filename);
-        return;
-    }
-    SDL_free(StaticPatternPath);
-    StaticPatternPath = (char*) SDL_malloc(256);
-    snprintf(StaticPatternPath, 256, "%s", filepath);
-    if (!Window) {
-        return;
-    }
-    SDL_Surface *bitmap_surface = SDL_LoadBMP(StaticPatternPath);
-    if (bitmap_surface) {
-        if ((bitmap_surface->w != WindowWidth || bitmap_surface->h != WindowHeight) && (verbose)) {
-            printf("Pattern size (%d, %d) does not match window size (%d, %d)!",
-                    bitmap_surface->w, bitmap_surface->h, WindowWidth, WindowHeight);
-        }
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer, bitmap_surface);
-        SDL_RenderClear(Renderer);
-        SDL_RenderTexture(Renderer, texture, NULL, NULL);
-        SDL_RenderPresent(Renderer);
-        SDL_DestroyTexture(texture);
-        SDL_DestroySurface(StaticPatternSurface);
-        StaticPatternSurface = bitmap_surface;
-        if (verbose)
-            printf("Pattern projected successfully from path:\n\t%s.", StaticPatternPath);
-    }
-    else
-        printf("Surface could not be created from BMP file: %s", SDL_GetError());
-}
-
-const char* BaseWindow::getStaticPatternPath() {
-    return StaticPatternPath;
-}
-
-SDL_Surface* BaseWindow::getStaticPatternSurface() {
-    return StaticPatternSurface;
 }
 
 void BaseWindow::open(bool verbose) {
@@ -218,6 +88,53 @@ void BaseWindow::close(bool verbose) {
     }
 }
 
+void BaseWindow::init(bool verbose) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        error("Unable to initialize SDL: \t%s", SDL_GetError());
+        SDL_Quit();
+        exit(1);
+    }
+    // Get the number of displays connected and find the target display
+    bool found = false;
+    DisplayID = SDL_GetPrimaryDisplay();
+    Displays = SDL_GetDisplays(&NumDisplays);
+    if (verbose)
+        printf("Number of display connected: %d", NumDisplays);
+    if (NumDisplays == 0) {
+        SDL_Quit();
+        exit(2);
+    }
+    for (int i = 0; i < NumDisplays; i++) {
+        const SDL_DisplayMode *mode = SDL_GetDesktopDisplayMode(Displays[i]);
+        if (mode->w == TARGET_DISPLAY_WIDTH && mode->h == TARGET_DISPLAY_HEIGHT) {
+            DisplayIndex = i;
+            DisplayID = Displays[i];
+            DisplayMode = (SDL_DisplayMode*) mode;
+            found = true;
+            if (verbose) {
+                if (i == 0)
+                    printf("Display (primary) with target resolution (%d, %d) found.", 
+                            TARGET_DISPLAY_WIDTH, TARGET_DISPLAY_HEIGHT);
+                else
+                    printf("Display (non-primary) with target resolution (%d, %d) found, display index (0-start): #%d.",
+                            TARGET_DISPLAY_WIDTH, TARGET_DISPLAY_HEIGHT, DisplayIndex);
+            }
+        }
+    }
+    if (!found) {
+        DisplayIndex = NumDisplays - 1;
+        DisplayID = Displays[NumDisplays - 1];
+        DisplayMode = (SDL_DisplayMode*) SDL_GetDesktopDisplayMode(DisplayID);
+        if (verbose)
+            printf("No display with target resolution (%d, %d) found. Default to the last display, resolution (%d, %d).", 
+                    TARGET_DISPLAY_WIDTH, TARGET_DISPLAY_HEIGHT, DisplayMode->w, DisplayMode->h);
+    }
+    // Get default path for opening file dialog
+    BaseDirectory = SDL_GetCurrentDirectory();
+    if (verbose)
+        printf("Base directory: %s", BaseDirectory);
+}
+
 bool BaseWindow::isWindowCreated() {
     return Window != NULL;
 }
@@ -229,11 +146,12 @@ bool BaseWindow::isWindowMinimized() {
     return SDL_GetWindowFlags(Window) & SDL_WINDOW_MINIMIZED;
 }
 
+// Display a solid color on the window
 void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     if (!Window) {
         open(verbose);
     }
-    SDL_SetRenderDrawColor(Renderer, r, g, b, 255);
+    SDL_SetRenderDrawColor(Renderer, r, g, b, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(Renderer);
     SDL_RenderPresent(Renderer);
     StaticPatternPath = NULL;
@@ -258,16 +176,91 @@ static void SDLCALL callbackStaticFileSelect(void* userdata, const char* const* 
 // Select files from the file system
 void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
     if (!default_location) {
-        default_location = DefaultPatternPath;
+        default_location = BaseDirectory;
     }
     if (verbose) {
         if (default_location)
             printf("Default location (static pattern): %s", default_location);
         else
             printf("Default location (static pattern): NULL");
-    }
-    
+    }    
     SDL_ShowOpenFileDialog(callbackStaticFileSelect, this, NULL, filters, 2, default_location, false);
+}
+
+void BaseWindow::setDisplayIndex(int idx, bool verbose) {
+    if ((idx >= 0) & (idx < NumDisplays) & (idx != DisplayIndex)) {
+        DisplayIndex = idx;
+        DisplayID = Displays[idx];
+        DisplayMode = (SDL_DisplayMode*) SDL_GetDesktopDisplayMode(DisplayID);
+        if (verbose)
+            printf("Set display index to %d, resolution: (%d, %d), refresh rate: %f, pixel format: %s",
+                DisplayIndex, DisplayMode->w, DisplayMode->h, DisplayMode->refresh_rate, 
+                SDL_GetPixelFormatName(DisplayMode->format));
+        if (Window) {
+            close(verbose);
+            open(verbose);
+        }
+    }
+}
+
+// Load pattern from a BMP file and display it on the window
+void BaseWindow::setStaticPatternPath(const char* filepath, 
+                                      bool verbose) {
+    if (!filepath) {
+        return;
+    }
+    SDL_free(StaticPatternPath);
+    StaticPatternPath = (char*) SDL_malloc(256);
+    snprintf(StaticPatternPath, 256, "%s", filepath);
+    if (!Window) {
+        return;
+    }
+    SDL_Surface *bitmap_surface = SDL_LoadBMP(StaticPatternPath);
+    if (bitmap_surface) {
+        if ((bitmap_surface->w != WindowWidth || bitmap_surface->h != WindowHeight) && (verbose)) {
+            printf("Pattern size (%d, %d) does not match window size (%d, %d)!",
+                    bitmap_surface->w, bitmap_surface->h, WindowWidth, WindowHeight);
+        }
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer, bitmap_surface);
+        SDL_RenderClear(Renderer);
+        SDL_RenderTexture(Renderer, texture, NULL, NULL);
+        SDL_RenderPresent(Renderer);
+        SDL_DestroyTexture(texture);
+        SDL_DestroySurface(StaticPatternSurface);
+        StaticPatternSurface = SDL_ConvertSurface(bitmap_surface, SDL_PIXELFORMAT_ARGB8888);
+        SDL_DestroySurface(bitmap_surface);
+        if (verbose)
+            printf("Pattern projected successfully from path:\n\t%s.", StaticPatternPath);
+    }
+    else
+        printf("Surface could not be created from BMP file: %s", SDL_GetError());
+}
+
+int BaseWindow::getDisplayIndex() {
+    return DisplayIndex;}
+
+bool BaseWindow::getStaticMode() {
+    return StaticPatternPath != NULL;
+}
+
+const char* BaseWindow::getStaticPatternPath() {
+    return StaticPatternPath;
+}
+
+const char* BaseWindow::getBaseDirectory() {
+    return BaseDirectory;
+}
+
+SDL_Surface* BaseWindow::getStaticPatternSurface() {
+    return StaticPatternSurface;
+}
+
+SDL_Window* BaseWindow::getWindow() {
+    return Window;
+}
+
+SDL_Renderer* BaseWindow::getRenderer() {
+    return Renderer;
 }
 
 PatternWindow::PatternWindow(bool verbose) {

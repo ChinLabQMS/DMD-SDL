@@ -6,6 +6,8 @@ using matlab::mex::ArgumentList;
 using namespace matlab::data;
 
 class MexFunction : public matlab::mex::Function, public BaseWindow {
+
+private:
     std::shared_ptr<matlab::engine::MATLABEngine> matlab = getEngine();
     ArrayFactory factory;
 
@@ -105,6 +107,14 @@ public:
                 outputs[0] = factory.createCharArray(getMexName());
             } else if (func[0] == "getStaticPatternPath") {
                 outputs[0] = factory.createCharArray(getStaticPatternPath());
+            } else if (func[0] == "getStaticPattern") {
+                uint32_t *pixels = (uint32_t*) getStaticPatternSurface()->pixels;
+                TypedArray<uint32_t> pattern = factory.createArray(
+                    { (uint32_t) WindowHeight, (uint32_t) WindowWidth }, 
+                    pixels, pixels + WindowHeight * WindowWidth);
+                outputs[0] = pattern;
+            } else if (func[0] == "getBaseDirectory") {
+                outputs[0] = factory.createCharArray(getBaseDirectory());
             } else if (func[0] == "isWindowMinimized") {
                 outputs[0] = factory.createScalar(isWindowMinimized());
             } else if (func[0] == "displayColor") {
@@ -155,6 +165,6 @@ public:
         }
     }
 
-    private:
-        bool LockState = false;
+private:
+    bool LockState = false;
 };

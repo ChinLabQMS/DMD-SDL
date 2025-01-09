@@ -2,24 +2,28 @@
 #include <iostream>
 #include "PatternWindow.h"
 
-#ifdef TEST
-const char* INIT_FILE_PATH = "docs\\example_1080x1920.bmp";
+#if TEST
+const char* INIT_FILE_PATH = "..\\docs\\red_1080x1920.bmp";
 #else
-const char* INIT_FILE_PATH = "docs\\example_912x1140.bmp";
+const char* INIT_FILE_PATH = "..\\resources\\solid\\green.bmp";
 #endif
 
 int main(int argc, char* argv[]){
     PatternWindow window;
+    window.setDisplayIndex(2);
     window.open();
     window.setStaticPatternPath(INIT_FILE_PATH);
     
     SDL_Surface *surface = window.getStaticPatternSurface();
-    void *pixels = surface->pixels;
-
+    SDL_PixelFormat format = surface->format;
+    std::cout << "Pixel format: " << SDL_GetPixelFormatName(format) << std::endl;
+    
+    uint32_t *pixels = (uint32_t*) surface->pixels;
     std::cout << "First 100 pixels: ";
     for (int i = 0; i < 100; i++) {
-        std::cout << ((uint8_t*) pixels)[i] << " ";
+        std::cout << pixels[i] << " ";
     }
+    std::cout << std::endl;
 
     // Event loop
     SDL_Event event;
@@ -29,5 +33,6 @@ int main(int argc, char* argv[]){
              break;
         }
     }
+    
     return 0;
 }
