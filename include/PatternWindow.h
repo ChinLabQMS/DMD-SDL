@@ -25,6 +25,7 @@ class BaseWindow {
         bool isWindowCreated();
         bool isWindowMinimized();
         void displayColor(int r = 0, int g = 0, int b = 0, bool verbose = true);
+        void setDynamicPattern(void* pattern, bool verbose = true);
         void selectAndProject(const char* default_location = NULL, bool verbose = true);
         void setDisplayIndex(int idx, bool verbose = true);
         void setStaticPatternPath(const char* filename, bool verbose = true);
@@ -39,6 +40,7 @@ class BaseWindow {
         SDL_Window *Window = NULL;
         SDL_Renderer *Renderer = NULL;
         SDL_Surface *StaticPatternSurface = NULL;
+        SDL_Surface *DynamicPatternSurface = NULL;
         SDL_DisplayID *Displays = NULL;
         SDL_DisplayID DisplayID;
         SDL_DisplayMode *DisplayMode;

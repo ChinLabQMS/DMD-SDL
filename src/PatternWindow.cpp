@@ -30,11 +30,9 @@ void BaseWindow::open(bool verbose) {
         if (verbose)
             printf("Window already created.");
         return;
-    }
-    
+    }    
     SDL_Rect rect;
     SDL_GetDisplayBounds(DisplayID, &rect);
-
     // Create a window on the target display
     SDL_PropertiesID props = SDL_CreateProperties();
     SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "Pattern window");
@@ -80,9 +78,11 @@ void BaseWindow::close(bool verbose) {
         SDL_DestroyRenderer(Renderer);
         SDL_DestroyWindow(Window);
         SDL_DestroySurface(StaticPatternSurface);
+        SDL_DestroySurface(DynamicPatternSurface);
         Window = NULL;
         Renderer = NULL;
         StaticPatternSurface = NULL;
+        DynamicPatternSurface = NULL;
         if (verbose) {
             printf("Window closed.");}
     }
@@ -155,6 +155,22 @@ void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     SDL_RenderClear(Renderer);
     SDL_RenderPresent(Renderer);
     StaticPatternPath = NULL;
+}
+
+// Project a pattern on the window
+void BaseWindow::setDynamicPattern(void* pattern, bool verbose) {
+    if (!Window) {
+        open(verbose);
+    }
+    SDL_DestroySurface(DynamicPatternSurface);
+    DynamicPatternSurface = SDL_CreateSurfaceFrom(WindowWidth, WindowHeight, SDL_PIXELFORMAT_ARGB8888, pattern, 4 * WindowWidth);
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer, DynamicPatternSurface);
+    SDL_RenderClear(Renderer);
+    SDL_RenderTexture(Renderer, texture, NULL, NULL);
+    SDL_RenderPresent(Renderer);
+    SDL_DestroyTexture(texture);
+    if (verbose)
+        printf("Pattern projected successfully.");
 }
 
 static const SDL_DialogFileFilter filters[] = {

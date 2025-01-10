@@ -141,6 +141,10 @@ public:
             } else if (func[0] == "setStaticPatternPath") {
                 StringArray filename = inputs[1];
                 setStaticPatternPath(std::string(filename[0]).c_str());
+            } else if (func[0] == "setDynamicPattern") {
+                TypedArray<uint32_t> pattern = inputs[1];
+                void *pattern_ptr = pattern.release().get();
+                setDynamicPattern(pattern_ptr);
             } else {
                 error("Invalid function name with two inputs.");
             }
@@ -152,6 +156,10 @@ public:
             } else if (func[0] == "setStaticPatternPath") {
                 StringArray filename = inputs[1];
                 setStaticPatternPath(std::string(filename[0]).c_str(), (bool) inputs[2][0]);
+            } else if (func[0] == "setDynamicPattern") {
+                TypedArray<uint32_t> pattern = inputs[1];
+                void *pattern_ptr = pattern.release().get();
+                setDynamicPattern(pattern_ptr, (bool) inputs[2][0]);
             } else {
                 error("Invalid function name with three inputs.");
             }
