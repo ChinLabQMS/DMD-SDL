@@ -120,10 +120,20 @@ public:
                 if (!surface) {
                     error("Static pattern not set.");
                 }
-                uint32_t *pixels = (uint32_t*) getStaticPatternSurface()->pixels;
+                uint32_t *pixels = (uint32_t*) surface->pixels;
                 TypedArray<uint32_t> pattern = factory.createArray(
-                    { (uint32_t) WindowHeight, (uint32_t) WindowWidth }, 
-                    pixels, pixels + WindowHeight * WindowWidth);
+                    { (uint32_t) surface->h, (uint32_t) surface->w }, 
+                    pixels, pixels + (surface->h) * (surface->w));
+                outputs[0] = pattern;
+            } else if (func[0] == "getDynamicPattern") {
+                SDL_Surface *surface = getDynamicPatternSurface();
+                if (!surface) {
+                    error("Dynamic pattern not set.");
+                }
+                uint32_t *pixels = (uint32_t*) surface->pixels;
+                TypedArray<uint32_t> pattern = factory.createArray(
+                    { (uint32_t) surface->h, (uint32_t) surface->w }, 
+                    pixels, pixels + (surface->h) * (surface->w));
                 outputs[0] = pattern;
             } else if (func[0] == "getBaseDirectory") {
                 outputs[0] = factory.createCharArray(getBaseDirectory());

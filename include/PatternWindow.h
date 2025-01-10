@@ -34,6 +34,7 @@ class BaseWindow {
         const char* getStaticPatternPath();
         const char* getBaseDirectory();
         SDL_Surface* getStaticPatternSurface();
+        SDL_Surface* getDynamicPatternSurface();
         SDL_Renderer* getRenderer();
         SDL_Window* getWindow();
     protected:

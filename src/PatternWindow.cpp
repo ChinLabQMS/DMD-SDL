@@ -162,6 +162,8 @@ void BaseWindow::setDynamicPattern(void* pattern, bool verbose) {
     if (!Window) {
         open(verbose);
     }
+    SDL_free(StaticPatternPath);
+    StaticPatternPath = NULL;
     SDL_DestroySurface(DynamicPatternSurface);
     DynamicPatternSurface = SDL_CreateSurfaceFrom(WindowWidth, WindowHeight, SDL_PIXELFORMAT_ARGB8888, pattern, 4 * WindowWidth);
     SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer, DynamicPatternSurface);
@@ -271,6 +273,10 @@ const char* BaseWindow::getBaseDirectory() {
 
 SDL_Surface* BaseWindow::getStaticPatternSurface() {
     return StaticPatternSurface;
+}
+
+SDL_Surface* BaseWindow::getDynamicPatternSurface() {
+    return DynamicPatternSurface;
 }
 
 SDL_Window* BaseWindow::getWindow() {
