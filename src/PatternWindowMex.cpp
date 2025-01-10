@@ -2,6 +2,14 @@
 #include "mexAdapter.hpp"
 #include "PatternWindow.h"
 
+#include "MatlabDataArray.hpp"
+template <typename T>
+const T* getDataPtr(matlab::data::Array arr) {
+  const matlab::data::TypedArray<T> arr_t = arr;
+  matlab::data::TypedIterator<const T> it(arr_t.begin());
+  return it.operator->();
+}
+
 using matlab::mex::ArgumentList;
 using namespace matlab::data;
 
@@ -142,9 +150,8 @@ public:
                 StringArray filename = inputs[1];
                 setStaticPatternPath(std::string(filename[0]).c_str());
             } else if (func[0] == "setDynamicPattern") {
-                TypedArray<uint32_t> pattern = inputs[1];
-                void *pattern_ptr = pattern.release().get();
-                setDynamicPattern(pattern_ptr);
+                const uint32_t *pattern_ptr = getDataPtr<uint32_t>(inputs[1]);
+                setDynamicPattern((void*) pattern_ptr);
             } else {
                 error("Invalid function name with two inputs.");
             }
@@ -157,9 +164,8 @@ public:
                 StringArray filename = inputs[1];
                 setStaticPatternPath(std::string(filename[0]).c_str(), (bool) inputs[2][0]);
             } else if (func[0] == "setDynamicPattern") {
-                TypedArray<uint32_t> pattern = inputs[1];
-                void *pattern_ptr = pattern.release().get();
-                setDynamicPattern(pattern_ptr, (bool) inputs[2][0]);
+                const uint32_t *pattern_ptr = getDataPtr<uint32_t>(inputs[1]);
+                setDynamicPattern((void*) pattern_ptr, inputs[2][0]);
             } else {
                 error("Invalid function name with three inputs.");
             }
