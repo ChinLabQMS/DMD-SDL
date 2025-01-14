@@ -122,8 +122,8 @@ public:
                 }
                 uint32_t *pixels = (uint32_t*) surface->pixels;
                 TypedArray<uint32_t> pattern = factory.createArray(
-                    { (uint32_t) surface->h, (uint32_t) surface->w }, 
-                    pixels, pixels + (surface->h) * (surface->w));
+                    { (uint32_t) surface->w, (uint32_t) surface->h }, 
+                    pixels, pixels + (surface->w) * (surface->h));
                 outputs[0] = pattern;
             } else if (func[0] == "getDynamicPattern") {
                 SDL_Surface *surface = getDynamicPatternSurface();
@@ -132,8 +132,8 @@ public:
                 }
                 uint32_t *pixels = (uint32_t*) surface->pixels;
                 TypedArray<uint32_t> pattern = factory.createArray(
-                    { (uint32_t) surface->h, (uint32_t) surface->w }, 
-                    pixels, pixels + (surface->h) * (surface->w));
+                    { (uint32_t) surface->w, (uint32_t) surface->h }, 
+                    pixels, pixels + (surface->w) * (surface->h));
                 outputs[0] = pattern;
             } else if (func[0] == "getBaseDirectory") {
                 outputs[0] = factory.createCharArray(getBaseDirectory());
