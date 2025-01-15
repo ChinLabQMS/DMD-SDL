@@ -2,19 +2,17 @@
 #include "mexAdapter.hpp"
 #include "PatternWindow.h"
 
-#include "MatlabDataArray.hpp"
-template <typename T>
-const T* getDataPtr(matlab::data::Array arr) {
-  const matlab::data::TypedArray<T> arr_t = arr;
-  matlab::data::TypedIterator<const T> it(arr_t.begin());
-  return it.operator->();
-}
-
 using matlab::mex::ArgumentList;
 using namespace matlab::data;
 
-class MexFunction : public matlab::mex::Function, public BaseWindow {
+template <typename T>
+const T* getDataPtr(Array arr) {
+  const TypedArray<T> arr_t = arr;
+  TypedIterator<const T> it(arr_t.begin());
+  return it.operator->();
+}
 
+class MexFunction : public matlab::mex::Function, public BaseWindow {
 private:
     std::shared_ptr<matlab::engine::MATLABEngine> matlab = getEngine();
     ArrayFactory factory;
