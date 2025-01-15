@@ -114,7 +114,12 @@ public:
             } else if (func[0] == "getMexName") {
                 outputs[0] = factory.createCharArray(getMexName());
             } else if (func[0] == "getStaticPatternPath") {
+                const char *path = getStaticPatternPath();
+                if (!path) {
+                    outputs[0] = factory.createCharArray("");
+                } else {
                 outputs[0] = factory.createCharArray(getStaticPatternPath());
+                }
             } else if (func[0] == "getStaticPattern") {
                 SDL_Surface *surface = getStaticPatternSurface();
                 if (!surface) {
