@@ -16,6 +16,7 @@ class MexFunction : public matlab::mex::Function, public BaseWindow {
 private:
     std::shared_ptr<matlab::engine::MATLABEngine> matlab = getEngine();
     ArrayFactory factory;
+    bool LockState = false;
 
 public:
     MexFunction() {
@@ -121,23 +122,25 @@ public:
             } else if (func[0] == "getStaticPattern") {
                 SDL_Surface *surface = getStaticPatternSurface();
                 if (!surface) {
-                    error("Static pattern not set.");
+                    outputs[0] = factory.createEmptyArray();
+                } else {
+                    uint32_t *pixels = (uint32_t*) surface->pixels;
+                    TypedArray<uint32_t> pattern = factory.createArray(
+                        { (uint32_t) surface->w, (uint32_t) surface->h }, 
+                        pixels, pixels + (surface->w) * (surface->h));
+                    outputs[0] = pattern;
                 }
-                uint32_t *pixels = (uint32_t*) surface->pixels;
-                TypedArray<uint32_t> pattern = factory.createArray(
-                    { (uint32_t) surface->w, (uint32_t) surface->h }, 
-                    pixels, pixels + (surface->w) * (surface->h));
-                outputs[0] = pattern;
             } else if (func[0] == "getDynamicPattern") {
                 SDL_Surface *surface = getDynamicPatternSurface();
                 if (!surface) {
-                    error("Dynamic pattern not set.");
+                    outputs[0] = factory.createEmptyArray();
+                } else {
+                    uint32_t *pixels = (uint32_t*) surface->pixels;
+                    TypedArray<uint32_t> pattern = factory.createArray(
+                        { (uint32_t) surface->w, (uint32_t) surface->h }, 
+                        pixels, pixels + (surface->w) * (surface->h));
+                    outputs[0] = pattern;
                 }
-                uint32_t *pixels = (uint32_t*) surface->pixels;
-                TypedArray<uint32_t> pattern = factory.createArray(
-                    { (uint32_t) surface->w, (uint32_t) surface->h }, 
-                    pixels, pixels + (surface->w) * (surface->h));
-                outputs[0] = pattern;
             } else if (func[0] == "getBaseDirectory") {
                 outputs[0] = factory.createCharArray(getBaseDirectory());
             } else if (func[0] == "isWindowMinimized") {
@@ -195,7 +198,4 @@ public:
             error("First input must be a scalar string.");
         }
     }
-
-private:
-    bool LockState = false;
 };
