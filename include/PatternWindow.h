@@ -30,6 +30,8 @@ class BaseWindow {
         void setDisplayIndex(int idx, bool verbose = true);
         void setStaticPatternPath(const char* filename, bool verbose = true);
         int getDisplayIndex();
+        int getWindowHeight();
+        int getWindowWidth();
         bool getStaticMode();
         const char* getStaticPatternPath();
         const char* getBaseDirectory();

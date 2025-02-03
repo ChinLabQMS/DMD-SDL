@@ -261,7 +261,22 @@ void BaseWindow::setStaticPatternPath(const char* filepath,
 }
 
 int BaseWindow::getDisplayIndex() {
-    return DisplayIndex;}
+    return DisplayIndex;
+}
+
+int BaseWindow::getWindowHeight() {
+    if (Window)
+        return WindowHeight;
+    else
+        return 0;
+}
+
+int BaseWindow::getWindowWidth() {
+    if (Window)
+        return WindowWidth;
+    else
+        return 0;
+}
 
 bool BaseWindow::getStaticMode() {
     return StaticPatternPath != NULL;

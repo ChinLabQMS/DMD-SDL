@@ -106,6 +106,10 @@ public:
                 outputs[0] = getDisplayModes();
             } else if (func[0] == "getDisplayIndex") {
                 outputs[0] = factory.createScalar(getDisplayIndex());
+            } else if (func[0] == "getWindowHeight") {
+                outputs[0] = factory.createScalar(getWindowHeight());
+            } else if (func[0] == "getWindowWidth") {
+                outputs[0] = factory.createScalar(getWindowWidth());
             } else if (func[0] == "getStaticMode") {
                 outputs[0] = factory.createScalar(getStaticMode());
             } else if (func[0] == "getLockState") {
