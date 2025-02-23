@@ -173,8 +173,9 @@ void BaseWindow::setDynamicPattern(void* pattern, bool verbose) {
     SDL_RenderTexture(Renderer, texture, NULL, NULL);
     SDL_RenderPresent(Renderer);
     SDL_DestroyTexture(texture);
-    if (verbose)
+    if (verbose) {
         printf("Pattern projected successfully.");
+    }
 }
 
 static const SDL_DialogFileFilter filters[] = {

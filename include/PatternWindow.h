@@ -50,7 +50,6 @@ class BaseWindow {
         int WindowWidth, WindowHeight, NumDisplays, DisplayIndex;
         char *StaticPatternPath = NULL, *BaseDirectory = NULL;
         void init(bool verbose = true);
-        // const char *getAbsoluteExistingFilePath(const char* filename);
 };
 
 class PatternWindow : public BaseWindow {

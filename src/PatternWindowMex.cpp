@@ -5,6 +5,7 @@
 using matlab::mex::ArgumentList;
 using namespace matlab::data;
 
+// Get a pointor to the raw data of a matlab array
 template <typename T>
 const T* getDataPtr(Array arr) {
   const TypedArray<T> arr_t = arr;
@@ -170,6 +171,11 @@ public:
                 StringArray filename = inputs[1];
                 setStaticPatternPath(std::string(filename[0]).c_str());
             } else if (func[0] == "setDynamicPattern") {
+                size_t nelems = inputs[1].getNumberOfElements();
+                if (nelems != WindowHeight * WindowWidth) {
+                    error("Provided array has different number of elements than the window size.");
+                    return;
+                }
                 const uint32_t *pattern_ptr = getDataPtr<uint32_t>(inputs[1]);
                 setDynamicPattern((void*) pattern_ptr);
             } else {
