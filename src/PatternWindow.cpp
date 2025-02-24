@@ -53,7 +53,7 @@ void BaseWindow::open(bool verbose) {
 
         SDL_GetWindowSize(Window, &WindowWidth, &WindowHeight);
         if (verbose)
-            printf("Window created successfully, resolution: (%d, %d).", WindowWidth, WindowHeight);
+            printf("Window created successfully, resolution: (%d, %d).", WindowHeight, WindowWidth);
         SDL_HideCursor();
 
         SDL_PropertiesID props = SDL_CreateProperties();
@@ -157,7 +157,7 @@ void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     StaticPatternPath = NULL;
 }
 
-// Project a pattern on the window
+// Project a pattern on the window with a pointer to the pixel data
 void BaseWindow::setDynamicPattern(void* pattern, bool verbose) {
     if (!Window) {
         open(verbose);
@@ -167,6 +167,7 @@ void BaseWindow::setDynamicPattern(void* pattern, bool verbose) {
     SDL_DestroySurface(StaticPatternSurface);
     StaticPatternSurface = NULL;
     SDL_DestroySurface(DynamicPatternSurface);
+    // Pixel data is assumed to be in ARGB format, pitch is 4 * WindowWidth
     DynamicPatternSurface = SDL_CreateSurfaceFrom(WindowWidth, WindowHeight, SDL_PIXELFORMAT_ARGB8888, pattern, 4 * WindowWidth);
     SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer, DynamicPatternSurface);
     SDL_RenderClear(Renderer);

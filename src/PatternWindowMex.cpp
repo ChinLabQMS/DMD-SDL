@@ -1,6 +1,7 @@
-#include "mex.hpp"
-#include "mexAdapter.hpp"
-#include "PatternWindow.h"
+#include <mex.hpp>
+#include <mexAdapter.hpp>
+#include <PixelCanvas.h>
+#include <PatternWindow.h>
 
 using matlab::mex::ArgumentList;
 using namespace matlab::data;
@@ -13,17 +14,47 @@ const T* getDataPtr(Array arr) {
   return it.operator->();
 }
 
-class MexFunction : public matlab::mex::Function, public BaseWindow {
+class CanvasWindow : public BaseWindow, public PixelCanvas {
+public:
+    CanvasWindow() {
+        init(false); // Initialize SDL without verbose output
+    }
+
+    void initCanvas2WindowSize(std::string arrangement) {
+        if (!Window) {
+            open(false);
+        }
+        initCanvas(WindowHeight, WindowWidth, arrangement);
+    }
+
+    void updateCanvas2StaticPattern() {
+        if (StaticPatternSurface) {
+            copyPixel2Pattern((uint32_t*) StaticPatternSurface->pixels);
+            updateReal2Pattern();
+        }
+        else {
+            printf("Static pattern surface is not created.");
+        } 
+    }
+
+    void updateCanvas2DynamicPattern() {
+        if (DynamicPatternSurface) {
+            copyPixel2Pattern((uint32_t*) DynamicPatternSurface->pixels);
+            updateReal2Pattern();
+        }
+        else {
+            printf("Dynamic pattern surface is not created.");
+        }
+    }
+};
+
+class MexFunction : public matlab::mex::Function, public CanvasWindow {
 private:
     std::shared_ptr<matlab::engine::MATLABEngine> matlab = getEngine();
     ArrayFactory factory;
     bool LockState = false;
 
 public:
-    MexFunction() {
-        init(false);
-    }
-    
     // Overloaded printf function to display messages in MATLAB console
     void printf(const char* format, ...) {
         char buffer[256];
@@ -81,6 +112,16 @@ public:
         return getFunctionName();
     }
 
+    void checkDynamicPatternDimensions(ArgumentList inputs) {
+        if (!Window) {
+            open();
+        }
+        size_t nelems = inputs[1].getNumberOfElements();
+        if (nelems != WindowWidth * WindowHeight) {
+            error("Invalid pattern size, number of elements is %d, while window size is (%d, %d).", nelems, WindowWidth, WindowHeight);
+        }
+    }
+
     void operator()(ArgumentList outputs, ArgumentList inputs) {
         checkArguments(outputs, inputs);
         if (inputs.size() == 0) {
@@ -129,6 +170,7 @@ public:
                 if (!surface) {
                     outputs[0] = factory.createEmptyArray();
                 } else {
+                    // Because MATLAB assumes column-major order, we need to transpose the pattern after reading
                     uint32_t *pixels = (uint32_t*) surface->pixels;
                     TypedArray<uint32_t> pattern = factory.createArray(
                         { (uint32_t) surface->w, (uint32_t) surface->h }, 
@@ -140,12 +182,27 @@ public:
                 if (!surface) {
                     outputs[0] = factory.createEmptyArray();
                 } else {
+                    // Because MATLAB assumes column-major order, we need to transpose the pattern after reading
                     uint32_t *pixels = (uint32_t*) surface->pixels;
                     TypedArray<uint32_t> pattern = factory.createArray(
                         { (uint32_t) surface->w, (uint32_t) surface->h }, 
                         pixels, pixels + (surface->w) * (surface->h));
                     outputs[0] = pattern;
                 }
+            } else if (func[0] == "getPatternCanvas") {
+                TypedArray<uint32_t> pattern = factory.createArray(
+                    { (uint32_t) NumCols, (uint32_t) NumRows }, 
+                    PatternCanvas, PatternCanvas + PixelCount);
+                    outputs[0] = pattern;
+            } else if (func[0] == "getRealPatternCanvas") {
+                TypedArray<uint32_t> pattern = factory.createArray(
+                    { (uint32_t) RealNumCols, (uint32_t) RealNumRows }, 
+                    RealPatternCanvas, RealPatternCanvas + RealPixelCount);
+                    outputs[0] = pattern;
+            } else if (func[0] == "updateCanvas2StaticPattern") {
+                updateCanvas2StaticPattern();
+            } else if (func[0] == "updateCanvas2DynamicPattern") {
+                updateCanvas2DynamicPattern();
             } else if (func[0] == "getBaseDirectory") {
                 outputs[0] = factory.createCharArray(getBaseDirectory());
             } else if (func[0] == "isWindowMinimized") {
@@ -171,13 +228,15 @@ public:
                 StringArray filename = inputs[1];
                 setStaticPatternPath(std::string(filename[0]).c_str());
             } else if (func[0] == "setDynamicPattern") {
-                size_t nelems = inputs[1].getNumberOfElements();
-                if (nelems != WindowHeight * WindowWidth) {
-                    error("Provided array has different number of elements than the window size.");
-                    return;
-                }
+                checkDynamicPatternDimensions(inputs);
                 const uint32_t *pattern_ptr = getDataPtr<uint32_t>(inputs[1]);
                 setDynamicPattern((void*) pattern_ptr);
+            } else if (func[0] == "initCanvas2WindowSize") {
+                initCanvas2WindowSize(inputs[1][0]);
+            } else if (func[0] == "updateCanvas2StaticPattern") {
+                updateCanvas2StaticPattern();
+            } else if (func[0] == "updateCanvas2DynamicPattern") {
+                updateCanvas2DynamicPattern();
             } else {
                 error("Invalid function name with two inputs.");
             }
@@ -190,8 +249,9 @@ public:
                 StringArray filename = inputs[1];
                 setStaticPatternPath(std::string(filename[0]).c_str(), (bool) inputs[2][0]);
             } else if (func[0] == "setDynamicPattern") {
+                checkDynamicPatternDimensions(inputs);
                 const uint32_t *pattern_ptr = getDataPtr<uint32_t>(inputs[1]);
-                setDynamicPattern((void*) pattern_ptr, inputs[2][0]);
+                setDynamicPattern((void*) pattern_ptr, inputs[2][0]);                  
             } else {
                 error("Invalid function name with three inputs.");
             }
