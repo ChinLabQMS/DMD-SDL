@@ -17,36 +17,39 @@ const T* getDataPtr(Array arr) {
 class CanvasWindow : public BaseWindow, public PixelCanvas {
 public:
     CanvasWindow() {
-        init(false); // Initialize SDL without verbose output
+        init(false); // Initialize SDL
     }
 
-    void initCanvas2WindowSize(std::string arrangement) {
+    void initCanvas2WindowSize() {
         if (!Window) {
             open(false);
         }
-        initCanvas(WindowHeight, WindowWidth, arrangement);
+        initCanvas(WindowHeight, WindowWidth);
     }
 
-    void updateCanvas2StaticPattern() {
+    void updateCanvas2StaticPattern(bool fast = true) {
         if (StaticPatternSurface) {
-            copyPixel2Pattern((uint32_t*) StaticPatternSurface->pixels);
-            updateReal2Pattern();
+            copyPixel2Pattern((uint32_t*) StaticPatternSurface->pixels, 
+                              StaticPatternSurface->w * StaticPatternSurface->h);
+            updateReal2Pattern(fast);
         }
         else {
             printf("Static pattern surface is not created.");
         } 
     }
 
-    void updateCanvas2DynamicPattern() {
+    void updateCanvas2DynamicPattern(bool fast = true) {
         if (DynamicPatternSurface) {
-            copyPixel2Pattern((uint32_t*) DynamicPatternSurface->pixels);
-            updateReal2Pattern();
+            copyPixel2Pattern((uint32_t*) DynamicPatternSurface->pixels, 
+                              DynamicPatternSurface->w * DynamicPatternSurface->h);
+            updateReal2Pattern(fast);
         }
         else {
             printf("Dynamic pattern surface is not created.");
         }
     }
 };
+
 
 class MexFunction : public matlab::mex::Function, public CanvasWindow {
 private:
@@ -170,35 +173,27 @@ public:
                 if (!surface) {
                     outputs[0] = factory.createEmptyArray();
                 } else {
-                    // Because MATLAB assumes column-major order, we need to transpose the pattern after reading
-                    uint32_t *pixels = (uint32_t*) surface->pixels;
-                    TypedArray<uint32_t> pattern = factory.createArray(
-                        { (uint32_t) surface->w, (uint32_t) surface->h }, 
-                        pixels, pixels + (surface->w) * (surface->h));
-                    outputs[0] = pattern;
+                    outputs[0] = createArrayFromSurface(surface);
                 }
             } else if (func[0] == "getDynamicPattern") {
                 SDL_Surface *surface = getDynamicPatternSurface();
                 if (!surface) {
                     outputs[0] = factory.createEmptyArray();
                 } else {
-                    // Because MATLAB assumes column-major order, we need to transpose the pattern after reading
-                    uint32_t *pixels = (uint32_t*) surface->pixels;
-                    TypedArray<uint32_t> pattern = factory.createArray(
-                        { (uint32_t) surface->w, (uint32_t) surface->h }, 
-                        pixels, pixels + (surface->w) * (surface->h));
-                    outputs[0] = pattern;
+                    outputs[0] = createArrayFromSurface(surface);
                 }
             } else if (func[0] == "getPatternCanvas") {
                 TypedArray<uint32_t> pattern = factory.createArray(
-                    { (uint32_t) NumCols, (uint32_t) NumRows }, 
-                    PatternCanvas, PatternCanvas + PixelCount);
-                    outputs[0] = pattern;
+                    { (uint32_t) NumRows, (uint32_t) NumCols }, 
+                    PatternCanvas.begin(), PatternCanvas.end(), InputLayout::ROW_MAJOR);
+                outputs[0] = pattern;
             } else if (func[0] == "getRealPatternCanvas") {
                 TypedArray<uint32_t> pattern = factory.createArray(
-                    { (uint32_t) RealNumCols, (uint32_t) RealNumRows }, 
-                    RealPatternCanvas, RealPatternCanvas + RealPixelCount);
+                    { (uint32_t) RealNumRows, (uint32_t) RealNumCols }, 
+                    RealPatternCanvas.begin(), RealPatternCanvas.end(), InputLayout::ROW_MAJOR);
                     outputs[0] = pattern;
+            } else if (func[0] == "initCanvas2WindowSize") {
+                initCanvas2WindowSize();
             } else if (func[0] == "updateCanvas2StaticPattern") {
                 updateCanvas2StaticPattern();
             } else if (func[0] == "updateCanvas2DynamicPattern") {
@@ -231,8 +226,6 @@ public:
                 checkDynamicPatternDimensions(inputs);
                 const uint32_t *pattern_ptr = getDataPtr<uint32_t>(inputs[1]);
                 setDynamicPattern((void*) pattern_ptr);
-            } else if (func[0] == "initCanvas2WindowSize") {
-                initCanvas2WindowSize(inputs[1][0]);
             } else if (func[0] == "updateCanvas2StaticPattern") {
                 updateCanvas2StaticPattern();
             } else if (func[0] == "updateCanvas2DynamicPattern") {
@@ -268,4 +261,15 @@ public:
             error("First input must be a scalar string.");
         }
     }
+
+protected:
+    TypedArray<uint32_t> createArrayFromSurface(SDL_Surface *surface) {
+        uint32_t *pixels = (uint32_t*) surface->pixels;
+        std::vector<uint32_t> pixels_vector(pixels, pixels + (surface->w) * (surface->h));
+        TypedArray<uint32_t> pattern = factory.createArray(
+            { (uint32_t) surface->h, (uint32_t) surface->w }, 
+            pixels_vector.begin(), pixels_vector.end(), InputLayout::ROW_MAJOR);
+        return pattern;
+    }
+
 };

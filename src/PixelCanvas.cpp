@@ -1,15 +1,50 @@
 #include <PixelCanvas.h>
 
+PixelCanvas::PixelCanvas(std::string arrangement) : PixelArrangement(std::move(arrangement)) {}
+
 PixelCanvas::~PixelCanvas() {
     closeCanvas();
 }
 
-// Update array a with values from array c at indices specified by array b
-void updateArray(int* a, int N, const int* b, const int* c, int M) {
+// Parallelized array updates
+void updateArrayFast(std::vector<uint32_t>& a, const std::vector<int>& idx, const std::vector<uint32_t>& val) {
+    int N = a.size();
+    int M = idx.size();
     #pragma omp parallel for
     for (int i = 0; i < M; ++i) {
-        if (b[i] >= 0 && b[i] < N) {
-            a[b[i]] = c[i];
+        if (idx[i] >= 0 && idx[i] < N) {
+            a[idx[i]] = val[i];
+        }
+    }
+}
+
+void updateArray(std::vector<uint32_t>& a, const std::vector<int>& idx, const std::vector<uint32_t>& val) {
+    int N = a.size();
+    int M = idx.size();
+    for (int i = 0; i < M; ++i) {
+        if (idx[i] >= 0 && idx[i] < N) {
+            a[idx[i]] = val[i];
+        }
+    }
+}
+
+void updateArrayReverseFast(const std::vector<uint32_t>& a, const std::vector<int>& idx, std::vector<uint32_t>& val) {
+    int N = a.size();
+    int M = idx.size();
+    #pragma omp parallel for
+    for (int i = 0; i < M; ++i) {
+        if (idx[i] >= 0 && idx[i] < N) {
+            val[i] = a[idx[i]];
+        }
+    }
+}
+
+void updateArrayReverse(const std::vector<uint32_t>& a, const std::vector<int>& idx, std::vector<uint32_t>& val) {
+    int N = a.size();
+    int M = idx.size();
+    for (int i = 0; i < M; ++i) {
+        if (idx[i] >= 0 && idx[i] < N) {
+            val[i] = a[idx[i]];
         }
     }
 }
@@ -19,41 +54,28 @@ int sub2ind(int nrows, int ncols, int x, int y) {
     return x * ncols + y;
 }
 
-void PixelCanvas::initCanvas(int nrows, int ncols, const std::string arrangement) {
-    PixelArrangement = arrangement;
+// Initialize Canvas
+void PixelCanvas::initCanvas(int nrows, int ncols) {
     NumRows = nrows;
     NumCols = ncols;
+    PixelCount = NumRows * NumCols;
 
-    // Allocate space for PixelIndex
-    PixelCount = nrows * ncols;
-    PixelIndex = new int[PixelCount];
+    PixelIndex.resize(PixelCount);
+    std::iota(PixelIndex.begin(), PixelIndex.end(), 0);  // Fill with sequential indices
 
-    // Compute projector space indices, use C-style indexing
-    for (int i = 0; i < PixelCount; ++i) {
-        PixelIndex[i] = i;
-    }
-
-    // Handle different pixel arrangements
     if (PixelArrangement == "Square") {
         RealNumRows = NumRows;
         RealNumCols = NumCols;
         RealPixelCount = PixelCount;
-        RealPixelIndex = new int[PixelCount];
-        for (int i = 0; i < PixelCount; ++i) {
-            RealPixelIndex[i] = PixelIndex[i];
-        }
+        RealPixelIndex = PixelIndex;
         BackgroundCount = 0;
-        RealBackgroundIndex = NULL;
     }
     else if (PixelArrangement == "Diamond") {
         RealNumRows = std::max(0, nrows / 2 + ncols);
         RealNumCols = std::max(0, ncols + (nrows - 1) / 2);
         RealPixelCount = RealNumRows * RealNumCols;
-        
-        // Allocate space for RealPixelIndex
-        RealPixelIndex = new int[PixelCount];
-    
-        // Compute transformed coordinates directly with integer division
+        RealPixelIndex.resize(PixelCount);
+
         for (int i = 0; i < PixelCount; ++i) {
             int x = i / ncols;  // row index
             int y = i % ncols;  // column index        
@@ -62,75 +84,68 @@ void PixelCanvas::initCanvas(int nrows, int ncols, const std::string arrangement
             RealPixelIndex[i] = sub2ind(RealNumRows, RealNumCols, real_x, real_y);
         }
 
-        // Compute background indices
         BackgroundCount = RealPixelCount - PixelCount;
-        RealBackgroundIndex = NULL;
-        // Memory leak
-        // if (BackgroundCount != 0) {
-        //     bool *real_idx = new bool[RealPixelCount];
-        //     for (int i = 0; i < RealPixelCount; ++i) {
-        //         real_idx[i] = true;
-        //     }
-        //     for (int i = 0; i < PixelCount; ++i) {
-        //         real_idx[RealPixelIndex[i]] = false;
-        //     }
-        //     RealBackgroundIndex = new int[BackgroundCount];
-        //     int bg_index = 0;
-        //     for (int i = 0; i < RealPixelCount; ++i) {
-        //         if (!real_idx[i]) {
-        //             RealBackgroundIndex[bg_index++] = i;
-        //         }
-        //     }
-        //     delete[] real_idx;
-        // }
+        if (BackgroundCount != 0) {
+            std::vector<bool> real_idx(RealPixelCount, true);
+            for (int idx : RealPixelIndex) {
+                real_idx[idx] = false;
+            }
+            RealBackgroundIndex.clear();
+            for (int i = 0; i < RealPixelCount; ++i) {
+                if (!real_idx[i]) {
+                    RealBackgroundIndex.push_back(i);
+                }
+            }
+        }
     }
 
-    // Allocate space for PatternCanvas and RealPatternCanvas
-    PatternCanvas = new uint32_t[PixelCount];
-    RealPatternCanvas = new uint32_t[RealPixelCount];
+    PatternCanvas.resize(PixelCount, 0);
+    RealPatternCanvas.resize(RealPixelCount, 0);
     resetCanvas();
 }
 
+// Reset Canvas
 void PixelCanvas::resetCanvas(uint32_t pattern_color, uint32_t background_color) {
-    for (int i = 0; i < PixelCount; ++i) {
-        PatternCanvas[i] = 0;
-    }
-    for (int i = 0; i < RealPixelCount; ++i) {
-        RealPatternCanvas[i] = background_color;
+    std::fill(PatternCanvas.begin(), PatternCanvas.end(), pattern_color);
+    for (int i = 0; i < BackgroundCount; ++i) {
+        RealPatternCanvas[RealBackgroundIndex[i]] = background_color;
     }
     for (int i = 0; i < PixelCount; ++i) {
         RealPatternCanvas[RealPixelIndex[i]] = pattern_color;
     }
 }
 
+// Cleanup Function
 void PixelCanvas::closeCanvas() {
-    delete[] PixelIndex;
-    delete[] RealPixelIndex;
-    delete[] RealBackgroundIndex;
-    delete[] PatternCanvas;
-    delete[] RealPatternCanvas;
+    PixelIndex.clear();
+    RealPixelIndex.clear();
+    RealBackgroundIndex.clear();
+    PatternCanvas.clear();
+    RealPatternCanvas.clear();
 }
 
-void PixelCanvas::updatePattern2Real() {
-    for (int i = 0; i < PixelCount; ++i) {
-        PatternCanvas[i] = RealPatternCanvas[RealPixelIndex[i]];
-    }
+// Update from Pattern to Real
+void PixelCanvas::updatePattern2Real(bool fast) {
+    if (fast)
+        updateArrayReverseFast(RealPatternCanvas, RealPixelIndex, PatternCanvas);
+    else
+        updateArrayReverse(RealPatternCanvas, RealPixelIndex, PatternCanvas);
 }
 
-void PixelCanvas::updateReal2Pattern() {
-    for (int i = 0; i < PixelCount; ++i) {
-        RealPatternCanvas[RealPixelIndex[i]] = PatternCanvas[i];
-    }
+// Update from Real to Pattern
+void PixelCanvas::updateReal2Pattern(bool fast) {
+    if (fast)
+        updateArrayFast(RealPatternCanvas, RealPixelIndex, PatternCanvas);
+    else
+        updateArray(RealPatternCanvas, RealPixelIndex, PatternCanvas);
 }
 
-void PixelCanvas::copyPixel2Pattern(uint32_t *pixels) {
-    for (int i = 0; i < PixelCount; ++i) {
-        PatternCanvas[i] = pixels[i];
-    }
+// Copy Pixels to Pattern using raw pointer
+void PixelCanvas::copyPixel2Pattern(uint32_t* pixels, size_t num_pixels) {
+    std::copy(pixels, pixels + num_pixels, PatternCanvas.begin());
 }
 
-void PixelCanvas::copyPixel2Real(uint32_t *pixels) {
-    for (int i = 0; i < RealPixelCount; ++i) {
-        RealPatternCanvas[i] = pixels[i];
-    }
+// Copy Pixels to Real using raw pointer
+void PixelCanvas::copyPixel2Real(uint32_t* pixels, size_t num_pixels) {
+    std::copy(pixels, pixels + num_pixels, RealPatternCanvas.begin());
 }
