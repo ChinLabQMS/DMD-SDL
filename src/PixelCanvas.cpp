@@ -1,52 +1,8 @@
 #include <PixelCanvas.h>
 
-PixelCanvas::PixelCanvas(std::string arrangement) : PixelArrangement(std::move(arrangement)) {}
 
 PixelCanvas::~PixelCanvas() {
     closeCanvas();
-}
-
-// Parallelized array updates
-void updateArrayFast(std::vector<uint32_t>& a, const std::vector<int>& idx, const std::vector<uint32_t>& val) {
-    int N = a.size();
-    int M = idx.size();
-    #pragma omp parallel for
-    for (int i = 0; i < M; ++i) {
-        if (idx[i] >= 0 && idx[i] < N) {
-            a[idx[i]] = val[i];
-        }
-    }
-}
-
-void updateArray(std::vector<uint32_t>& a, const std::vector<int>& idx, const std::vector<uint32_t>& val) {
-    int N = a.size();
-    int M = idx.size();
-    for (int i = 0; i < M; ++i) {
-        if (idx[i] >= 0 && idx[i] < N) {
-            a[idx[i]] = val[i];
-        }
-    }
-}
-
-void updateArrayReverseFast(const std::vector<uint32_t>& a, const std::vector<int>& idx, std::vector<uint32_t>& val) {
-    int N = a.size();
-    int M = idx.size();
-    #pragma omp parallel for
-    for (int i = 0; i < M; ++i) {
-        if (idx[i] >= 0 && idx[i] < N) {
-            val[i] = a[idx[i]];
-        }
-    }
-}
-
-void updateArrayReverse(const std::vector<uint32_t>& a, const std::vector<int>& idx, std::vector<uint32_t>& val) {
-    int N = a.size();
-    int M = idx.size();
-    for (int i = 0; i < M; ++i) {
-        if (idx[i] >= 0 && idx[i] < N) {
-            val[i] = a[idx[i]];
-        }
-    }
 }
 
 // Convert subscripts to linear indices, use C-style indexing
@@ -55,7 +11,9 @@ int sub2ind(int nrows, int ncols, int x, int y) {
 }
 
 // Initialize Canvas
-void PixelCanvas::initCanvas(int nrows, int ncols) {
+void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement) {
+    PixelArrangement = std::move(arrangement);
+    IsCanvasInitialized = true;
     NumRows = nrows;
     NumCols = ncols;
     PixelCount = NumRows * NumCols;
@@ -105,11 +63,13 @@ void PixelCanvas::initCanvas(int nrows, int ncols) {
 }
 
 // Reset Canvas
-void PixelCanvas::resetCanvas(uint32_t pattern_color, uint32_t background_color) {
+void PixelCanvas::resetCanvas(uint32_t pattern_color, uint32_t background_color, bool use_parallel) {
     std::fill(PatternCanvas.begin(), PatternCanvas.end(), pattern_color);
+    #pragma omp parallel for if(use_parallel)
     for (int i = 0; i < BackgroundCount; ++i) {
         RealPatternCanvas[RealBackgroundIndex[i]] = background_color;
     }
+    #pragma omp parallel for if(use_parallel)
     for (int i = 0; i < PixelCount; ++i) {
         RealPatternCanvas[RealPixelIndex[i]] = pattern_color;
     }
@@ -125,84 +85,53 @@ void PixelCanvas::closeCanvas() {
 }
 
 // Update from Pattern to Real
-void PixelCanvas::updatePattern2Real(bool fast) {
-    if (fast)
-        updateArrayReverseFast(RealPatternCanvas, RealPixelIndex, PatternCanvas);
-    else
-        updateArrayReverse(RealPatternCanvas, RealPixelIndex, PatternCanvas);
+void PixelCanvas::updatePattern2Real(bool use_parallel) {
+    #pragma omp parallel for if(use_parallel)
+    for (size_t i = 0; i < PatternCanvas.size(); ++i) {
+        PatternCanvas[i] = RealPatternCanvas[RealPixelIndex[i]];
+    }
 }
 
 // Update from Real to Pattern
-void PixelCanvas::updateReal2Pattern(bool fast) {
-    if (fast)
-        updateArrayFast(RealPatternCanvas, RealPixelIndex, PatternCanvas);
-    else
-        updateArray(RealPatternCanvas, RealPixelIndex, PatternCanvas);
+void PixelCanvas::updateReal2Pattern(bool use_parallel) {
+    #pragma omp parallel for if(use_parallel)
+    for (size_t i = 0; i < PatternCanvas.size(); ++i) {
+        RealPatternCanvas[RealPixelIndex[i]] = PatternCanvas[i];
+    }
 }
 
 // Copy Pixels to Pattern using raw pointer
-void PixelCanvas::copyPixel2Pattern(uint32_t* pixels, size_t num_pixels) {
+void PixelCanvas::copyPixel2Pattern(uint32_t* pixels, size_t num_pixels, bool use_parallel) {
     std::copy(pixels, pixels + num_pixels, PatternCanvas.begin());
+    updateReal2Pattern(use_parallel);
 }
 
 // Copy Pixels to Real using raw pointer
-void PixelCanvas::copyPixel2Real(uint32_t* pixels, size_t num_pixels) {
+void PixelCanvas::copyPixel2Real(uint32_t* pixels, size_t num_pixels, bool use_parallel) {
     std::copy(pixels, pixels + num_pixels, RealPatternCanvas.begin());
+    updatePattern2Real(use_parallel);
 }
 
 // Convert Pattern to RGB
-std::vector<uint8_t> PixelCanvas::convertPattern2RGB(const std::vector<uint32_t>& pattern) {
-    std::vector<uint8_t> rgb;
-    rgb.resize(pattern.size() * 3);
-    for (size_t i = 0; i < pattern.size(); ++i) {
-        rgb[i] = (pattern[i] & 0xFF); // Red
-        rgb[i + pattern.size()] = (pattern[i] >> 8) & 0xFF; // Green
-        rgb[i + 2*pattern.size()] = (pattern[i] >> 16) & 0xFF; // Blue
-    }
-    return rgb;
-}
-
-// Convert Pattern to RGB
-std::vector<uint8_t> PixelCanvas::convertPattern2RGBFast(const std::vector<uint32_t>& pattern) {
-    std::vector<uint8_t> rgb;
-    rgb.resize(pattern.size() * 3);
-    #pragma omp parallel for
-    for (size_t i = 0; i < pattern.size(); ++i) {
-        rgb[i] = (pattern[i] & 0xFF); // Red
-        rgb[i + pattern.size()] = (pattern[i] >> 8) & 0xFF; // Green
-        rgb[i + 2*pattern.size()] = (pattern[i] >> 16) & 0xFF; // Blue
+// Function for raw pointer
+std::vector<uint8_t> PixelCanvas::convertPattern2RGB(const uint32_t *pixels, size_t num_elements, bool use_parallel) {
+    std::vector<uint8_t> rgb(num_elements * 3);
+    // Enable parallel processing if requested
+    #pragma omp parallel for if(use_parallel)
+    for (size_t i = 0; i < num_elements; ++i) {
+        rgb[i] = pixels[i] & 0xFF;                     // Red
+        rgb[i + num_elements] = (pixels[i] >> 8) & 0xFF; // Green
+        rgb[i + 2 * num_elements] = (pixels[i] >> 16) & 0xFF; // Blue
     }
     return rgb;
 }
 
 // Convert RGB to Pattern
-std::vector<uint32_t> PixelCanvas::convertRGB2Pattern(const std::vector<uint8_t>& rgb, bool alpha_mask) {
+std::vector<uint32_t> PixelCanvas::convertRGB2Pattern(const uint8_t *rgb, size_t num_elements, bool alpha_mask, bool use_parallel) {
     std::vector<uint32_t> pattern;
-    pattern.resize(rgb.size() / 3);
+    pattern.resize(num_elements / 3);
     for (size_t i = 0; i < pattern.size(); ++i) {
-        pattern[i] = (rgb[i + 2 * pattern.size()] << 16) + (rgb[i + pattern.size()] << 8) + rgb[i];
-    }
-    if (alpha_mask) {
-        for (size_t i = 0; i < pattern.size(); ++i) {
-            pattern[i] |= 0xFF000000; // Set alpha channel to 255
-        }
-    }
-    return pattern;
-}
-
-// Convert RGB to Pattern
-std::vector<uint32_t> PixelCanvas::convertRGB2PatternFast(const std::vector<uint8_t>& rgb, bool alpha_mask) {
-    std::vector<uint32_t> pattern;
-    pattern.resize(rgb.size() / 3);
-    #pragma omp parallel for
-    for (size_t i = 0; i < pattern.size(); ++i) {
-        pattern[i] = (rgb[i + 2 * pattern.size()] << 16) + (rgb[i + pattern.size()] << 8) + rgb[i];
-    }
-    if (alpha_mask) {
-        #pragma omp parallel for
-        for (size_t i = 0; i < pattern.size(); ++i) {
-            pattern[i] |= 0xFF000000; // Set alpha channel to 255
-        }
+        pattern[i] = (rgb[i + 2 * pattern.size()] << 16) + (rgb[i + pattern.size()] << 8) + rgb[i] + (alpha_mask ? 0xFF000000 : 0);
     }
     return pattern;
 }

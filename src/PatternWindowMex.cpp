@@ -20,32 +20,50 @@ public:
         init(false); // Initialize SDL
     }
 
-    void initCanvas2WindowSize() {
-        if (!Window) {
-            open(false);
+    // Every time the window is opened, the canvas is initialized
+    void open(std::string arrangement = "Diamond", bool use_parallel = true) {
+        BaseWindow::open(false);
+        if (Window) {
+            initCanvas(WindowHeight, WindowWidth, arrangement);
+            updateCanvas2StaticPattern(use_parallel);
         }
-        initCanvas(WindowHeight, WindowWidth);
     }
 
-    void updateCanvas2StaticPattern(bool fast = true) {
+    // Every time the window is closed, the canvas is cleared
+    void close() {
+        BaseWindow::close(false);
+        closeCanvas();
+    }
+
+    void setStaticPatternPath(const char *filepath, bool verbose = true, bool use_parallel = true) {
+        BaseWindow::setStaticPatternPath(filepath, verbose);
+        updateCanvas2StaticPattern(use_parallel);
+    }
+
+    void projectDynamicPatternFromCanvas(bool verbose) {
+        if (PatternCanvas.size() == WindowWidth * WindowHeight) {
+            setDynamicPattern((void*) PatternCanvas.data(), verbose);
+        }
+        else {
+            error("Invalid pattern size, number of elements is %d, while window size is (%d, %d).", 
+                  PatternCanvas.size(), WindowWidth, WindowHeight);
+        }
+    }
+
+protected:
+    void updateCanvas2StaticPattern(bool use_parallel = true) {
         if (StaticPatternSurface) {
             copyPixel2Pattern((uint32_t*) StaticPatternSurface->pixels, 
                               StaticPatternSurface->w * StaticPatternSurface->h);
-            updateReal2Pattern(fast);
+            updateReal2Pattern(use_parallel);
         }
-        else {
-            printf("Static pattern surface is not created.");
-        } 
     }
 
-    void updateCanvas2DynamicPattern(bool fast = true) {
+    void updateCanvas2DynamicPattern(bool use_parallel = true) {
         if (DynamicPatternSurface) {
             copyPixel2Pattern((uint32_t*) DynamicPatternSurface->pixels, 
                               DynamicPatternSurface->w * DynamicPatternSurface->h);
-            updateReal2Pattern(fast);
-        }
-        else {
-            printf("Dynamic pattern surface is not created.");
+            updateReal2Pattern(use_parallel);
         }
     }
 };
@@ -126,9 +144,11 @@ public:
             } else {
                 close();
             }
+            return;
         }
-        else if (inputs.size() == 1) {
-            StringArray func = inputs[0];
+
+        StringArray func = inputs[0];
+        if (inputs.size() == 1) {
             if (func[0] == "open") {
                 open();
             } else if (func[0] == "close") {
@@ -156,9 +176,9 @@ public:
             } else if (func[0] == "getStaticPatternPath") {
                 const char *path = getStaticPatternPath();
                 if (!path) {
-                    outputs[0] = factory.createCharArray("");
+                    outputs[0] = factory.createEmptyArray();
                 } else {
-                outputs[0] = factory.createCharArray(getStaticPatternPath());
+                outputs[0] = factory.createCharArray(path);
                 }
             } else if (func[0] == "getStaticPattern") {
                 SDL_Surface *surface = getStaticPatternSurface();
@@ -180,7 +200,7 @@ public:
                     PatternCanvas.begin(), PatternCanvas.end(), InputLayout::ROW_MAJOR);
                 outputs[0] = pattern;
             } else if (func[0] == "getPatternCanvasRGB") {
-                std::vector<uint8_t> rgb = convertPattern2RGB(PatternCanvas);
+                std::vector<uint8_t> rgb = convertPattern2RGB(PatternCanvas.data(), PatternCanvas.size());
                 TypedArray<uint8_t> pattern = factory.createArray(
                     { (uint32_t) NumRows, (uint32_t) NumCols, 3 }, 
                     rgb.begin(), rgb.end(), InputLayout::ROW_MAJOR);
@@ -191,17 +211,11 @@ public:
                     RealPatternCanvas.begin(), RealPatternCanvas.end(), InputLayout::ROW_MAJOR);
                     outputs[0] = pattern;
             } else if (func[0] == "getRealPatternCanvasRGB") {
-                std::vector<uint8_t> rgb = convertPattern2RGB(RealPatternCanvas);
+                std::vector<uint8_t> rgb = convertPattern2RGB(RealPatternCanvas.data(), RealPatternCanvas.size());
                 TypedArray<uint8_t> pattern = factory.createArray(
                     { (uint32_t) RealNumRows, (uint32_t) RealNumCols, 3 }, 
                     rgb.begin(), rgb.end(), InputLayout::ROW_MAJOR);
                 outputs[0] = pattern;
-            } else if (func[0] == "initCanvas2WindowSize") {
-                initCanvas2WindowSize();
-            } else if (func[0] == "updateCanvas2StaticPattern") {
-                updateCanvas2StaticPattern();
-            } else if (func[0] == "updateCanvas2DynamicPattern") {
-                updateCanvas2DynamicPattern();
             } else if (func[0] == "getBaseDirectory") {
                 outputs[0] = factory.createCharArray(getBaseDirectory());
             } else if (func[0] == "isWindowMinimized") {
@@ -209,15 +223,14 @@ public:
             } else if (func[0] == "displayColor") {
                 displayColor();
             } else {
-                error("Invalid function name with one input.");
+                error("Invalid function name with zero input.");
             }
+            return;
         }
-        else if (inputs.size() == 2) {
-            StringArray func = inputs[0];
+        
+        if (inputs.size() == 2) {
             if (func[0] == "open") {
                 open(inputs[1][0]);
-            } else if (func[0] == "close") {
-                close(inputs[1][0]);
             } else if (func[0] == "setDisplayIndex") {
                 setDisplayIndex(inputs[1][0]);
             } else if (func[0] == "displayColor") {
@@ -230,28 +243,51 @@ public:
                 checkDynamicPatternDimensions(inputs);
                 const uint32_t *pattern_ptr = getDataPtr<uint32_t>(inputs[1]);
                 setDynamicPattern((void*) pattern_ptr);
-            } else if (func[0] == "updateCanvas2StaticPattern") {
-                updateCanvas2StaticPattern();
-            } else if (func[0] == "updateCanvas2DynamicPattern") {
-                updateCanvas2DynamicPattern();
             } else {
-                error("Invalid function name with two inputs.");
+                error("Invalid function name with one input.");
             }
+            return;
         }
-        else if (inputs.size() == 3) {
-            StringArray func = inputs[0];
-            if (func[0] == "setDisplayIndex") {
+        
+        if (inputs.size() == 3) {
+            if (func[0] == "open") {
+                open(inputs[1][0], inputs[2][0]);
+            } else if (func[0] == "setDisplayIndex") {
                 setDisplayIndex(inputs[1][0], inputs[2][0]);
             } else if (func[0] == "setStaticPatternPath") {
                 StringArray filename = inputs[1];
-                setStaticPatternPath(std::string(filename[0]).c_str(), (bool) inputs[2][0]);
+                setStaticPatternPath(std::string(filename[0]).c_str(), inputs[2][0]);
             } else if (func[0] == "setDynamicPattern") {
                 checkDynamicPatternDimensions(inputs);
                 const uint32_t *pattern_ptr = getDataPtr<uint32_t>(inputs[1]);
-                setDynamicPattern((void*) pattern_ptr, inputs[2][0]);                  
+                setDynamicPattern((void*) pattern_ptr, inputs[2][0]);
+            } else if (func[0] == "convertPattern2RGB") {
+                TypedArray<uint32_t> pattern = inputs[1];
+                const uint32_t *pattern_ptr = getDataPtr<uint32_t>(pattern);
+                size_t num_elements = pattern.getNumberOfElements();
+                bool use_parallel = inputs[2][0];
+                std::vector<uint8_t> rgb = convertPattern2RGB(pattern_ptr, num_elements, use_parallel);
+                TypedArray<uint8_t> rgb_array = factory.createArray(
+                    { pattern.getDimensions()[0], pattern.getDimensions()[1], 3 }, 
+                    rgb.begin(), rgb.end());
+                outputs[0] = rgb_array;
+            } else {
+                error("Invalid function name with two inputs.");
+            }
+            return;
+        }
+
+        if (inputs.size() == 4) {
+            StringArray func = inputs[0];
+            if (func[0] == "setStaticPatternPath") {
+                StringArray filename = inputs[1];
+                setStaticPatternPath(std::string(filename[0]).c_str(), inputs[2][0], inputs[3][0]);
             } else {
                 error("Invalid function name with three inputs.");
             }
+        }
+        else {
+            error("Invalid number of inputs.");
         }
     }
 
