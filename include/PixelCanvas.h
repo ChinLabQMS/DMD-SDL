@@ -31,6 +31,10 @@ public:
     void updateReal2Pattern(bool fast = true);
     void copyPixel2Pattern(uint32_t* pixels, size_t numPixels);
     void copyPixel2Real(uint32_t* pixels, size_t num_pixels);
+    static std::vector<uint8_t> convertPattern2RGB(const std::vector<uint32_t>& pattern);
+    static std::vector<uint8_t> convertPattern2RGBFast(const std::vector<uint32_t>& pattern);
+    static std::vector<uint32_t> convertRGB2Pattern(const std::vector<uint8_t>& rgb, bool alpha_mask = true);
+    static std::vector<uint32_t> convertRGB2PatternFast(const std::vector<uint8_t>& rgb, bool alpha_mask = true);
 };
 
 #endif // PIXELCANVAS_H

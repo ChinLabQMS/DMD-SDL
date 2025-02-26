@@ -8,7 +8,7 @@ int main(int argc, char* argv[]){
     SDL_Event event;
     int n = 0;
     Uint64 start_time = SDL_GetTicks();
-    while (1){
+    while (1) {
         SDL_PollEvent(&event);
         if (event.type == SDL_EVENT_QUIT) {
             break;

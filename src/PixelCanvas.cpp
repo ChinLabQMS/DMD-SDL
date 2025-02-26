@@ -149,3 +149,60 @@ void PixelCanvas::copyPixel2Pattern(uint32_t* pixels, size_t num_pixels) {
 void PixelCanvas::copyPixel2Real(uint32_t* pixels, size_t num_pixels) {
     std::copy(pixels, pixels + num_pixels, RealPatternCanvas.begin());
 }
+
+// Convert Pattern to RGB
+std::vector<uint8_t> PixelCanvas::convertPattern2RGB(const std::vector<uint32_t>& pattern) {
+    std::vector<uint8_t> rgb;
+    rgb.resize(pattern.size() * 3);
+    for (size_t i = 0; i < pattern.size(); ++i) {
+        rgb[i] = (pattern[i] & 0xFF); // Red
+        rgb[i + pattern.size()] = (pattern[i] >> 8) & 0xFF; // Green
+        rgb[i + 2*pattern.size()] = (pattern[i] >> 16) & 0xFF; // Blue
+    }
+    return rgb;
+}
+
+// Convert Pattern to RGB
+std::vector<uint8_t> PixelCanvas::convertPattern2RGBFast(const std::vector<uint32_t>& pattern) {
+    std::vector<uint8_t> rgb;
+    rgb.resize(pattern.size() * 3);
+    #pragma omp parallel for
+    for (size_t i = 0; i < pattern.size(); ++i) {
+        rgb[i] = (pattern[i] & 0xFF); // Red
+        rgb[i + pattern.size()] = (pattern[i] >> 8) & 0xFF; // Green
+        rgb[i + 2*pattern.size()] = (pattern[i] >> 16) & 0xFF; // Blue
+    }
+    return rgb;
+}
+
+// Convert RGB to Pattern
+std::vector<uint32_t> PixelCanvas::convertRGB2Pattern(const std::vector<uint8_t>& rgb, bool alpha_mask) {
+    std::vector<uint32_t> pattern;
+    pattern.resize(rgb.size() / 3);
+    for (size_t i = 0; i < pattern.size(); ++i) {
+        pattern[i] = (rgb[i + 2 * pattern.size()] << 16) + (rgb[i + pattern.size()] << 8) + rgb[i];
+    }
+    if (alpha_mask) {
+        for (size_t i = 0; i < pattern.size(); ++i) {
+            pattern[i] |= 0xFF000000; // Set alpha channel to 255
+        }
+    }
+    return pattern;
+}
+
+// Convert RGB to Pattern
+std::vector<uint32_t> PixelCanvas::convertRGB2PatternFast(const std::vector<uint8_t>& rgb, bool alpha_mask) {
+    std::vector<uint32_t> pattern;
+    pattern.resize(rgb.size() / 3);
+    #pragma omp parallel for
+    for (size_t i = 0; i < pattern.size(); ++i) {
+        pattern[i] = (rgb[i + 2 * pattern.size()] << 16) + (rgb[i + pattern.size()] << 8) + rgb[i];
+    }
+    if (alpha_mask) {
+        #pragma omp parallel for
+        for (size_t i = 0; i < pattern.size(); ++i) {
+            pattern[i] |= 0xFF000000; // Set alpha channel to 255
+        }
+    }
+    return pattern;
+}

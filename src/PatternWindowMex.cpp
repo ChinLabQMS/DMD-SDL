@@ -107,14 +107,6 @@ public:
         }
     }
 
-    bool getLockState() {
-        return LockState;
-    }
-
-    std::u16string getMexName() {
-        return getFunctionName();
-    }
-
     void checkDynamicPatternDimensions(ArgumentList inputs) {
         if (!Window) {
             open();
@@ -158,9 +150,9 @@ public:
             } else if (func[0] == "getStaticMode") {
                 outputs[0] = factory.createScalar(getStaticMode());
             } else if (func[0] == "getLockState") {
-                outputs[0] = factory.createScalar(getLockState());
+                outputs[0] = factory.createScalar(LockState);
             } else if (func[0] == "getMexName") {
-                outputs[0] = factory.createCharArray(getMexName());
+                outputs[0] = factory.createCharArray(getFunctionName());
             } else if (func[0] == "getStaticPatternPath") {
                 const char *path = getStaticPatternPath();
                 if (!path) {
@@ -187,11 +179,23 @@ public:
                     { (uint32_t) NumRows, (uint32_t) NumCols }, 
                     PatternCanvas.begin(), PatternCanvas.end(), InputLayout::ROW_MAJOR);
                 outputs[0] = pattern;
+            } else if (func[0] == "getPatternCanvasRGB") {
+                std::vector<uint8_t> rgb = convertPattern2RGB(PatternCanvas);
+                TypedArray<uint8_t> pattern = factory.createArray(
+                    { (uint32_t) NumRows, (uint32_t) NumCols, 3 }, 
+                    rgb.begin(), rgb.end(), InputLayout::ROW_MAJOR);
+                outputs[0] = pattern;
             } else if (func[0] == "getRealPatternCanvas") {
                 TypedArray<uint32_t> pattern = factory.createArray(
                     { (uint32_t) RealNumRows, (uint32_t) RealNumCols }, 
                     RealPatternCanvas.begin(), RealPatternCanvas.end(), InputLayout::ROW_MAJOR);
                     outputs[0] = pattern;
+            } else if (func[0] == "getRealPatternCanvasRGB") {
+                std::vector<uint8_t> rgb = convertPattern2RGB(RealPatternCanvas);
+                TypedArray<uint8_t> pattern = factory.createArray(
+                    { (uint32_t) RealNumRows, (uint32_t) RealNumCols, 3 }, 
+                    rgb.begin(), rgb.end(), InputLayout::ROW_MAJOR);
+                outputs[0] = pattern;
             } else if (func[0] == "initCanvas2WindowSize") {
                 initCanvas2WindowSize();
             } else if (func[0] == "updateCanvas2StaticPattern") {
