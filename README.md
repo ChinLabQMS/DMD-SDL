@@ -54,12 +54,13 @@ The `static_debug.exe` is built with a different default window size and is used
 ## Interface to MATLAB
 `PatternWindowMex.cpp` is a MATLAB interface to the pattern window. 
 It allows MATLAB to create and close a window and modify the window state.
+In addition to window open/close and window content manipulation, the Mex function also integrates support for dynamically drawing patterns with [PixelCanvas](/include/PixelCanvas.h) class.
 
 To use a version of MinGW that is supported by MATLAB, install this addon: [MATLAB Support for MinGW-w64 C/C++/Fortran Compiler](https://www.mathworks.com/matlabcentral/fileexchange/52848-matlab-support-for-mingw-w64-c-c-fortran-compiler).
 
 To build the mex file, run the following command under the project root directory in MATLAB command window:
 ```bash
-mex src/PatternWindowMex.cpp src/PatternWindow.cpp -R2018a -DTEST=0 -Iinclude -Llib -lSDL3 -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8
+mex src/PatternWindowMex.cpp src/PixelCanvas.cpp src/PatternWindow.cpp -R2018a -output mex/PatternWindowMexTest CXXFLAGS="$CXXFLAGS -O3 -fopenmp" LDFLAGS="$LDFLAGS -fopenmp" -DTEST=1 -Iinclude -Llib -lSDL3 -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8
 ```
 If the compliation is successful, a `PatternWindowMex.mexw64` file will be created in the project root directory.
 To test, run the following command in MATLAB command window:
@@ -70,3 +71,36 @@ A black window should appear. To close the window, run the command again.
 
 Alternatively, you can use the [compile_mex.m](/mex/compile_mex.m) MATLAB script for compilation, 
 or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/mex) folder.
+
+#### Available functions in C++ Mex file
+
+- `PatternWindowMex()` - toggle window state (open/close)
+- `PatternWindowMex("open", pixel_arrangement="Diamond", use_parallel=true)` - open the window with specified pixel arrangement ("Diamond" or "Square") and parallel processing (true/false)
+- `PatternWindowMex("close")` - close the window
+- `PatternWindowMex("lock")` - lock the Mex file such that it won't be cleared with `clear mex` command
+- `PatternWindowMex("unlock")` - unlock the Mex file to allow it to be cleared with `clear mex` command
+- `PatternWindowMex("getLockState")` - get the lock state of the Mex file 
+- `PatternWindowMex("getMexName")` - get the name of the Mex file
+- `PatternWindowMex("getBaseDirectory")` - get the working directory of the Mex file
+- `PatternWindowMex("isWindowCreated")` - check if the window is open
+- `PatternWindowMex("isWindowMinimized")` - check if the window is minimized
+- `PatternWindowMex("getDisplayModes")` - get the display modes of all the monitors connected to the system as a struct array
+- `PatternWindowMex("getWindowHeight")` - get the height of the window if it is open, otherwise return 0
+- `PatternWindowMex("getWindowWidth")` - get the width of the window if it is open, otherwise return 0
+- `PatternWindowMex("getStaticMode")` - get whether the window is in static mode
+- `PatternWindowMex("getStaticPatternPath")` - get the path of the static pattern loaded to the window if it is in static mode (empty if not in static mode)
+- `PatternWindowMex("getStaticPattern")` - get the static pattern loaded to the window if it is in static mode (empty if in dynamic mode)
+- `PatternWindowMex("getStaticPatternRGB")` - get the static pattern in RGB format
+- `PatternWindowMex("getDynamicPattern")` - get the dynamic pattern loaded to the window if it is in dynamic mode (empty if in static mode)
+- `PatternWindowMex("getDynamicPatternRGB")` - get the dynamic pattern in RGB format
+- `PatternWindowMex("getPatternCanvas")` - get the pattern canvas of the window, which should be in sync with window content in static mode
+- `PatternWindowMex("getPatternCanvasRGB")` - get the pattern canvas of the window in RGB format, which should be in sync with window content in static mode
+- `PatternWindowMex("getRealPatternCanvas")` - get the real-space pattern canvas of the window, which should be in sync with window content in static mode
+- `PatternWindowMex("getRealPatternCanvasRGB")` - get the real-space pattern canvas of the window in RGB format, which should be in sync with window content in static mode
+- `PatternWindowMex("setDisplayIndex", display_index)` - set the display index (0-index integer) of the window to the specified display, the order is the same as the one returned by `PatternWindowMex("getDisplayModes")`
+- `PatternWindowMex("displayColor", color=[0,0,0])` - display a color on the window, color is a 1x3 vector with RGB values
+- `PatternWindowMex("setStaticPatternPath", path, use_parallel=true)` - set the static pattern to be displayed on the window, path is the path to the BMP file
+- `PatternWindowMex("setDynamicPattern", pattern)` - set the dynamic pattern to be displayed on the window, pattern is an array of uint32 values
+- `PatternWindowMex("setDynamicPattern", pattern, verbose)` - set the dynamic pattern to be displayed on the window with verbose mode (true/false)
+- `PatternWindowMex("convertPattern2RGB", pattern, use_parallel=true)` - convert the pattern to RGB format with parallel processing (true/false), pattern is an array of uint32 values, return the RGB pattern as a 3D array of uint8 values
+- `PatternWindowMex("convertRGB2Pattern", rgb_pattern, alpha_mask=true, use_parallel=true)` - convert the RGB pattern to pattern with parallel processing (true/false), rgb_pattern is a 3D array of uint8 values, return the pattern as an array of uint32 values

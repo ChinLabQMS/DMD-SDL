@@ -10,11 +10,14 @@
 
 class PixelCanvas {
 public:
-    bool IsCanvasInitialized = false;
-    int NumRows, NumCols;
-    std::string PixelArrangement;
-    int RealNumRows, RealNumCols;
-    int PixelCount, BackgroundCount, RealPixelCount;
+    int NumRows = 0;
+    int NumCols = 0;
+    std::string PixelArrangement = "Diamond";
+    int RealNumRows = 0;
+    int RealNumCols = 0;
+    int PixelCount = 0;
+    int BackgroundCount = 0;
+    int RealPixelCount = 0;
 
     std::vector<int> PixelIndex;
     std::vector<int> RealPixelIndex;
@@ -24,7 +27,7 @@ public:
     std::vector<uint32_t> RealPatternCanvas;
 
     ~PixelCanvas();
-    void initCanvas(int nrows, int ncols, std::string arrangement = "Diamond");
+    void initCanvas(int nrows, int ncols, std::string arrangement = "Diamond", bool use_parallel = true);
     void resetCanvas(uint32_t pattern_color = 0, uint32_t background_color = 0xFF0000, bool use_parallel = true);
     void closeCanvas();
     void updatePattern2Real(bool use_parallel = true);

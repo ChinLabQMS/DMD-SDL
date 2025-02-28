@@ -1,7 +1,5 @@
 #include <mex.hpp>
 #include <mexAdapter.hpp>
-#include <PixelCanvas.h>
-#include <PatternWindow.h>
 
 using matlab::mex::ArgumentList;
 using namespace matlab::data;
@@ -13,61 +11,6 @@ const T* getDataPtr(Array arr) {
   TypedIterator<const T> it(arr_t.begin());
   return it.operator->();
 }
-
-class CanvasWindow : public BaseWindow, public PixelCanvas {
-public:
-    CanvasWindow() {
-        init(false); // Initialize SDL
-    }
-
-    // Every time the window is opened, the canvas is initialized
-    void open(std::string arrangement = "Diamond", bool use_parallel = true) {
-        BaseWindow::open(false);
-        if (Window) {
-            initCanvas(WindowHeight, WindowWidth, arrangement);
-            updateCanvas2StaticPattern(use_parallel);
-        }
-    }
-
-    // Every time the window is closed, the canvas is cleared
-    void close() {
-        BaseWindow::close(false);
-        closeCanvas();
-    }
-
-    void setStaticPatternPath(const char *filepath, bool verbose = true, bool use_parallel = true) {
-        BaseWindow::setStaticPatternPath(filepath, verbose);
-        updateCanvas2StaticPattern(use_parallel);
-    }
-
-    void projectDynamicPatternFromCanvas(bool verbose) {
-        if (PatternCanvas.size() == WindowWidth * WindowHeight) {
-            setDynamicPattern((void*) PatternCanvas.data(), verbose);
-        }
-        else {
-            error("Invalid pattern size, number of elements is %d, while window size is (%d, %d).", 
-                  PatternCanvas.size(), WindowWidth, WindowHeight);
-        }
-    }
-
-protected:
-    void updateCanvas2StaticPattern(bool use_parallel = true) {
-        if (StaticPatternSurface) {
-            copyPixel2Pattern((uint32_t*) StaticPatternSurface->pixels, 
-                              StaticPatternSurface->w * StaticPatternSurface->h);
-            updateReal2Pattern(use_parallel);
-        }
-    }
-
-    void updateCanvas2DynamicPattern(bool use_parallel = true) {
-        if (DynamicPatternSurface) {
-            copyPixel2Pattern((uint32_t*) DynamicPatternSurface->pixels, 
-                              DynamicPatternSurface->w * DynamicPatternSurface->h);
-            updateReal2Pattern(use_parallel);
-        }
-    }
-};
-
 
 class MexFunction : public matlab::mex::Function, public CanvasWindow {
 private:
@@ -125,16 +68,6 @@ public:
         }
     }
 
-    void checkDynamicPatternDimensions(ArgumentList inputs) {
-        if (!Window) {
-            open();
-        }
-        size_t nelems = inputs[1].getNumberOfElements();
-        if (nelems != WindowWidth * WindowHeight) {
-            error("Invalid pattern size, number of elements is %d, while window size is (%d, %d).", nelems, WindowWidth, WindowHeight);
-        }
-    }
-
     void operator()(ArgumentList outputs, ArgumentList inputs) {
         checkArguments(outputs, inputs);
         if (inputs.size() == 0) {
@@ -157,8 +90,16 @@ public:
                 lock();
             } else if (func[0] == "unlock") {
                 unlock();
+            } else if (func[0] == "getLockState") {
+                outputs[0] = factory.createScalar(LockState);
+            } else if (func[0] == "getMexName") {
+                outputs[0] = factory.createCharArray(getFunctionName());
+            } else if (func[0] == "getBaseDirectory") {
+                outputs[0] = factory.createCharArray(getBaseDirectory());
             } else if (func[0] == "isWindowCreated") {
                 outputs[0] = factory.createScalar(isWindowCreated());
+            } else if (func[0] == "isWindowMinimized") {
+                outputs[0] = factory.createScalar(isWindowMinimized());
             } else if (func[0] == "getDisplayModes") {
                 outputs[0] = getDisplayModes();
             } else if (func[0] == "getDisplayIndex") {
@@ -169,57 +110,51 @@ public:
                 outputs[0] = factory.createScalar(getWindowWidth());
             } else if (func[0] == "getStaticMode") {
                 outputs[0] = factory.createScalar(getStaticMode());
-            } else if (func[0] == "getLockState") {
-                outputs[0] = factory.createScalar(LockState);
-            } else if (func[0] == "getMexName") {
-                outputs[0] = factory.createCharArray(getFunctionName());
             } else if (func[0] == "getStaticPatternPath") {
-                const char *path = getStaticPatternPath();
-                if (!path) {
+                if (StaticPatternPath)
+                    outputs[0] = factory.createCharArray(StaticPatternPath);
+                else
                     outputs[0] = factory.createEmptyArray();
-                } else {
-                outputs[0] = factory.createCharArray(path);
-                }
             } else if (func[0] == "getStaticPattern") {
-                SDL_Surface *surface = getStaticPatternSurface();
-                if (!surface) {
+                if (StaticPatternSurface)
+                    outputs[0] = createArrayFromSurface(StaticPatternSurface);
+                else
                     outputs[0] = factory.createEmptyArray();
-                } else {
-                    outputs[0] = createArrayFromSurface(surface);
-                }
+            } else if (func[0] == "getStaticPatternRGB") {
+                if (StaticPatternSurface)
+                    outputs[0] = createRGBArrayFromSurface(StaticPatternSurface);
+                else
+                    outputs[0] = factory.createEmptyArray();
             } else if (func[0] == "getDynamicPattern") {
-                SDL_Surface *surface = getDynamicPatternSurface();
-                if (!surface) {
+                if (DynamicPatternSurface)
+                    outputs[0] = createArrayFromSurface(DynamicPatternSurface);
+                else
                     outputs[0] = factory.createEmptyArray();
-                } else {
-                    outputs[0] = createArrayFromSurface(surface);
-                }
+            } else if (func[0] == "getDynamicPatternRGB") {
+                if (DynamicPatternSurface)
+                    outputs[0] = createRGBArrayFromSurface(DynamicPatternSurface);
+                else
+                    outputs[0] = factory.createEmptyArray();
             } else if (func[0] == "getPatternCanvas") {
-                TypedArray<uint32_t> pattern = factory.createArray(
-                    { (uint32_t) NumRows, (uint32_t) NumCols }, 
-                    PatternCanvas.begin(), PatternCanvas.end(), InputLayout::ROW_MAJOR);
-                outputs[0] = pattern;
+                if (PatternCanvas.size() > 0)
+                    outputs[0] = createArrayFromVector(PatternCanvas, WindowHeight, WindowWidth);
+                else
+                    outputs[0] = factory.createEmptyArray();
             } else if (func[0] == "getPatternCanvasRGB") {
-                std::vector<uint8_t> rgb = convertPattern2RGB(PatternCanvas.data(), PatternCanvas.size());
-                TypedArray<uint8_t> pattern = factory.createArray(
-                    { (uint32_t) NumRows, (uint32_t) NumCols, 3 }, 
-                    rgb.begin(), rgb.end(), InputLayout::ROW_MAJOR);
-                outputs[0] = pattern;
+                if (PatternCanvas.size() > 0)
+                    outputs[0] = createRGBArrayFromVector(PatternCanvas, WindowHeight, WindowWidth);
+                else
+                    outputs[0] = factory.createEmptyArray();
             } else if (func[0] == "getRealPatternCanvas") {
-                TypedArray<uint32_t> pattern = factory.createArray(
-                    { (uint32_t) RealNumRows, (uint32_t) RealNumCols }, 
-                    RealPatternCanvas.begin(), RealPatternCanvas.end(), InputLayout::ROW_MAJOR);
-                    outputs[0] = pattern;
+                if (RealPatternCanvas.size() > 0)
+                    outputs[0] = createArrayFromVector(RealPatternCanvas, RealNumRows, RealNumCols);
+                else
+                    outputs[0] = factory.createEmptyArray();
             } else if (func[0] == "getRealPatternCanvasRGB") {
-                std::vector<uint8_t> rgb = convertPattern2RGB(RealPatternCanvas.data(), RealPatternCanvas.size());
-                TypedArray<uint8_t> pattern = factory.createArray(
-                    { (uint32_t) RealNumRows, (uint32_t) RealNumCols, 3 }, 
-                    rgb.begin(), rgb.end(), InputLayout::ROW_MAJOR);
-                outputs[0] = pattern;
-            } else if (func[0] == "getBaseDirectory") {
-                outputs[0] = factory.createCharArray(getBaseDirectory());
-            } else if (func[0] == "isWindowMinimized") {
-                outputs[0] = factory.createScalar(isWindowMinimized());
+                if (RealPatternCanvas.size() > 0)
+                    outputs[0] = createRGBArrayFromVector(RealPatternCanvas, RealNumRows, RealNumCols);
+                else
+                    outputs[0] = factory.createEmptyArray();
             } else if (func[0] == "displayColor") {
                 displayColor();
             } else {
@@ -232,7 +167,7 @@ public:
             if (func[0] == "open") {
                 open(inputs[1][0]);
             } else if (func[0] == "setDisplayIndex") {
-                setDisplayIndex(inputs[1][0]);
+                setDisplayIndex(inputs[1][0], false);
             } else if (func[0] == "displayColor") {
                 TypedArray<double> color = inputs[1];
                 displayColor(color[0], color[1], color[2]);
@@ -240,9 +175,13 @@ public:
                 StringArray filename = inputs[1];
                 setStaticPatternPath(std::string(filename[0]).c_str());
             } else if (func[0] == "setDynamicPattern") {
-                checkDynamicPatternDimensions(inputs);
+                checkDynamicPatternDimensions(inputs[1]);
                 const uint32_t *pattern_ptr = getDataPtr<uint32_t>(inputs[1]);
                 setDynamicPattern((void*) pattern_ptr);
+            } else if (func[0] == "convertPattern2RGB") {
+                outputs[0] = convertPattern2RGBMex(inputs[1]);
+            } else if (func[0] == "convertRGB2Pattern") {
+                outputs[0] = convertRGB2PatternMex(inputs[1]);
             } else {
                 error("Invalid function name with one input.");
             }
@@ -252,25 +191,17 @@ public:
         if (inputs.size() == 3) {
             if (func[0] == "open") {
                 open(inputs[1][0], inputs[2][0]);
-            } else if (func[0] == "setDisplayIndex") {
-                setDisplayIndex(inputs[1][0], inputs[2][0]);
             } else if (func[0] == "setStaticPatternPath") {
                 StringArray filename = inputs[1];
                 setStaticPatternPath(std::string(filename[0]).c_str(), inputs[2][0]);
             } else if (func[0] == "setDynamicPattern") {
-                checkDynamicPatternDimensions(inputs);
+                checkDynamicPatternDimensions(inputs[1]);
                 const uint32_t *pattern_ptr = getDataPtr<uint32_t>(inputs[1]);
                 setDynamicPattern((void*) pattern_ptr, inputs[2][0]);
             } else if (func[0] == "convertPattern2RGB") {
-                TypedArray<uint32_t> pattern = inputs[1];
-                const uint32_t *pattern_ptr = getDataPtr<uint32_t>(pattern);
-                size_t num_elements = pattern.getNumberOfElements();
-                bool use_parallel = inputs[2][0];
-                std::vector<uint8_t> rgb = convertPattern2RGB(pattern_ptr, num_elements, use_parallel);
-                TypedArray<uint8_t> rgb_array = factory.createArray(
-                    { pattern.getDimensions()[0], pattern.getDimensions()[1], 3 }, 
-                    rgb.begin(), rgb.end());
-                outputs[0] = rgb_array;
+                outputs[0] = convertPattern2RGBMex(inputs[1], inputs[2][0]);
+            } else if (func[0] == "convertRGB2Pattern") {
+                outputs[0] = convertRGB2PatternMex(inputs[1], inputs[2][0]);
             } else {
                 error("Invalid function name with two inputs.");
             }
@@ -278,17 +209,15 @@ public:
         }
 
         if (inputs.size() == 4) {
-            StringArray func = inputs[0];
-            if (func[0] == "setStaticPatternPath") {
-                StringArray filename = inputs[1];
-                setStaticPatternPath(std::string(filename[0]).c_str(), inputs[2][0], inputs[3][0]);
+            if (func[0] == "convertRGB2Pattern") {
+                outputs[0] = convertRGB2PatternMex(inputs[1], inputs[2][0], inputs[3][0]);
             } else {
                 error("Invalid function name with three inputs.");
             }
+            return;
         }
-        else {
-            error("Invalid number of inputs.");
-        }
+
+        error("Invalid number of inputs: %d.", inputs.size());
     }
 
     void checkArguments(ArgumentList outputs, ArgumentList inputs) {
@@ -303,7 +232,17 @@ public:
     }
 
 protected:
-    TypedArray<uint32_t> createArrayFromSurface(SDL_Surface *surface) {
+    void checkDynamicPatternDimensions(const TypedArray<uint32_t> pattern) {
+        if (!Window) {
+            open();
+        }
+        size_t nelems = pattern.getNumberOfElements();
+        if (nelems != WindowWidth * WindowHeight) {
+            error("Invalid pattern size, number of elements is %d, while window size is (%d, %d).", nelems, WindowWidth, WindowHeight);
+        }
+    }
+
+    TypedArray<uint32_t> createArrayFromSurface(const SDL_Surface *surface) {
         uint32_t *pixels = (uint32_t*) surface->pixels;
         std::vector<uint32_t> pixels_vector(pixels, pixels + (surface->w) * (surface->h));
         TypedArray<uint32_t> pattern = factory.createArray(
@@ -312,4 +251,47 @@ protected:
         return pattern;
     }
 
+    TypedArray<uint8_t> createRGBArrayFromSurface(const SDL_Surface *surface, bool use_parallel = true) {
+        TypedArray<uint32_t> pattern = createArrayFromSurface(surface);
+        return convertPattern2RGBMex(pattern, use_parallel);
+    }
+
+    TypedArray<uint32_t> createArrayFromVector(const std::vector<uint32_t> vec, size_t nrows, size_t ncols) {
+        TypedArray<uint32_t> pattern = factory.createArray(
+            { (uint32_t) nrows, (uint32_t) ncols }, 
+            vec.begin(), vec.end(), InputLayout::ROW_MAJOR);
+        return pattern;
+    }
+
+    TypedArray<uint8_t> createRGBArrayFromVector(const std::vector<uint32_t> vec, size_t nrows, size_t ncols, bool use_parallel = true) {
+        TypedArray<uint32_t> pattern = createArrayFromVector(vec, nrows, ncols);
+        return convertPattern2RGBMex(pattern, use_parallel);
+    }
+
+    TypedArray<uint8_t> convertPattern2RGBMex(const TypedArray<uint32_t> pattern, bool use_parallel = true) {
+        const uint32_t *pattern_ptr = getDataPtr<uint32_t>(pattern);
+        std::vector<uint8_t> rgb = convertPattern2RGB(pattern_ptr, pattern.getNumberOfElements(), use_parallel);
+        TypedArray<uint8_t> rgb_array = factory.createArray(
+            { pattern.getDimensions()[0], pattern.getDimensions()[1], 3 }, 
+            rgb.begin(), rgb.end());
+        return rgb_array;
+    }
+
+    TypedArray<uint32_t> convertRGB2PatternMex(const TypedArray<uint8_t> rgb, bool alpha_mask = true, bool use_parallel = true) {
+        if (rgb.getDimensions()[2] != 3) {
+            error("Invalid number of color channels, must be 3.");
+        }
+        const uint8_t *rgb_ptr = getDataPtr<uint8_t>(rgb);
+        std::vector<uint32_t> pattern = convertRGB2Pattern(rgb_ptr, rgb.getNumberOfElements(), use_parallel);
+        TypedArray<uint32_t> pattern_array = factory.createArray(
+            { rgb.getDimensions()[0], rgb.getDimensions()[1] }, 
+            pattern.begin(), pattern.end());
+        return pattern_array;
+    }
 };
+
+int main() {
+    MexFunction mexFunction;
+    
+    return 0;
+}

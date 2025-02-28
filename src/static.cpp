@@ -1,8 +1,9 @@
 #include <string>
-#include "PatternWindow.h"
+#include "BaseWindow.h"
 
 int main(int argc, char* argv[]){
-    PatternWindow window;
+    BaseWindow window;
+    window.init();
     window.open();
     window.selectAndProject();
     

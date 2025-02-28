@@ -12,17 +12,17 @@ LINKER_FLAGS = -lSDL3 -lm -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -l
 COMPILER_FLAGS_TEST = $(CFLAGS_TEST) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
 COMPILER_FLAGS_STANDARD = $(CFLAGS_STANDARD) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
 
-all: static black_white
-
-$(OUTPUT_DIR)/%_test.exe: $(SRC_DIR)/%.cpp $(SRC_DIR)/PatternWindow.cpp
-	@echo "Building target: $@"
-	$(CC) $^ -o $@ $(COMPILER_FLAGS_TEST)
-
 $(OUTPUT_DIR)/%.exe: $(SRC_DIR)/%.cpp $(SRC_DIR)/PatternWindow.cpp
 	@echo "Building target: $@"
 	$(CC) $^ -o $@ $(COMPILER_FLAGS_STANDARD)
 
-static: $(OUTPUT_DIR)/static_test.exe $(OUTPUT_DIR)/static.exe
-black_white: $(OUTPUT_DIR)/black_white_test.exe $(OUTPUT_DIR)/black_white.exe
+all: static black_white
+base_window: static black_white
+static: $(OUTPUT_DIR)/static.exe
+black_white: $(OUTPUT_DIR)/black_white.exe
+
+clean:
+	@echo "Cleaning up..."
+	rm -f $(OUTPUT_DIR)/*.exe
 
 .PHONY: all static black_white

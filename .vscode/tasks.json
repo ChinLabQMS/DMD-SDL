@@ -6,7 +6,7 @@
             "command": "g++",
             "args": [
                 "${file}",
-                "${fileDirname}\\PatternWindow.cpp",
+                "${fileDirname}\\BaseWindow.cpp",
                 "${fileDirname}\\PixelCanvas.cpp",
                 "-g", "-Wall", "-fopenmp",
                 "-I./include",
