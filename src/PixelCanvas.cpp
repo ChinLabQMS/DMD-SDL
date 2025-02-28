@@ -1,24 +1,8 @@
 #include <PixelCanvas.h>
 
-
 PixelCanvas::~PixelCanvas() {
     closeCanvas();
 }
-
-// Convert subscripts to linear indices, use C-style indexing
-int sub2ind(int nrows, int ncols, int x, int y) {
-    return x * ncols + y;
-}
-
-// Convert projector space to real space
-inline int realX(int nrows, int ncols, int x, int y) {
-    return (nrows - x) / 2 + y;
-}
-
-inline int realY(int nrows, int ncols, int x, int y) {
-    return (nrows - 1 - x) / 2 + ncols - y - 1;
-}
-
 
 // Initialize Canvas
 void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool use_parallel) {
@@ -27,14 +11,15 @@ void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool
     NumCols = ncols;
     PixelCount = NumRows * NumCols;
 
-    PixelIndex.resize(PixelCount);
-    std::iota(PixelIndex.begin(), PixelIndex.end(), 0);  // Fill with sequential indices
-
     if (PixelArrangement == "Square") {
         RealNumRows = NumRows;
         RealNumCols = NumCols;
         RealPixelCount = PixelCount;
-        RealPixelIndex = PixelIndex;
+        RealPixelIndex.resize(PixelCount);
+        #pragma omp parallel for if(use_parallel)
+        for (int i = 0; i < PixelCount; ++i) {
+            RealPixelIndex[i] = i;
+        }
         BackgroundCount = 0;
         RealBackgroundIndex.clear();
     }
@@ -62,7 +47,7 @@ void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool
             }
             int bg_idx = 0;
             for (int i = 0; i < RealPixelCount; ++i) {
-                if (!real_idx[i]) {
+                if (real_idx[i]) {
                     RealBackgroundIndex[bg_idx++] = i;
                 }
             }
@@ -76,7 +61,10 @@ void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool
 
 // Reset Canvas
 void PixelCanvas::resetCanvas(uint32_t pattern_color, uint32_t background_color, bool use_parallel) {
-    std::fill(PatternCanvas.begin(), PatternCanvas.end(), pattern_color);
+    #pragma omp parallel for if(use_parallel)
+    for (int i = 0; i < PixelCount; ++i) {
+        PatternCanvas[i] = background_color;
+    }
     #pragma omp parallel for if(use_parallel)
     for (int i = 0; i < BackgroundCount; ++i) {
         RealPatternCanvas[RealBackgroundIndex[i]] = background_color;
@@ -90,7 +78,6 @@ void PixelCanvas::resetCanvas(uint32_t pattern_color, uint32_t background_color,
 // Cleanup Function
 void PixelCanvas::closeCanvas() {
     PixelArrangement.clear();
-    PixelIndex.clear();
     RealPixelIndex.clear();
     RealBackgroundIndex.clear();
     PatternCanvas.clear();

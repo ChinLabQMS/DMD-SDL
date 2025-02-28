@@ -1,4 +1,5 @@
 #include <PixelCanvas.h>
+#include <chrono>
 
 // Template function to measure execution time of a non-static class member function
 template <typename ClassType, typename ReturnType, typename... Args>

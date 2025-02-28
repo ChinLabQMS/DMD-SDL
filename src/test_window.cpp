@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
         green[i] = 0xFF00FF00;    
         blue[i] = 0xFF0000FF;
     }
-    window.displayColor(0, 0, 0);
+    window.displayColor(0, 0, 0, false);
     measureExecutionTime("Set dynamic pattern to red", &BaseWindow::setDynamicPattern, window, (void*) red, false);
     measureExecutionTime("Set dynamic pattern to green", &BaseWindow::setDynamicPattern, window, (void*) green, false);
     measureExecutionTime("Set dynamic pattern to blue", &BaseWindow::setDynamicPattern, window, (void*) blue, false);

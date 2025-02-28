@@ -8,7 +8,7 @@
                 "${file}",
                 "${fileDirname}\\BaseWindow.cpp",
                 "${fileDirname}\\PixelCanvas.cpp",
-                "-g", "-Wall", "-fopenmp",
+                "-g", "-Wall", "-fopenmp", "-std=c++17", "-O3",
                 "-I./include",
                 "-L./lib",
                 "-lSDL3", "-lm", "-lkernel32", "-luser32", "-lgdi32", "-lwinmm", "-limm32", "-lole32", "-loleaut32", "-lversion", "-luuid", "-ladvapi32", "-lsetupapi", "-lshell32", "-ldinput8",

@@ -8,6 +8,20 @@
 #include <numeric>
 #include <omp.h>
 
+// Convert subscripts to linear indices, use C-style indexing
+inline int sub2ind(int nrows, int ncols, int x, int y) {
+    return x * ncols + y;
+}
+
+// Convert projector space to real space
+inline int realX(int nrows, int ncols, int x, int y) {
+    return (nrows - x) / 2 + y;
+}
+
+inline int realY(int nrows, int ncols, int x, int y) {
+    return (nrows - 1 - x) / 2 + ncols - y - 1;
+}
+
 class PixelCanvas {
 public:
     int NumRows = 0;
@@ -19,7 +33,6 @@ public:
     int BackgroundCount = 0;
     int RealPixelCount = 0;
 
-    std::vector<int> PixelIndex;
     std::vector<int> RealPixelIndex;
     std::vector<int> RealBackgroundIndex;
 
