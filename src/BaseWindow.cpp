@@ -26,6 +26,13 @@ void BaseWindow::error(const char *format, ...) {
     va_end(args);
 }
 
+void BaseWindow::warn(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN, format, args);
+    va_end(args);
+}
+
 // Initialize SDL and find the target display
 // If verbose is true, print messages to the console
 void BaseWindow::init(bool verbose) {
@@ -66,7 +73,7 @@ void BaseWindow::init(bool verbose) {
         DisplayID = Displays[NumDisplays - 1];
         DisplayMode = (SDL_DisplayMode*) SDL_GetDesktopDisplayMode(DisplayID);
         if (verbose)
-            printf("No display with target resolution (%d, %d) found. Default to the last display, resolution (%d, %d).", 
+            warn("No display with target resolution (%d, %d) found. Default to the last display, resolution (%d, %d).", 
                     TARGET_DISPLAY_WIDTH, TARGET_DISPLAY_HEIGHT, DisplayMode->w, DisplayMode->h);
     }
     // Get default path for opening file dialog
@@ -82,7 +89,7 @@ void BaseWindow::init(bool verbose) {
 void BaseWindow::open(bool verbose) {
     if (Window) {
         if (verbose)
-            printf("Window already created.");
+            warn("Window already created.");
         return;
     }    
     SDL_Rect rect;
@@ -109,13 +116,15 @@ void BaseWindow::open(bool verbose) {
         if (verbose)
             printf("Window created successfully, resolution: (%d, %d).", WindowHeight, WindowWidth);
         SDL_HideCursor();
-
+        // Create a renderer for the window
         SDL_PropertiesID props = SDL_CreateProperties();
         SDL_SetPointerProperty(props, SDL_PROP_RENDERER_CREATE_WINDOW_POINTER, Window);
         SDL_SetNumberProperty(props, SDL_PROP_RENDERER_CREATE_PRESENT_VSYNC_NUMBER, 1);
         Renderer = SDL_CreateRendererWithProperties(props);
         SDL_DestroyProperties(props);
         if (Renderer) {
+            // Create a streaming texture for the renderer
+            Texture = SDL_CreateTexture(Renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WindowWidth, WindowHeight);
             if (!StaticPatternPath) {
                 displayColor(0, 0, 0);
             } else {
@@ -132,12 +141,12 @@ void BaseWindow::close(bool verbose) {
     if (Window) {
         SDL_DestroyRenderer(Renderer);
         SDL_DestroyWindow(Window);
+        SDL_DestroyTexture(Texture);
         SDL_DestroySurface(StaticPatternSurface);
-        SDL_DestroySurface(DynamicPatternSurface);
         Window = NULL;
         Renderer = NULL;
+        Texture = NULL;
         StaticPatternSurface = NULL;
-        DynamicPatternSurface = NULL;
         if (verbose) {
             printf("Window closed.");}
     }
@@ -165,6 +174,12 @@ void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     SDL_free(OperationMode);
     OperationMode = (char*) SDL_malloc(256);
     snprintf(OperationMode, 256, "Color");
+    ColorModeR = r;
+    ColorModeG = g;
+    ColorModeB = b;
+    if (verbose) {
+        printf("Color displayed successfully: (%d, %d, %d).", r, g, b);
+    }
 }
 
 // Load pattern from a BMP file and display it on the window
@@ -182,18 +197,18 @@ void BaseWindow::setStaticPatternPath(const char* filepath,
     SDL_Surface *bitmap_surface = SDL_LoadBMP(StaticPatternPath);
     if (bitmap_surface) {
         if ((bitmap_surface->w != WindowWidth || bitmap_surface->h != WindowHeight) && (verbose)) {
-            printf("Pattern size (%d, %d) does not match window size (%d, %d)!",
+            warn("Pattern size (%d, %d) does not match window size (%d, %d)! Pattern will be resized to fit the window.",
                     bitmap_surface->h, bitmap_surface->w, WindowWidth, WindowHeight);
         }
         SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer, bitmap_surface);
         SDL_RenderClear(Renderer);
         SDL_RenderTexture(Renderer, texture, NULL, NULL);
+        SDL_DestroySurface(bitmap_surface);
         SDL_DestroyTexture(texture);
         // Read the pixels from the renderer instead of using the bitmap_surface
-        // to ensure the correct surface size
-        SDL_DestroySurface(bitmap_surface);
-        bitmap_surface = SDL_RenderReadPixels(Renderer, NULL);
+        // to ensure the correct surface size (SLOW!)
         SDL_DestroySurface(StaticPatternSurface);
+        bitmap_surface = SDL_RenderReadPixels(Renderer, NULL);
         StaticPatternSurface = SDL_ConvertSurface(bitmap_surface, SDL_PIXELFORMAT_ARGB8888);
         SDL_DestroySurface(bitmap_surface);
         SDL_RenderPresent(Renderer);
@@ -213,14 +228,15 @@ void BaseWindow::setDynamicPattern(void* pattern, bool verbose) {
     if (!Window) {
         open(verbose);
     }
-    SDL_DestroySurface(DynamicPatternSurface);
     // Pixel data is assumed to be in ARGB format, pitch is 4 * WindowWidth
-    DynamicPatternSurface = SDL_CreateSurfaceFrom(WindowWidth, WindowHeight, SDL_PIXELFORMAT_ARGB8888, pattern, 4 * WindowWidth);
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(Renderer, DynamicPatternSurface);    
+    void *pixels;
+    int pitch;
+    SDL_LockTexture(Texture, NULL, &pixels, &pitch);
+    memcpy(pixels, pattern, 4 * WindowWidth * WindowHeight);
+    SDL_UnlockTexture(Texture);
     SDL_RenderClear(Renderer);
-    SDL_RenderTexture(Renderer, texture, NULL, NULL);
+    SDL_RenderTexture(Renderer, Texture, NULL, NULL);
     SDL_RenderPresent(Renderer);
-    SDL_DestroyTexture(texture);
     if (verbose) {
         printf("Pattern projected successfully.");
     }
@@ -307,8 +323,4 @@ const char* BaseWindow::getBaseDirectory() {
 
 SDL_Surface* BaseWindow::getStaticPatternSurface() {
     return StaticPatternSurface;
-}
-
-SDL_Surface* BaseWindow::getDynamicPatternSurface() {
-    return DynamicPatternSurface;
 }
