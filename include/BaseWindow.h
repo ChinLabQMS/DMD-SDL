@@ -11,6 +11,7 @@ class BaseWindow {
         ~BaseWindow();
         virtual void printf(const char* format, ...);
         virtual void error(const char* format, ...);
+        void init(bool verbose = true);
         void open(bool verbose = true);
         void close(bool verbose = true);
         bool isWindowCreated();
@@ -23,14 +24,11 @@ class BaseWindow {
         int getDisplayIndex();
         int getWindowHeight();
         int getWindowWidth();
-        bool getStaticMode();
+        const char* getOperationMode();
         const char* getStaticPatternPath();
         const char* getBaseDirectory();
         SDL_Surface* getStaticPatternSurface();
         SDL_Surface* getDynamicPatternSurface();
-        SDL_Renderer* getRenderer();
-        SDL_Window* getWindow();
-        void init(bool verbose = true);
     protected:
         SDL_Window *Window = NULL;
         SDL_Renderer *Renderer = NULL;
@@ -38,9 +36,11 @@ class BaseWindow {
         SDL_Surface *DynamicPatternSurface = NULL;
         SDL_DisplayID *Displays = NULL;
         SDL_DisplayID DisplayID;
-        SDL_DisplayMode *DisplayMode;
+        SDL_DisplayMode *DisplayMode = NULL;
         int WindowWidth, WindowHeight, NumDisplays, DisplayIndex;
-        char *StaticPatternPath = NULL, *BaseDirectory = NULL;
+        char *StaticPatternPath = NULL;
+        char *BaseDirectory = NULL;
+        char *OperationMode = NULL;
 };
 
 #endif // BASEWINDOW_H
