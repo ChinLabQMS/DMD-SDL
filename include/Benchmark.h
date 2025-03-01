@@ -11,5 +11,5 @@ void measureExecutionTime(const std::string& label, ReturnType (ClassType::*func
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
-    std::cout << label << " execution time: " << elapsed.count() << " seconds" << std::endl;
+    std::cout << label << " execution time: " << elapsed.count() * 1000 << " miliseconds" << std::endl;
 }
