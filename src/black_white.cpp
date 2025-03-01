@@ -15,9 +15,9 @@ int main(int argc, char* argv[]){
             break;
         }
         if (n % 2 == 0) {
-            window.displayColor(0, 0, 0);
+            window.displayColor(0, 0, 0, false);
         } else {
-            window.displayColor(255, 255, 255);
+            window.displayColor(255, 255, 255, false);
         }
         if ((n + 1) % 60 == 0) {
             int elapsed_time = (int) (SDL_GetTicks() - start_time);
