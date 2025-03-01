@@ -5,8 +5,8 @@ OUTPUT_DIR = bin
 CC = g++
 INCLUDE_PATHS = -I./include
 LIBRARY_PATHS = -L./lib
-CFLAGS_STANDARD = -Wall -O3 -DTEST=0
-CFLAGS_TEST = -Wall -O3 -DTEST=1
+CFLAGS_STANDARD = -Wall -O3 -fopenmp -DTEST=0
+CFLAGS_TEST = -Wall -O3 -fopenmp -DTEST=1
 LINKER_FLAGS = -lSDL3 -lm -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8
 
 COMPILER_FLAGS_TEST = $(CFLAGS_TEST) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)

@@ -28,6 +28,11 @@ int main(int argc, char* argv[]){
     for (size_t i = 0; i < 23; i++) {
         measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void*) pattern[i], false);
     }
+    SDL_Delay(2000);
+    for (size_t i = 0; i < 23; i++) {
+        measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void*) pattern[i], false);
+    }
+
 
     // Free memory
     for (size_t i = 0; i < 23; i++) {
@@ -38,7 +43,9 @@ int main(int argc, char* argv[]){
     SDL_Delay(2000);
     measureExecutionTime("Close window", &BaseWindow::close, window, true);
 
-    SDL_Delay(30000);
+    std::cout << "Test complete." << std::endl;
+    std::cout << "Press any key to exit." << std::endl;
+    std::cin.get();
 
     return 0;
 }
