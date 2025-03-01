@@ -41,7 +41,8 @@ public:
 
     ~PixelCanvas();
     void initCanvas(int nrows, int ncols, std::string arrangement = "Diamond", bool use_parallel = true);
-    void resetCanvas(uint32_t pattern_color = 0, uint32_t background_color = 0xFF0000, bool use_parallel = true);
+    void resetBackground(uint32_t background_color = 0xFF0000, bool use_parallel = true);
+    void resetPattern(uint32_t pattern_color = 0, bool use_parallel = true);
     void closeCanvas();
     void updatePattern2Real(bool use_parallel = true);
     void updateReal2Pattern(bool use_parallel = true);

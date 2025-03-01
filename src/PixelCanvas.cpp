@@ -42,6 +42,7 @@ void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool
         RealBackgroundIndex.resize(BackgroundCount);
         if (BackgroundCount != 0) {
             std::vector<bool> real_idx(RealPixelCount, true);
+            #pragma omp parallel for if(use_parallel)
             for (int idx : RealPixelIndex) {
                 real_idx[idx] = false;
             }
@@ -56,22 +57,24 @@ void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool
 
     PatternCanvas.resize(PixelCount, 0);
     RealPatternCanvas.resize(RealPixelCount, 0);
-    resetCanvas(use_parallel);
+    resetBackground();
+    resetPattern();
 }
 
-// Reset Canvas
-void PixelCanvas::resetCanvas(uint32_t pattern_color, uint32_t background_color, bool use_parallel) {
-    #pragma omp parallel for if(use_parallel)
-    for (int i = 0; i < PixelCount; ++i) {
-        PatternCanvas[i] = background_color;
-    }
+// Reset Background
+void PixelCanvas::resetBackground(uint32_t background_color, bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
     for (int i = 0; i < BackgroundCount; ++i) {
         RealPatternCanvas[RealBackgroundIndex[i]] = background_color;
     }
+}
+
+// Reset Pattern
+void PixelCanvas::resetPattern(uint32_t pattern_color, bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
     for (int i = 0; i < PixelCount; ++i) {
         RealPatternCanvas[RealPixelIndex[i]] = pattern_color;
+        PatternCanvas[i] = pattern_color;
     }
 }
 
@@ -91,7 +94,7 @@ void PixelCanvas::closeCanvas() {
     BackgroundCount = 0;
 }
 
-// Update from Pattern to Real
+// Update Pattern to Real
 void PixelCanvas::updatePattern2Real(bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
     for (size_t i = 0; i < PatternCanvas.size(); ++i) {
@@ -99,7 +102,7 @@ void PixelCanvas::updatePattern2Real(bool use_parallel) {
     }
 }
 
-// Update from Real to Pattern
+// Update Real to Pattern
 void PixelCanvas::updateReal2Pattern(bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
     for (size_t i = 0; i < PatternCanvas.size(); ++i) {

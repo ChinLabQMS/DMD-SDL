@@ -3,8 +3,18 @@
 
 #include "SDL3/SDL.h"
 
+#ifndef TEST
+#define TEST 0
+#endif
+
 const int TARGET_DISPLAY_WIDTH = 912;
 const int TARGET_DISPLAY_HEIGHT = 1140;
+
+#if TEST
+const int RENDERER_VSYNC = 0;
+#else
+const int RENDERER_VSYNC = 1;
+#endif
 
 class BaseWindow {
     public:

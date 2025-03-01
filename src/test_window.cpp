@@ -1,19 +1,5 @@
-#include <iostream>
-#include <chrono>
 #include "BaseWindow.h"
-
-// Template function to measure execution time of a non-static class member function
-template <typename ClassType, typename ReturnType, typename... Args>
-void measureExecutionTime(const std::string& label, ReturnType (ClassType::*func)(Args...), ClassType& obj, Args&&... args) {
-    auto start = std::chrono::high_resolution_clock::now();
-
-    // Call the member function
-    (obj.*func)(std::forward<Args>(args)...);
-
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << label << " execution time: " << elapsed.count() << " seconds" << std::endl;
-}
+#include "Benchmark.h"
 
 int main(int argc, char* argv[]){
     BaseWindow window;
@@ -22,7 +8,7 @@ int main(int argc, char* argv[]){
     measureExecutionTime("Initialize SDL", &BaseWindow::init, window, true);
     measureExecutionTime("Open window", &BaseWindow::open, window, true);
     measureExecutionTime("Display color", &BaseWindow::displayColor, window, 255, 0, 0, true);
-
+    
     // Set static pattern
     measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/CHIN.bmp", true);
     measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/QMS.bmp", true);
@@ -58,6 +44,8 @@ int main(int argc, char* argv[]){
 
     SDL_Delay(2000);
     measureExecutionTime("Close window", &BaseWindow::close, window, true);
-    
+
+    SDL_Delay(30000);
+
     return 0;
 }

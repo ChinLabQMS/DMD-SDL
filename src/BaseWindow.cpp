@@ -119,7 +119,7 @@ void BaseWindow::open(bool verbose) {
         // Create a renderer for the window
         SDL_PropertiesID props = SDL_CreateProperties();
         SDL_SetPointerProperty(props, SDL_PROP_RENDERER_CREATE_WINDOW_POINTER, Window);
-        SDL_SetNumberProperty(props, SDL_PROP_RENDERER_CREATE_PRESENT_VSYNC_NUMBER, 1);
+        SDL_SetNumberProperty(props, SDL_PROP_RENDERER_CREATE_PRESENT_VSYNC_NUMBER, RENDERER_VSYNC);
         Renderer = SDL_CreateRendererWithProperties(props);
         SDL_DestroyProperties(props);
         if (Renderer) {
