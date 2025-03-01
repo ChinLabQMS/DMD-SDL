@@ -126,7 +126,7 @@ void BaseWindow::open(bool verbose) {
             // Create a streaming texture for the renderer
             Texture = SDL_CreateTexture(Renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WindowWidth, WindowHeight);
             if (!StaticPatternPath) {
-                displayColor(0, 0, 0);
+                displayColor(0, 0, 0, verbose);
             } else {
                 setStaticPatternPath(StaticPatternPath, verbose);
             }

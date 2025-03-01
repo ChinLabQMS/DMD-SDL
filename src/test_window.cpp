@@ -10,9 +10,9 @@ int main(int argc, char* argv[]){
     measureExecutionTime("Display color", &BaseWindow::displayColor, window, 255, 0, 0, true);
     
     // Set static pattern
-    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/CHIN.bmp", true);
-    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/QMS.bmp", true);
-    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/RGB.bmp", true);
+    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/CHIN.bmp", false);
+    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/QMS.bmp", false);
+    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/RGB.bmp", false);
     SDL_Delay(2000);
 
     // Set dynamic pattern
@@ -20,26 +20,43 @@ int main(int argc, char* argv[]){
     uint32_t * red = new uint32_t[pattern_size];
     uint32_t * green = new uint32_t[pattern_size];
     uint32_t * blue = new uint32_t[pattern_size];
+    uint32_t * white = new uint32_t[pattern_size];
+    uint32_t * black = new uint32_t[pattern_size];
+    uint32_t * gray = new uint32_t[pattern_size];
     for (size_t i = 0; i < pattern_size; i++) {
         red[i] = 0xFFFF0000;
         green[i] = 0xFF00FF00;    
         blue[i] = 0xFF0000FF;
+        white[i] = 0xFFFFFFFF;
+        black[i] = 0xFF000000;
+        gray[i] = 0xFFAAAAAA;
     }
     window.displayColor(0, 0, 0, false);
+    measureExecutionTime("Set dynamic pattern to white", &BaseWindow::setDynamicPattern, window, (void*) white, false);
+    measureExecutionTime("Set dynamic pattern to black", &BaseWindow::setDynamicPattern, window, (void*) black, false);
+    measureExecutionTime("Set dynamic pattern to gray", &BaseWindow::setDynamicPattern, window, (void*) gray, false);
     measureExecutionTime("Set dynamic pattern to red", &BaseWindow::setDynamicPattern, window, (void*) red, false);
     measureExecutionTime("Set dynamic pattern to green", &BaseWindow::setDynamicPattern, window, (void*) green, false);
     measureExecutionTime("Set dynamic pattern to blue", &BaseWindow::setDynamicPattern, window, (void*) blue, false);
+    SDL_Delay(2000);
+    measureExecutionTime("Set dynamic pattern to white", &BaseWindow::setDynamicPattern, window, (void*) white, false);
+    measureExecutionTime("Set dynamic pattern to black", &BaseWindow::setDynamicPattern, window, (void*) black, false);
+    measureExecutionTime("Set dynamic pattern to gray", &BaseWindow::setDynamicPattern, window, (void*) gray, false);
     measureExecutionTime("Set dynamic pattern to red", &BaseWindow::setDynamicPattern, window, (void*) red, false);
     measureExecutionTime("Set dynamic pattern to green", &BaseWindow::setDynamicPattern, window, (void*) green, false);
     measureExecutionTime("Set dynamic pattern to blue", &BaseWindow::setDynamicPattern, window, (void*) blue, false);
+    SDL_Delay(2000);
+    measureExecutionTime("Set dynamic pattern to white", &BaseWindow::setDynamicPattern, window, (void*) white, false);
+    measureExecutionTime("Set dynamic pattern to black", &BaseWindow::setDynamicPattern, window, (void*) black, false);
+    measureExecutionTime("Set dynamic pattern to gray", &BaseWindow::setDynamicPattern, window, (void*) gray, false);
     measureExecutionTime("Set dynamic pattern to red", &BaseWindow::setDynamicPattern, window, (void*) red, false);
     measureExecutionTime("Set dynamic pattern to green", &BaseWindow::setDynamicPattern, window, (void*) green, false);
     measureExecutionTime("Set dynamic pattern to blue", &BaseWindow::setDynamicPattern, window, (void*) blue, false);
-    measureExecutionTime("Set dynamic pattern to red", &BaseWindow::setDynamicPattern, window, (void*) red, false);
-    measureExecutionTime("Set dynamic pattern to green", &BaseWindow::setDynamicPattern, window, (void*) green, false);
-    measureExecutionTime("Set dynamic pattern to blue", &BaseWindow::setDynamicPattern, window, (void*) blue, false);
-    delete[] green;
+    delete[] white;
+    delete[] black;
+    delete[] gray;
     delete[] red;
+    delete[] green;
     delete[] blue;
 
     SDL_Delay(2000);
