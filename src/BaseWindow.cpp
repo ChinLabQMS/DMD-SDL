@@ -255,7 +255,7 @@ void BaseWindow::setStaticPatternPath(const char* filepath,
 
 
 // Project a pattern on the window with a pointer to the pixel data
-void BaseWindow::setDynamicPattern(void* pattern, bool verbose) {
+void BaseWindow::setDynamicPattern(void* pattern, bool verbose, bool use_parallel) {
     if (!Window) {
         open(verbose);
     }
@@ -263,9 +263,10 @@ void BaseWindow::setDynamicPattern(void* pattern, bool verbose) {
     void *pixels;
     int pitch;
     SDL_LockTexture(Texture, NULL, &pixels, &pitch);
+    #pragma omp parallel for if(use_parallel)
     for (int i = 0; i < WindowHeight; i++) {
         memcpy((uint8_t*) pixels + i * pitch, 
-               (uint8_t*) pattern + i * sizeof(uint32_t) * WindowWidth, 
+               (uint8_t*) pattern + 4 * i * WindowWidth, 
                sizeof(uint32_t) * WindowWidth);
     }
     SDL_UnlockTexture(Texture);

@@ -29,7 +29,7 @@ class BaseWindow {
         bool isWindowMinimized();
         void displayColor(int r = 0, int g = 0, int b = 0, bool verbose = true);
         void readBMP(const char* filename, void* pixels, int* width, int* height, bool verbose = true);
-        void setDynamicPattern(void* pattern, bool verbose = true);
+        void setDynamicPattern(void* pattern, bool verbose = true, bool use_parallel = true);
         void selectAndProject(const char* default_location = NULL, bool verbose = true);
         void selectAndReadBMP(const char* default_location = NULL, bool verbose = true);
         void setDisplayIndex(int idx, bool verbose = true);

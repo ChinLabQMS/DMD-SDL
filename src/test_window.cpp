@@ -26,12 +26,24 @@ int main(int argc, char* argv[]){
             pattern[i][j] = color;
         }
     }
+    std::cout << "Testing dynamic pattern projection..." << std::endl;
     for (size_t i = 0; i < 23; i++) {
-        measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void *) pattern[i], false);
+        measureExecutionTime("Set dynamic pattern (with parallel)", &BaseWindow::setDynamicPattern, window, (void *) pattern[i], false, true);
     }
     SDL_Delay(2000);
+    std::cout << "Testing dynamic pattern projection..." << std::endl;
     for (size_t i = 0; i < 23; i++) {
-        measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void *) pattern[i], false);
+        measureExecutionTime("Set dynamic pattern (with parallel)", &BaseWindow::setDynamicPattern, window, (void *) pattern[i], false, true);
+    }
+    SDL_Delay(2000);
+    std::cout << "Testing dynamic pattern projection..." << std::endl;
+    for (size_t i = 0; i < 23; i++) {
+        measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void *) pattern[i], false, false);
+    }
+    SDL_Delay(2000);
+    std::cout << "Testing dynamic pattern projection..." << std::endl;
+    for (size_t i = 0; i < 23; i++) {
+        measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void *) pattern[i], false, false);
     }
 
     // Free memory
