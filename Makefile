@@ -21,13 +21,18 @@ $(OUTPUT_DIR)/%_novsync.exe: $(SRC_DIR)/%.cpp $(SRC_DIR)/BaseWindow.cpp
 	$(CC) $^ -o $@ $(COMPILER_FLAGS_TEST)
 
 all: base_window
-base_window: static black_white test
+
+base_window: static black_white test_window
+
 static: $(OUTPUT_DIR)/static.exe
 black_white: $(OUTPUT_DIR)/black_white.exe
-test: $(OUTPUT_DIR)/test_window.exe $(OUTPUT_DIR)/test_window_novsync.exe
+test_window: $(OUTPUT_DIR)/test_window.exe $(OUTPUT_DIR)/test_window_novsync.exe
+
+test_pixel:
+	$(CC) $(SRC_DIR)/test_pixel.cpp $(SRC_DIR)/PixelCanvas.cpp -o $(OUTPUT_DIR)/test_pixel.exe $(COMPILER_FLAGS_STANDARD)
 
 clean:
 	@echo "Cleaning up..."
 	rm -f $(OUTPUT_DIR)/*.exe
 
-.PHONY: all base_window static black_white test clean
+.PHONY: all base_window static black_white test_window clean

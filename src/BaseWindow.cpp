@@ -6,6 +6,7 @@ BaseWindow::~BaseWindow() {
     SDL_free(Displays);
     SDL_free(StaticPatternPath);
     SDL_free(BaseDirectory);
+    SDL_free(BMPPixels);
     Displays = NULL;
     StaticPatternPath = NULL;
     BaseDirectory = NULL;
@@ -123,7 +124,7 @@ void BaseWindow::open(bool verbose) {
         Renderer = SDL_CreateRendererWithProperties(props);
         SDL_DestroyProperties(props);
         if (Renderer) {
-            // Create a streaming texture for the renderer
+            // Create a streaming texture for dynamic pattern projection
             Texture = SDL_CreateTexture(Renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WindowWidth, WindowHeight);
             if (!StaticPatternPath) {
                 displayColor(0, 0, 0, verbose);
@@ -182,6 +183,36 @@ void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     }
 }
 
+void BaseWindow::readBMP(const char* filename, void* pixels, int* width, int* height, bool verbose) {
+    SDL_Surface *bitmap_surface = SDL_LoadBMP(filename);
+    if (bitmap_surface) {
+        if (verbose) {
+            printf("BMP file loaded successfully: %s", filename);
+        }
+        SDL_Surface *surface = SDL_ConvertSurface(bitmap_surface, SDL_PIXELFORMAT_ARGB8888);
+        SDL_DestroySurface(bitmap_surface);
+        if (width) {
+            *width = surface->w;
+        } else {
+            BMPWidth = surface->w;
+        }
+        if (height) {
+            *height = surface->h;
+        } else {
+            BMPHeight = surface->h;
+        }
+        if (pixels) {
+            memcpy(pixels, surface->pixels, sizeof(uint32_t) * surface->w * surface->h);
+        } else {
+            SDL_free(BMPPixels);
+            BMPPixels = (uint32_t*) SDL_malloc(sizeof(uint32_t) * surface->w * surface->h);
+            memcpy(BMPPixels, (uint32_t*) surface->pixels, sizeof(uint32_t) * surface->w * surface->h);
+        }
+    } else {
+        error("Surface could not be created from BMP file: %s", SDL_GetError());
+    }
+}
+
 // Load pattern from a BMP file and display it on the window
 void BaseWindow::setStaticPatternPath(const char* filepath, 
                                       bool verbose) {
@@ -228,11 +259,15 @@ void BaseWindow::setDynamicPattern(void* pattern, bool verbose) {
     if (!Window) {
         open(verbose);
     }
-    // Pixel data is assumed to be in ARGB format, pitch is 4 * WindowWidth
+    // Pixel data is assumed to be in ARGB format, pitch is 4 * WindowWidth + padding
     void *pixels;
     int pitch;
     SDL_LockTexture(Texture, NULL, &pixels, &pitch);
-    memcpy(pixels, pattern, 4 * WindowWidth * WindowHeight);
+    for (int i = 0; i < WindowHeight; i++) {
+        memcpy((uint8_t*) pixels + i * pitch, 
+               (uint8_t*) pattern + i * sizeof(uint32_t) * WindowWidth, 
+               sizeof(uint32_t) * WindowWidth);
+    }
     SDL_UnlockTexture(Texture);
     SDL_RenderClear(Renderer);
     SDL_RenderTexture(Renderer, Texture, NULL, NULL);
@@ -273,6 +308,30 @@ void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
             printf("Default location (static pattern): NULL");
     }
     SDL_ShowOpenFileDialog(callbackStaticFileSelect, this, NULL, filters, 2, default_location, false);
+}
+
+void SDLCALL callbackStaticReadFileSelect(void* userdata, const char* const* filelist, int filter) {
+    BaseWindow *window = (BaseWindow*) userdata;
+    if (!filelist)
+        window->error("An error occured during file selection: %s", SDL_GetError());
+    else if (!*filelist)
+        window->error("The user did not select any file.");
+    else {
+        window->readBMP(*filelist, NULL, NULL, NULL, false);
+    }
+}
+
+void BaseWindow::selectAndReadBMP(const char* default_location, bool verbose) {
+    if (!default_location) {
+        default_location = BaseDirectory;
+    }
+    if (verbose) {
+        if (default_location)
+            printf("Default location (BMP file): %s", default_location);
+        else
+            printf("Default location (BMP file): NULL");
+    }
+    SDL_ShowOpenFileDialog(callbackStaticReadFileSelect, this, NULL, filters, 2, default_location, false);
 }
 
 void BaseWindow::setDisplayIndex(int idx, bool verbose) {

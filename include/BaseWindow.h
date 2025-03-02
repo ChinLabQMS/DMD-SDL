@@ -28,8 +28,10 @@ class BaseWindow {
         bool isWindowCreated();
         bool isWindowMinimized();
         void displayColor(int r = 0, int g = 0, int b = 0, bool verbose = true);
+        void readBMP(const char* filename, void* pixels, int* width, int* height, bool verbose = true);
         void setDynamicPattern(void* pattern, bool verbose = true);
         void selectAndProject(const char* default_location = NULL, bool verbose = true);
+        void selectAndReadBMP(const char* default_location = NULL, bool verbose = true);
         void setDisplayIndex(int idx, bool verbose = true);
         void setStaticPatternPath(const char* filename, bool verbose = true);
         int getDisplayIndex();
@@ -49,6 +51,8 @@ class BaseWindow {
         SDL_DisplayMode *DisplayMode = NULL;
         int WindowWidth, WindowHeight, NumDisplays, DisplayIndex;
         int ColorModeR = 0, ColorModeG = 0, ColorModeB = 0;
+        int BMPWidth = 0, BMPHeight = 0;
+        uint32_t *BMPPixels = NULL;
         char *StaticPatternPath = NULL;
         char *BaseDirectory = NULL;
         char *OperationMode = NULL;

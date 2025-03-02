@@ -8,7 +8,8 @@ int main(int argc, char* argv[]){
     measureExecutionTime("Initialize SDL", &BaseWindow::init, window, true);
     measureExecutionTime("Open window", &BaseWindow::open, window, true);
     measureExecutionTime("Display color", &BaseWindow::displayColor, window, 255, 0, 0, true);
-    
+    measureExecutionTime("Read BMP", &BaseWindow::readBMP, window, (const char*) "../resources/text/CHIN.bmp", (void*) NULL, (int*) NULL, (int*) NULL, true);    
+
     // Set static pattern
     measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/CHIN.bmp", false);
     measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/QMS.bmp", false);
@@ -26,19 +27,18 @@ int main(int argc, char* argv[]){
         }
     }
     for (size_t i = 0; i < 23; i++) {
-        measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void*) pattern[i], false);
+        measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void *) pattern[i], false);
     }
     SDL_Delay(2000);
     for (size_t i = 0; i < 23; i++) {
-        measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void*) pattern[i], false);
+        measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void *) pattern[i], false);
     }
-
 
     // Free memory
     for (size_t i = 0; i < 23; i++) {
         delete[] pattern[i];
     }
-    delete[] pattern;    
+    delete[] pattern;
 
     SDL_Delay(2000);
     measureExecutionTime("Close window", &BaseWindow::close, window, true);

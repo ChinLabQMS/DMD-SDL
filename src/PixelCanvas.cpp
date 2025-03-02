@@ -4,59 +4,61 @@ PixelCanvas::~PixelCanvas() {
     closeCanvas();
 }
 
-// Initialize Canvas
+// Initialize Canvas to a specific arrangement and size
+// Compute forward and reverse mapping between pattern and real canvas
 void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool use_parallel) {
     PixelArrangement = std::move(arrangement);
     NumRows = nrows;
     NumCols = ncols;
-    PixelCount = NumRows * NumCols;
-
+    PatternNumPixels = NumRows * NumCols;
+    Pattern2RealIndex.resize(PatternNumPixels);
+    // Assign pattern to real index mapping based on arrangement
     if (PixelArrangement == "Square") {
         RealNumRows = NumRows;
         RealNumCols = NumCols;
-        RealPixelCount = PixelCount;
-        RealPixelIndex.resize(PixelCount);
+        RealNumPixels = PatternNumPixels;
         #pragma omp parallel for if(use_parallel)
-        for (int i = 0; i < PixelCount; ++i) {
-            RealPixelIndex[i] = i;
+        for (int i = 0; i < PatternNumPixels; ++i) {
+            Pattern2RealIndex[i] = i;
         }
-        BackgroundCount = 0;
-        RealBackgroundIndex.clear();
     }
     else if (PixelArrangement == "Diamond") {
         RealNumRows = std::max(0, nrows / 2 + ncols);
         RealNumCols = std::max(0, ncols + (nrows - 1) / 2);
-        RealPixelCount = RealNumRows * RealNumCols;
-        RealPixelIndex.resize(PixelCount);        
-
+        RealNumPixels = RealNumRows * RealNumCols;
         #pragma omp parallel for if(use_parallel)
-        for (int i = 0; i < PixelCount; ++i) {
+        for (int i = 0; i < PatternNumPixels; ++i) {
             int x = i / ncols;  // row index
-            int y = i % ncols;  // column index        
-            int real_x = realX(nrows, ncols, x, y);
-            int real_y = realY(nrows, ncols, x, y);
-            RealPixelIndex[i] = sub2ind(RealNumRows, RealNumCols, real_x, real_y);
-        }
-
-        BackgroundCount = RealPixelCount - PixelCount;
-        RealBackgroundIndex.resize(BackgroundCount);
-        if (BackgroundCount != 0) {
-            std::vector<bool> real_idx(RealPixelCount, true);
-            #pragma omp parallel for if(use_parallel)
-            for (int idx : RealPixelIndex) {
-                real_idx[idx] = false;
-            }
-            int bg_idx = 0;
-            for (int i = 0; i < RealPixelCount; ++i) {
-                if (real_idx[i]) {
-                    RealBackgroundIndex[bg_idx++] = i;
-                }
-            }
+            int y = i % ncols;  // column index
+            Pattern2RealIndex[i] = sub2ind(RealNumRows, RealNumCols, 
+                                           realDiamondX(nrows, ncols, x, y), 
+                                           realDiamondY(nrows, ncols, x, y));
         }
     }
-
-    PatternCanvas.resize(PixelCount, 0);
-    RealPatternCanvas.resize(RealPixelCount, 0);
+    else {
+        throw std::invalid_argument("Invalid pixel arrangement.");
+    }
+    // Assign real to pattern index mapping
+    Real2PatternIndex.resize(RealNumPixels);
+    #pragma omp parallel for if(use_parallel)
+    for (int i = 0; i < RealNumPixels; ++i) {
+        Real2PatternIndex[i] = -1;
+    }
+    #pragma omp parallel for if(use_parallel)
+    for (int i = 0; i < PatternNumPixels; ++i) {
+        Real2PatternIndex[Pattern2RealIndex[i]] = i;
+    }
+    // Assign background to real index mapping
+    BackgroundNumPixels = RealNumPixels - PatternNumPixels;
+    Background2RealIndex.resize(BackgroundNumPixels);
+    int bg_idx = 0;
+    for (int i = 0; i < RealNumPixels; ++i) {
+        if (Real2PatternIndex[i] == -1) {
+            Background2RealIndex[bg_idx++] = i;
+        }
+    }
+    PatternCanvas.resize(PatternNumPixels, 0);
+    RealCanvas.resize(RealNumPixels, 0);
     resetBackground();
     resetPattern();
 }
@@ -64,41 +66,50 @@ void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool
 // Reset Background
 void PixelCanvas::resetBackground(uint32_t background_color, bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
-    for (int i = 0; i < BackgroundCount; ++i) {
-        RealPatternCanvas[RealBackgroundIndex[i]] = background_color;
+    for (int i = 0; i < BackgroundNumPixels; ++i) {
+        RealCanvas[Background2RealIndex[i]] = background_color;
     }
 }
 
 // Reset Pattern
 void PixelCanvas::resetPattern(uint32_t pattern_color, bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
-    for (int i = 0; i < PixelCount; ++i) {
-        RealPatternCanvas[RealPixelIndex[i]] = pattern_color;
+    for (int i = 0; i < PatternNumPixels; ++i) {
+        RealCanvas[Pattern2RealIndex[i]] = pattern_color;
         PatternCanvas[i] = pattern_color;
     }
+}
+
+// Clear Pattern Memory
+void PixelCanvas::clearPatternMemory() {
+    for (auto& pattern : PatternMemory) {
+        pattern.clear();
+    }
+    PatternMemory.clear();
 }
 
 // Cleanup Function
 void PixelCanvas::closeCanvas() {
     PixelArrangement.clear();
-    RealPixelIndex.clear();
-    RealBackgroundIndex.clear();
+    Pattern2RealIndex.clear();
+    Background2RealIndex.clear();
+    Real2PatternIndex.clear();
     PatternCanvas.clear();
-    RealPatternCanvas.clear();
+    RealCanvas.clear();
     NumRows = 0;
     NumCols = 0;
     RealNumRows = 0;
     RealNumCols = 0;
-    PixelCount = 0;
-    RealPixelCount = 0;
-    BackgroundCount = 0;
+    PatternNumPixels = 0;
+    BackgroundNumPixels = 0;
+    RealNumPixels = 0;
 }
 
 // Update Pattern to Real
 void PixelCanvas::updatePattern2Real(bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
     for (size_t i = 0; i < PatternCanvas.size(); ++i) {
-        PatternCanvas[i] = RealPatternCanvas[RealPixelIndex[i]];
+        PatternCanvas[i] = RealCanvas[Pattern2RealIndex[i]];
     }
 }
 
@@ -106,28 +117,8 @@ void PixelCanvas::updatePattern2Real(bool use_parallel) {
 void PixelCanvas::updateReal2Pattern(bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
     for (size_t i = 0; i < PatternCanvas.size(); ++i) {
-        RealPatternCanvas[RealPixelIndex[i]] = PatternCanvas[i];
+        RealCanvas[Pattern2RealIndex[i]] = PatternCanvas[i];
     }
-}
-
-// Copy Pixels to Pattern using raw pointer
-void PixelCanvas::copyPixel2Pattern(uint32_t* pixels, size_t num_pixels, bool use_parallel) {
-    PatternCanvas.resize(num_pixels);
-    #pragma omp parallel for if(use_parallel)
-    for (size_t i = 0; i < num_pixels; ++i) {
-        PatternCanvas[i] = pixels[i];
-    }
-    updateReal2Pattern(use_parallel);
-}
-
-// Copy Pixels to Real using raw pointer
-void PixelCanvas::copyPixel2Real(uint32_t* pixels, size_t num_pixels, bool use_parallel) {
-    RealPatternCanvas.resize(num_pixels);
-    #pragma omp parallel for if(use_parallel)
-    for (size_t i = 0; i < num_pixels; ++i) {
-        RealPatternCanvas[i] = pixels[i];
-    }
-    updatePattern2Real(use_parallel);
 }
 
 // Convert Pattern to RGB

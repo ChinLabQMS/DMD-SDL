@@ -67,6 +67,8 @@
         "stop_token": "cpp",
         "thread": "cpp",
         "variant": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "charconv": "cpp",
+        "format": "cpp"
     }
 }
