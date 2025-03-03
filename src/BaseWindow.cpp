@@ -6,7 +6,8 @@ BaseWindow::~BaseWindow() {
     SDL_free(Displays);
     SDL_free(StaticPatternPath);
     SDL_free(BaseDirectory);
-    SDL_free(BMPPixels);
+    SDL_DestroySurface(BMPSurface);
+    BMPSurface = NULL;
     Displays = NULL;
     StaticPatternPath = NULL;
     BaseDirectory = NULL;
@@ -183,31 +184,20 @@ void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     }
 }
 
-void BaseWindow::readBMP(const char* filename, void* pixels, int* width, int* height, bool verbose) {
+void BaseWindow::readBMP(const char* filename, SDL_Surface **surface, bool verbose) {
     SDL_Surface *bitmap_surface = SDL_LoadBMP(filename);
     if (bitmap_surface) {
         if (verbose) {
             printf("BMP file loaded successfully: %s", filename);
         }
-        SDL_Surface *surface = SDL_ConvertSurface(bitmap_surface, SDL_PIXELFORMAT_ARGB8888);
+        if (surface) {
+            *surface = SDL_ConvertSurface(bitmap_surface, SDL_PIXELFORMAT_ARGB8888);
+        }
+        else {
+            SDL_DestroySurface(BMPSurface);
+            BMPSurface = SDL_ConvertSurface(bitmap_surface, SDL_PIXELFORMAT_ARGB8888);
+        }
         SDL_DestroySurface(bitmap_surface);
-        if (width) {
-            *width = surface->w;
-        } else {
-            BMPWidth = surface->w;
-        }
-        if (height) {
-            *height = surface->h;
-        } else {
-            BMPHeight = surface->h;
-        }
-        if (pixels) {
-            memcpy(pixels, surface->pixels, sizeof(uint32_t) * surface->w * surface->h);
-        } else {
-            SDL_free(BMPPixels);
-            BMPPixels = (uint32_t*) SDL_malloc(sizeof(uint32_t) * surface->w * surface->h);
-            memcpy(BMPPixels, (uint32_t*) surface->pixels, sizeof(uint32_t) * surface->w * surface->h);
-        }
     } else {
         error("Surface could not be created from BMP file: %s", SDL_GetError());
     }
@@ -291,7 +281,7 @@ void SDLCALL callbackStaticFileSelect(void* userdata, const char* const* filelis
     if (!filelist)
         window->error("An error occured during file selection: %s", SDL_GetError());
     else if (!*filelist)
-        window->error("The user did not select any file.");
+        window->warn("The user did not select any file.");
     else {
         window->setStaticPatternPath(*filelist);
     }
@@ -318,7 +308,7 @@ void SDLCALL callbackStaticReadFileSelect(void* userdata, const char* const* fil
     else if (!*filelist)
         window->error("The user did not select any file.");
     else {
-        window->readBMP(*filelist, NULL, NULL, NULL, false);
+        window->readBMP(*filelist, NULL, false);
     }
 }
 

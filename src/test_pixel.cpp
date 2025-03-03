@@ -2,8 +2,10 @@
 #include "Benchmark.h"
 
 int main() {
+    int width = 1140;
+    int height = 912;
     PixelCanvas canvas;
-    measureExecutionTime("Initialize canvas", &PixelCanvas::initCanvas, canvas, 1140, 912, (std::string) "Diamond", true);
+    measureExecutionTime("Initialize canvas", &PixelCanvas::initCanvas, canvas, (int) width, (int) height, (std::string) "Diamond", true);
 
     // Measure execution time of instance (non-static) methods
     measureExecutionTime("Reset pattern", &PixelCanvas::resetPattern, canvas, (uint32_t) 0xFF000000, true);
@@ -16,11 +18,34 @@ int main() {
     measureExecutionTime("Update real to pattern (no parallel)", &PixelCanvas::updateReal2Pattern, canvas, false);
 
     // Allocate valid pixel data instead of passing nullptr
-    std::vector<uint32_t> pixelData(1140 * 912, 0xFFFFFF); // White pixels
-    std::cout << "Pixel data created with size: " << pixelData.size() << std::endl;
+    std::vector<uint32_t> pixels(width * height, 0xFF80C0E0); // White pixels
+    std::cout << "Pixel data created with size: " << pixels.size() << std::endl;
 
-    // measureExecutionTime("Copy pixel to pattern", &PixelCanvas::copyPixel2Pattern, canvas, pixelData.data(), pixelData.size(), true);
-    // measureExecutionTime("Copy pixel to pattern (no parallel)", &PixelCanvas::copyPixel2Pattern, canvas, pixelData.data(), pixelData.size(), false);
+    measureExecutionTime("Load PatternMemory", &PixelCanvas::loadPatternMemory, canvas, (const uint32_t *) pixels.data(), (size_t) pixels.size());
+    measureExecutionTime("Load PatternMemory", &PixelCanvas::loadPatternMemory, canvas, (const uint32_t *) pixels.data(), (size_t) pixels.size());
+    measureExecutionTime("Load PatternMemory", &PixelCanvas::loadPatternMemory, canvas, (const uint32_t *) pixels.data(), (size_t) pixels.size());
+    measureExecutionTime("Load PatternMemory", &PixelCanvas::loadPatternMemory, canvas, (const uint32_t *) pixels.data(), (size_t) pixels.size());
+    measureExecutionTime("Clear PatternMemory", &PixelCanvas::clearPatternMemory, canvas);
+
+    measureExecutionTime("Get PatternCanvas RGB", &PixelCanvas::getPatternCanvasRGB, canvas, true);
+    measureExecutionTime("Get PatternCanvas RGB (no parallel)", &PixelCanvas::getPatternCanvasRGB, canvas, false);
+
+    measureExecutionTime("Get RealCanvas RGB", &PixelCanvas::getRealCanvasRGB, canvas, true);
+    measureExecutionTime("Get RealCanvas RGB (no parallel)", &PixelCanvas::getRealCanvasRGB, canvas, false);
+
+    // Measure execution time of static methods
+    std::vector<uint8_t> rgb = measureExecutionTime("Convert pattern to RGB", &PixelCanvas::convertPattern2RGB, (uint8_t *) pixels.data(), (int) height, (int) width, (int) width * 4, true);
+    std::vector<uint32_t> pattern = measureExecutionTime("Convert RGB to pattern", &PixelCanvas::convertRGB2Pattern, (uint8_t *) rgb.data(), (int) height, (int) width, (int) width * 3, true);
+
+    
+    std::cout << "Pattern[0] = " << pattern[0] << std::endl;
+    std::cout << "RGB[0] = " << (uint32_t) rgb[0] << std::endl;
+    std::cout << "RGB[1] = " << (uint32_t) rgb[1] << std::endl;
+    std::cout << "RGB[2] = " << (uint32_t) rgb[2] << std::endl;
+    std::cout << "Pixel[0] = " << pixels[0] << std::endl;
+    
+
+    measureExecutionTime("Close canvas", &PixelCanvas::closeCanvas, canvas);
 
     return 0;
 }

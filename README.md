@@ -38,6 +38,15 @@ mingw32-make
 6. The libraries should be built in the `SDL3_build/` directory. Default name should be `libSDL3.a`. You can copy this libraray file to the `DMD-SDL/lib` directory.
 7. Copy all the header files from the source directory include folder `SDL3-3.2.4\include\SDL3` to the `DMD-SDL/include` directory.
 
+## Structure
+The main components are: `BaseWindow`, `PatternWindow`, and `PixelCanvas`.
+<img src="docs/diagram.png" alt="black" width="400"/>
+
+If only require the basic window functionalities, use `BaseWindow` class. 
+If using the C++ code for generating patterns, use `PixelCanvas` class.
+If require pixel pattern drawing with window functionality, use `PatternWindow` class. 
+If require MATLAB interface, use `PatternWindowMex` class.
+
 ## Static pattern projection
 `static.cpp` Create an opaque window with target size, and open a file selection dialog to select a BMP file, then render a static pattern loaded from BMP to the window.
 
@@ -60,7 +69,7 @@ To use a version of MinGW that is supported by MATLAB, install this addon: [MATL
 
 To build the mex file, run the following command under the project root directory in MATLAB command window:
 ```bash
-mex src/PatternWindowMex.cpp src/PixelCanvas.cpp src/PatternWindow.cpp -R2018a -output mex/PatternWindowMexTest CXXFLAGS="$CXXFLAGS -O3 -fopenmp" LDFLAGS="$LDFLAGS -fopenmp" -DTEST=1 -Iinclude -Llib -lSDL3 -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8
+mex src/PatternWindowMex.cpp src/PatternWindow.cpp src/PixelCanvas.cpp src/BaseWindow.cpp -R2018a -output mex/PatternWindowMex CXXFLAGS="$CXXFLAGS -O3 -fopenmp -std=c++17" LDFLAGS="$LDFLAGS -fopenmp" -DTEST=0 -Iinclude -Llib -lSDL3 -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8
 ```
 If the compliation is successful, a `PatternWindowMex.mexw64` file will be created in the project root directory.
 To test, run the following command in MATLAB command window:
@@ -87,20 +96,16 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("getDisplayModes")` - get the display modes of all the monitors connected to the system as a struct array
 - `PatternWindowMex("getWindowHeight")` - get the height of the window if it is open, otherwise return 0
 - `PatternWindowMex("getWindowWidth")` - get the width of the window if it is open, otherwise return 0
-- `PatternWindowMex("getStaticMode")` - get whether the window is in static mode
+- `PatternWindowMex("getOperationMode")` - get the mode of the window (static/dynamic/color)
 - `PatternWindowMex("getStaticPatternPath")` - get the path of the static pattern loaded to the window if it is in static mode (empty if not in static mode)
-- `PatternWindowMex("getStaticPattern")` - get the static pattern loaded to the window if it is in static mode (empty if in dynamic mode)
+- `PatternWindowMex("getStaticPattern")` - get the static pattern loaded to the window
 - `PatternWindowMex("getStaticPatternRGB")` - get the static pattern in RGB format
-- `PatternWindowMex("getDynamicPattern")` - get the dynamic pattern loaded to the window if it is in dynamic mode (empty if in static mode)
-- `PatternWindowMex("getDynamicPatternRGB")` - get the dynamic pattern in RGB format
 - `PatternWindowMex("getPatternCanvas")` - get the pattern canvas of the window, which should be in sync with window content in static mode
 - `PatternWindowMex("getPatternCanvasRGB")` - get the pattern canvas of the window in RGB format, which should be in sync with window content in static mode
-- `PatternWindowMex("getRealPatternCanvas")` - get the real-space pattern canvas of the window, which should be in sync with window content in static mode
-- `PatternWindowMex("getRealPatternCanvasRGB")` - get the real-space pattern canvas of the window in RGB format, which should be in sync with window content in static mode
+- `PatternWindowMex("getRealCanvas")` - get the real-space canvas of the window, which should be in sync with window content in static mode
+- `PatternWindowMex("getRealCanvasRGB")` - get the real-space pattern canvas of the window in RGB format, which should be in sync with window content in static mode
 - `PatternWindowMex("setDisplayIndex", display_index)` - set the display index (0-index integer) of the window to the specified display, the order is the same as the one returned by `PatternWindowMex("getDisplayModes")`
 - `PatternWindowMex("displayColor", color=[0,0,0])` - display a color on the window, color is a 1x3 vector with RGB values
 - `PatternWindowMex("setStaticPatternPath", path, use_parallel=true)` - set the static pattern to be displayed on the window, path is the path to the BMP file
-- `PatternWindowMex("setDynamicPattern", pattern)` - set the dynamic pattern to be displayed on the window, pattern is an array of uint32 values
-- `PatternWindowMex("setDynamicPattern", pattern, verbose)` - set the dynamic pattern to be displayed on the window with verbose mode (true/false)
 - `PatternWindowMex("convertPattern2RGB", pattern, use_parallel=true)` - convert the pattern to RGB format with parallel processing (true/false), pattern is an array of uint32 values, return the RGB pattern as a 3D array of uint8 values
-- `PatternWindowMex("convertRGB2Pattern", rgb_pattern, alpha_mask=true, use_parallel=true)` - convert the RGB pattern to pattern with parallel processing (true/false), rgb_pattern is a 3D array of uint8 values, return the pattern as an array of uint32 values
+- `PatternWindowMex("convertRGB2Pattern", rgb_pattern, use_parallel=true)` - convert the RGB pattern to pattern with parallel processing (true/false), rgb_pattern is a 3D array of uint8 values, return the pattern as an array of uint32 values

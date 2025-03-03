@@ -88,6 +88,11 @@ void PixelCanvas::clearPatternMemory() {
     PatternMemory.clear();
 }
 
+// Load a pattern to PatternMemory
+void PixelCanvas::loadPatternMemory(const uint32_t *pattern, size_t num_elements) {
+    PatternMemory.push_back(std::vector<uint32_t>(pattern, pattern + num_elements));
+}
+
 // Cleanup Function
 void PixelCanvas::closeCanvas() {
     PixelArrangement.clear();
@@ -96,6 +101,7 @@ void PixelCanvas::closeCanvas() {
     Real2PatternIndex.clear();
     PatternCanvas.clear();
     RealCanvas.clear();
+    clearPatternMemory();
     NumRows = 0;
     NumCols = 0;
     RealNumRows = 0;
@@ -121,28 +127,42 @@ void PixelCanvas::updateReal2Pattern(bool use_parallel) {
     }
 }
 
-// Convert Pattern to RGB
-// Function for raw pointer
-std::vector<uint8_t> PixelCanvas::convertPattern2RGB(const uint32_t *pixels, size_t num_elements, bool use_parallel) {
-    std::vector<uint8_t> rgb(num_elements * 3);
-    // Enable parallel processing if requested
+// Get Pattern Canvas in RGB format
+std::vector<uint8_t> PixelCanvas::getPatternCanvasRGB(bool use_parallel) {
+    return convertPattern2RGB((uint8_t *) PatternCanvas.data(), NumRows, NumCols, NumCols * 4, use_parallel);
+}
+
+// Get Real Canvas in RGB format
+std::vector<uint8_t> PixelCanvas::getRealCanvasRGB(bool use_parallel) {
+    return convertPattern2RGB((uint8_t *) RealCanvas.data(), RealNumRows, RealNumCols, RealNumCols * 4, use_parallel);
+}
+
+// Convert Pattern to RGB (pixel takes 3 bytes in RGB format)
+std::vector<uint8_t> PixelCanvas::convertPattern2RGB(uint8_t *pattern, int height, int width, int pitch, bool use_parallel) {
+    std::vector<uint8_t> rgb(3 * width * height);
     #pragma omp parallel for if(use_parallel)
-    for (size_t i = 0; i < num_elements; ++i) {
-        rgb[i] = pixels[i] & 0xFF;                     // Red
-        rgb[i + num_elements] = (pixels[i] >> 8) & 0xFF; // Green
-        rgb[i + 2 * num_elements] = (pixels[i] >> 16) & 0xFF; // Blue
+    for (int i = 0; i < height; ++i) {
+        for (int j = 0; j < width; ++j) {
+            int pixel_index = i * pitch + 4 * j;
+            int rgb_index = 3 * (i * width + j);
+            rgb[rgb_index] = pattern[pixel_index + 2]; // R
+            rgb[rgb_index + 1] = pattern[pixel_index + 1]; // G
+            rgb[rgb_index + 2] = pattern[pixel_index]; // B
+        }
     }
     return rgb;
 }
 
-// Convert RGB to Pattern
-// Function for raw pointer
-std::vector<uint32_t> PixelCanvas::convertRGB2Pattern(const uint8_t *rgb, size_t num_elements, bool alpha_mask, bool use_parallel) {
-    std::vector<uint32_t> pattern(num_elements / 3);
-    // Enable parallel processing if requested
+// Convert RGB to Pattern (uint32_t 4 bytes format)
+std::vector<uint32_t> PixelCanvas::convertRGB2Pattern(uint8_t *rgb, int height, int width, int pitch, bool use_parallel) {
+    std::vector<uint32_t> pattern(width * height);
     #pragma omp parallel for if(use_parallel)
-    for (size_t i = 0; i < pattern.size(); ++i) {
-        pattern[i] = (rgb[i] << 16) + (rgb[i + pattern.size()] << 8) + rgb[i + 2*pattern.size()] + (alpha_mask ? 0xFF000000 : 0);
+    for (int i = 0; i < height; ++i) {
+        for (int j = 0; j < width; ++j) {
+            int pixel_index = i * pitch + 3 * j;
+            int pattern_index = i * width + j;
+            pattern[pattern_index] = (0xFF000000) | (rgb[pixel_index] << 16) | (rgb[pixel_index + 1] << 8) | rgb[pixel_index + 2];
+        }
     }
     return pattern;
 }

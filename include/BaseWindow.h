@@ -2,6 +2,7 @@
 #define BASEWINDOW_H
 
 #include "SDL3/SDL.h"
+#include "omp.h"
 
 #ifndef TEST
 #define TEST 0
@@ -28,7 +29,7 @@ class BaseWindow {
         bool isWindowCreated();
         bool isWindowMinimized();
         void displayColor(int r = 0, int g = 0, int b = 0, bool verbose = true);
-        void readBMP(const char* filename, void* pixels, int* width, int* height, bool verbose = true);
+        void readBMP(const char* filename, SDL_Surface **surface, bool verbose = true);
         void setDynamicPattern(void* pattern, bool verbose = true, bool use_parallel = true);
         void selectAndProject(const char* default_location = NULL, bool verbose = true);
         void selectAndReadBMP(const char* default_location = NULL, bool verbose = true);
@@ -45,14 +46,13 @@ class BaseWindow {
         SDL_Window *Window = NULL;
         SDL_Renderer *Renderer = NULL;
         SDL_Surface *StaticPatternSurface = NULL;
+        SDL_Surface *BMPSurface = NULL;
         SDL_Texture *Texture = NULL;
         SDL_DisplayID *Displays = NULL;
         SDL_DisplayID DisplayID;
         SDL_DisplayMode *DisplayMode = NULL;
         int WindowWidth, WindowHeight, NumDisplays, DisplayIndex;
         int ColorModeR = 0, ColorModeG = 0, ColorModeB = 0;
-        int BMPWidth = 0, BMPHeight = 0;
-        uint32_t *BMPPixels = NULL;
         char *StaticPatternPath = NULL;
         char *BaseDirectory = NULL;
         char *OperationMode = NULL;
