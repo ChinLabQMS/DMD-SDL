@@ -1,5 +1,9 @@
 #include "PatternWindowMex.h"
 
+MexFunction::MexFunction() {
+    init(false); // Initialize SDL upon creation
+}
+
 // Overloaded printf function to display messages in MATLAB console
 void MexFunction::printf(const char* format, ...) {
     char buffer[256];
@@ -50,14 +54,20 @@ void MexFunction::unlock() {
 // Set the path to the static pattern image file
 void MexFunction::setStaticPatternPath(const char* filepath, bool use_parallel) {
     PatternWindow::setStaticPatternPath(filepath, use_parallel);
-    // Update the RGB array of the static pattern
+    // Update the Matlab array of the static pattern
     if (StaticPatternSurface) {
+        uint32_t * pixels = (uint32_t*) StaticPatternSurface->pixels;
+        StaticPatternMex = factory.createArray({ (size_t) StaticPatternSurface->h, (size_t) StaticPatternSurface->w }, 
+                                                pixels, 
+                                                pixels + StaticPatternSurface->h * StaticPatternSurface->w, 
+                                                InputLayout::ROW_MAJOR);
         StaticPatternRGBMex = factory.createArray(
             { (size_t) WindowHeight, (size_t) WindowWidth, 3 }, 
             StaticPatternRGB.begin(), StaticPatternRGB.end(), 
-            InputLayout::ROW_MAJOR);        
+            InputLayout::ROW_MAJOR);
     }
     else {
+        StaticPatternMex = factory.createArray({0, 0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
         StaticPatternRGBMex = factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
     }
 }
@@ -66,6 +76,14 @@ void MexFunction::setStaticPatternPath(const char* filepath, bool use_parallel) 
 CharArray MexFunction::getOperationMode() {
     if (OperationMode) {
         return factory.createCharArray(OperationMode);
+    } else {
+        return factory.createArray({0, 0}, (char *) nullptr, (char *) nullptr);
+    }
+}
+
+CharArray MexFunction::getBaseDirectory() {
+    if (BaseDirectory) {
+        return factory.createCharArray(BaseDirectory);
     } else {
         return factory.createArray({0, 0}, (char *) nullptr, (char *) nullptr);
     }
@@ -95,14 +113,12 @@ StructArray MexFunction::getDisplayModes() {
     return display_modes;
 }
 
-// Get the static pattern as a MATLAB array
-TypedArray<uint32_t> MexFunction::getStaticPattern() {
-    if (StaticPatternSurface) {
-        uint32_t * pixels = (uint32_t*) StaticPatternSurface->pixels;
-        return factory.createArray({ (size_t) StaticPatternSurface->h, (size_t) StaticPatternSurface->w }, 
-                                                                 pixels, 
-                                                                 pixels + StaticPatternSurface->h * StaticPatternSurface->w, 
-                                                                 InputLayout::ROW_MAJOR);
+TypedArray<uint32_t> MexFunction::getBMPSurfacePattern() {
+    if (BMPSurface) {
+        return factory.createArray({ (size_t) BMPSurface->h, (size_t) BMPSurface->w }, 
+                                    (uint32_t *) BMPSurface->pixels, 
+                                    (uint32_t *) BMPSurface->pixels + BMPSurface->h * BMPSurface->w, 
+                                    InputLayout::ROW_MAJOR);
     } else {
         return factory.createArray({0, 0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
     }
@@ -167,7 +183,7 @@ void MexFunction::checkArguments(ArgumentList outputs, ArgumentList inputs) {
 }
 
 // Convert pattern to RGB, assuming column major order in pattern
-TypedArray<uint8_t> MexFunction::convertPattern2RGBMex(TypedArray<uint32_t> pattern, bool use_parallel) {
+TypedArray<uint8_t> MexFunction::convertPattern2RGBMex(const TypedArray<uint32_t> pattern, bool use_parallel) {
     uint32_t *pattern_ptr = (uint32_t *) getDataPtr<uint32_t>(pattern);
     size_t height = pattern.getDimensions()[0];
     size_t width = pattern.getDimensions()[1];
@@ -187,7 +203,7 @@ TypedArray<uint8_t> MexFunction::convertPattern2RGBMex(TypedArray<uint32_t> patt
 }
 
 // Convert RGB to pattern, assuming column major order in RGB
-TypedArray<uint32_t> MexFunction::convertRGB2PatternMex(TypedArray<uint8_t> rgb, bool use_parallel) {
+TypedArray<uint32_t> MexFunction::convertRGB2PatternMex(const TypedArray<uint8_t> rgb, bool use_parallel) {
     const uint8_t *rgb_ptr = getDataPtr<uint8_t>(rgb);
     size_t height = rgb.getDimensions()[0];
     size_t width = rgb.getDimensions()[1];
@@ -232,7 +248,7 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "getMexName") {
             outputs[0] = factory.createCharArray(getFunctionName());
         } else if (func[0] == "getBaseDirectory") {
-            outputs[0] = factory.createCharArray(getBaseDirectory());
+            outputs[0] = getBaseDirectory();
         } else if (func[0] == "isWindowCreated") {
             outputs[0] = factory.createScalar(isWindowCreated());
         } else if (func[0] == "isWindowMinimized") {
@@ -240,7 +256,7 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "getDisplayModes") {
             outputs[0] = getDisplayModes();
         } else if (func[0] == "getDisplayIndex") {
-            outputs[0] = factory.createScalar<double>(getDisplayIndex());
+            outputs[0] = factory.createScalar<double>(DisplayIndex);
         } else if (func[0] == "getWindowHeight") {
             outputs[0] = factory.createScalar(getWindowHeight());
         } else if (func[0] == "getWindowWidth") {
@@ -250,7 +266,7 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "getStaticPatternPath") {
             outputs[0] = getStaticPatternPath();
         } else if (func[0] == "getStaticPattern") {
-            outputs[0] = getStaticPattern();
+            outputs[0] = StaticPatternMex;
         } else if (func[0] == "getStaticPatternRGB") {
             outputs[0] = StaticPatternRGBMex;
         } else if (func[0] == "getPatternCanvas") {
@@ -263,6 +279,12 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             outputs[0] = getRealCanvasRGB();
         } else if (func[0] == "displayColor") {
             displayColor();
+        } else if (func[0] == "selectAndProject") {
+            selectAndProject();
+        } else if (func[0] == "selectAndReadBMP") {
+            selectAndReadBMP();
+        } else if (func[0] == "getBMPSurfacePattern") {
+            outputs[0] = getBMPSurfacePattern();
         } else {
             error("Invalid function name with zero input.");
         }

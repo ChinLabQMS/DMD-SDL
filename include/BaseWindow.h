@@ -20,28 +20,23 @@ const int RENDERER_VSYNC = 1;
 class BaseWindow {
     public:
         ~BaseWindow();
-        virtual void printf(const char* format, ...);
-        virtual void error(const char* format, ...);
-        virtual void warn(const char* format, ...);
+        virtual void printf(const char* format, ...) const;
+        virtual void error(const char* format, ...) const;
+        virtual void warn(const char* format, ...) const;
         void init(bool verbose = true);
-        void open(bool verbose = true);
-        void close(bool verbose = true);
-        bool isWindowCreated();
-        bool isWindowMinimized();
+        virtual void open(bool verbose = true);
+        virtual void close(bool verbose = true);
         void displayColor(int r = 0, int g = 0, int b = 0, bool verbose = true);
         void readBMP(const char* filename, SDL_Surface **surface, bool verbose = true);
         void setDynamicPattern(void* pattern, bool verbose = true, bool use_parallel = true);
         void selectAndProject(const char* default_location = NULL, bool verbose = true);
         void selectAndReadBMP(const char* default_location = NULL, bool verbose = true);
         void setDisplayIndex(int idx, bool verbose = true);
-        void setStaticPatternPath(const char* filename, bool verbose = true);
-        int getDisplayIndex();
-        int getWindowHeight();
-        int getWindowWidth();
-        const char* getOperationMode();
-        const char* getStaticPatternPath();
-        const char* getBaseDirectory();
-        SDL_Surface* getStaticPatternSurface();
+        virtual void setStaticPatternPath(const char* filename, bool verbose = true);
+        bool isWindowCreated() const;
+        bool isWindowMinimized() const;
+        int getWindowHeight() const;
+        int getWindowWidth() const;
     protected:
         SDL_Window *Window = NULL;
         SDL_Renderer *Renderer = NULL;

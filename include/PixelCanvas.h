@@ -53,6 +53,7 @@ public:
     void updateReal2Pattern(bool use_parallel = true);
     std::vector<uint8_t> getPatternCanvasRGB(bool use_parallel = true);
     std::vector<uint8_t> getRealCanvasRGB(bool use_parallel = true);
+    static std::vector<uint32_t> createSolidPattern(uint32_t color = 0, int num_elements = 0, bool use_parallel = true);
     static std::vector<uint8_t> convertPattern2RGB(uint8_t *pattern, int height, int width, int pitch, bool use_parallel = true);
     static std::vector<uint32_t> convertRGB2Pattern(uint8_t *rgb, int height, int width, int pitch, bool use_parallel = true);
 };

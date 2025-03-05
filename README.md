@@ -107,5 +107,6 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("setDisplayIndex", display_index)` - set the display index (0-index integer) of the window to the specified display, the order is the same as the one returned by `PatternWindowMex("getDisplayModes")`
 - `PatternWindowMex("displayColor", color=[0,0,0])` - display a color on the window, color is a 1x3 vector with RGB values
 - `PatternWindowMex("setStaticPatternPath", path, use_parallel=true)` - set the static pattern to be displayed on the window, path is the path to the BMP file
+- `PatternWindowMex("loadPatternMemoryFromPath", path, use_parallel=true)` - load the pattern memory from the BMP file, path is the path to the BMP file
 - `PatternWindowMex("convertPattern2RGB", pattern, use_parallel=true)` - convert the pattern to RGB format with parallel processing (true/false), pattern is an array of uint32 values, return the RGB pattern as a 3D array of uint8 values
 - `PatternWindowMex("convertRGB2Pattern", rgb_pattern, use_parallel=true)` - convert the RGB pattern to pattern with parallel processing (true/false), rgb_pattern is a 3D array of uint8 values, return the pattern as an array of uint32 values

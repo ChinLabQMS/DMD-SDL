@@ -24,8 +24,11 @@ private:
     bool LockState = false;
     TypedArray<uint8_t> StaticPatternRGBMex = factory.createArray({0, 0, 3}, 
                                               (uint8_t *) nullptr, (uint8_t *) nullptr);
+    TypedArray<uint32_t> StaticPatternMex = factory.createArray({0, 0}, 
+                                              (uint32_t *) nullptr, (uint32_t *) nullptr);
     void checkArguments(ArgumentList outputs, ArgumentList inputs);
 public:
+    MexFunction();
     void printf(const char* format, ...) override;
     void warn(const char* format, ...) override;
     void error(const char* format, ...) override;
@@ -33,15 +36,16 @@ public:
     void unlock();
     void setStaticPatternPath(const char* filepath, bool use_parallel = true);
     CharArray getOperationMode();
+    CharArray getBaseDirectory();
     CharArray getStaticPatternPath();
     StructArray getDisplayModes();
-    TypedArray<uint32_t> getStaticPattern();
+    TypedArray<uint32_t> getBMPSurfacePattern();
     TypedArray<uint32_t> getPatternCanvas();
     TypedArray<uint8_t> getPatternCanvasRGB(bool use_parallel = true);
     TypedArray<uint32_t> getRealCanvas();
     TypedArray<uint8_t> getRealCanvasRGB(bool use_parallel = true);
-    TypedArray<uint8_t> convertPattern2RGBMex(TypedArray<uint32_t> pattern, bool use_parallel = true);
-    TypedArray<uint32_t> convertRGB2PatternMex(TypedArray<uint8_t> rgb, bool use_parallel = true);
+    TypedArray<uint8_t> convertPattern2RGBMex(const TypedArray<uint32_t> pattern, bool use_parallel = true);
+    TypedArray<uint32_t> convertRGB2PatternMex(const TypedArray<uint8_t> rgb, bool use_parallel = true);
     void operator()(ArgumentList outputs, ArgumentList inputs) override;
 };
 

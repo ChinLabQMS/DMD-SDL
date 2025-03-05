@@ -6,6 +6,7 @@ int main(int argc, char* argv[]){
     window.init();
     window.open();
     window.selectAndProject();
+    window.printf("Finished selecting and projecting.");
     
     // Event loop
     SDL_Event event;

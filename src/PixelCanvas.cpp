@@ -137,6 +137,16 @@ std::vector<uint8_t> PixelCanvas::getRealCanvasRGB(bool use_parallel) {
     return convertPattern2RGB((uint8_t *) RealCanvas.data(), RealNumRows, RealNumCols, RealNumCols * 4, use_parallel);
 }
 
+// Create a test pattern with solid color
+std::vector<uint32_t> PixelCanvas::createSolidPattern(uint32_t color, int num_elements, bool use_parallel) {
+    std::vector<uint32_t> pattern(num_elements);
+    #pragma omp parallel for if(use_parallel)
+    for (int i = 0; i < num_elements; ++i) {
+        pattern[i] = 0xFF000000 | color;
+    }
+    return pattern;
+}
+
 // Convert Pattern to RGB (pixel takes 3 bytes in RGB format)
 std::vector<uint8_t> PixelCanvas::convertPattern2RGB(uint8_t *pattern, int height, int width, int pitch, bool use_parallel) {
     std::vector<uint8_t> rgb(3 * width * height);

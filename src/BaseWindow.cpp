@@ -1,6 +1,14 @@
 #include <string>
 #include "BaseWindow.h"
 
+void replaceBackslash(char *str) {
+    for (size_t i = 0; i < strlen(str); i++) {
+        if (str[i] == '\\') {
+            str[i] = '/';
+        }
+    }
+}
+
 BaseWindow::~BaseWindow() {
     close();
     SDL_free(Displays);
@@ -11,24 +19,25 @@ BaseWindow::~BaseWindow() {
     Displays = NULL;
     StaticPatternPath = NULL;
     BaseDirectory = NULL;
+    BMPSurface = NULL;
     SDL_Quit();
 }
 
-void BaseWindow::printf(const char *format, ...) {
+void BaseWindow::printf(const char *format, ...) const {
     va_list args;
     va_start(args, format);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, format, args);
     va_end(args);
 }
 
-void BaseWindow::error(const char *format, ...) {
+void BaseWindow::error(const char *format, ...) const {
     va_list args;
     va_start(args, format);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR, format, args);
     va_end(args);
 }
 
-void BaseWindow::warn(const char *format, ...) {
+void BaseWindow::warn(const char *format, ...) const {
     va_list args;
     va_start(args, format);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN, format, args);
@@ -78,8 +87,9 @@ void BaseWindow::init(bool verbose) {
             warn("No display with target resolution (%d, %d) found. Default to the last display, resolution (%d, %d).", 
                     TARGET_DISPLAY_WIDTH, TARGET_DISPLAY_HEIGHT, DisplayMode->w, DisplayMode->h);
     }
-    // Get default path for opening file dialog
+    // Get default path for opening file dialog, reformat to remove backslashes
     BaseDirectory = SDL_GetCurrentDirectory();
+    replaceBackslash(BaseDirectory);
     if (verbose)
         printf("Base directory: %s", BaseDirectory);
 }
@@ -154,17 +164,6 @@ void BaseWindow::close(bool verbose) {
     }
 }
 
-bool BaseWindow::isWindowCreated() {
-    return Window != NULL;
-}
-
-bool BaseWindow::isWindowMinimized() {
-    if (!Window) {
-        return false;
-    }
-    return SDL_GetWindowFlags(Window) & SDL_WINDOW_MINIMIZED;
-}
-
 // Display a solid color on the window
 void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     if (!Window) {
@@ -191,6 +190,7 @@ void BaseWindow::readBMP(const char* filename, SDL_Surface **surface, bool verbo
             printf("BMP file loaded successfully: %s", filename);
         }
         if (surface) {
+            SDL_DestroySurface(*surface);
             *surface = SDL_ConvertSurface(bitmap_surface, SDL_PIXELFORMAT_ARGB8888);
         }
         else {
@@ -283,8 +283,15 @@ void SDLCALL callbackStaticFileSelect(void* userdata, const char* const* filelis
     else if (!*filelist)
         window->warn("The user did not select any file.");
     else {
-        window->setStaticPatternPath(*filelist);
+        window->setStaticPatternPath(*filelist, false);
     }
+    SDL_Event user_event;
+    SDL_zero(user_event);
+    user_event.type = SDL_EVENT_USER;
+    user_event.user.code = 0;
+    user_event.user.data1 = NULL;
+    user_event.user.data2 = NULL;
+    SDL_PushEvent(&user_event);
 }
 
 // Select files from the file system
@@ -299,6 +306,15 @@ void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
             printf("Default location (static pattern): NULL");
     }
     SDL_ShowOpenFileDialog(callbackStaticFileSelect, this, NULL, filters, 2, default_location, false);
+    // Delay the return until the user input is received
+    SDL_Event event;
+    while (true) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_USER) {
+                return;
+            }
+        }
+    }
 }
 
 void SDLCALL callbackStaticReadFileSelect(void* userdata, const char* const* filelist, int filter) {
@@ -310,6 +326,13 @@ void SDLCALL callbackStaticReadFileSelect(void* userdata, const char* const* fil
     else {
         window->readBMP(*filelist, NULL, false);
     }
+    SDL_Event user_event;
+    SDL_zero(user_event);
+    user_event.type = SDL_EVENT_USER;
+    user_event.user.code = 0;
+    user_event.user.data1 = NULL;
+    user_event.user.data2 = NULL;
+    SDL_PushEvent(&user_event);
 }
 
 void BaseWindow::selectAndReadBMP(const char* default_location, bool verbose) {
@@ -323,6 +346,15 @@ void BaseWindow::selectAndReadBMP(const char* default_location, bool verbose) {
             printf("Default location (BMP file): NULL");
     }
     SDL_ShowOpenFileDialog(callbackStaticReadFileSelect, this, NULL, filters, 2, default_location, false);
+    // Delay the return until the user input is received
+    SDL_Event event;
+    while (true) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_USER) {
+                return;
+            }
+        }
+    }
 }
 
 void BaseWindow::setDisplayIndex(int idx, bool verbose) {
@@ -341,36 +373,27 @@ void BaseWindow::setDisplayIndex(int idx, bool verbose) {
     }
 }
 
-int BaseWindow::getDisplayIndex() {
-    return DisplayIndex;
+bool BaseWindow::isWindowCreated() const {
+    return Window != NULL;
 }
 
-int BaseWindow::getWindowHeight() {
+bool BaseWindow::isWindowMinimized() const {
+    if (!Window) {
+        return false;
+    }
+    return SDL_GetWindowFlags(Window) & SDL_WINDOW_MINIMIZED;
+}
+
+int BaseWindow::getWindowHeight() const {
     if (Window)
         return WindowHeight;
     else
         return 0;
 }
 
-int BaseWindow::getWindowWidth() {
+int BaseWindow::getWindowWidth() const {
     if (Window)
         return WindowWidth;
     else
         return 0;
-}
-
-const char* BaseWindow::getOperationMode() {
-    return OperationMode;
-}
-
-const char* BaseWindow::getStaticPatternPath() {
-    return StaticPatternPath;
-}
-
-const char* BaseWindow::getBaseDirectory() {
-    return BaseDirectory;
-}
-
-SDL_Surface* BaseWindow::getStaticPatternSurface() {
-    return StaticPatternSurface;
 }
