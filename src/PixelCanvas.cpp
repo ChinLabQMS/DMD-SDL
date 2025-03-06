@@ -1,13 +1,12 @@
 #include <PixelCanvas.h>
 
-PixelCanvas::~PixelCanvas() {
-    closeCanvas();
+PixelCanvas::PixelCanvas(std::string arrangement) {
+    PixelArrangement = std::move(arrangement);
 }
 
 // Initialize Canvas to a specific arrangement and size
 // Compute forward and reverse mapping between pattern and real canvas
-void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool use_parallel) {
-    PixelArrangement = std::move(arrangement);
+void PixelCanvas::initCanvas(int nrows, int ncols, bool use_parallel) {
     NumRows = nrows;
     NumCols = ncols;
     PatternNumPixels = NumRows * NumCols;

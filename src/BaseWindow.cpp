@@ -10,7 +10,7 @@ void replaceBackslash(char *str) {
 }
 
 BaseWindow::~BaseWindow() {
-    close();
+    close(false);
     SDL_free(Displays);
     SDL_free(StaticPatternPath);
     SDL_free(BaseDirectory);
@@ -23,21 +23,21 @@ BaseWindow::~BaseWindow() {
     SDL_Quit();
 }
 
-void BaseWindow::printf(const char *format, ...) const {
+void BaseWindow::printf(const char *format, ...) {
     va_list args;
     va_start(args, format);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, format, args);
     va_end(args);
 }
 
-void BaseWindow::error(const char *format, ...) const {
+void BaseWindow::error(const char *format, ...) {
     va_list args;
     va_start(args, format);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR, format, args);
     va_end(args);
 }
 
-void BaseWindow::warn(const char *format, ...) const {
+void BaseWindow::warn(const char *format, ...) {
     va_list args;
     va_start(args, format);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN, format, args);
@@ -159,6 +159,8 @@ void BaseWindow::close(bool verbose) {
         Renderer = NULL;
         Texture = NULL;
         StaticPatternSurface = NULL;
+        WindowWidth = 0;
+        WindowHeight = 0;
         if (verbose) {
             printf("Window closed.");}
     }
@@ -186,9 +188,6 @@ void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
 void BaseWindow::readBMP(const char* filename, SDL_Surface **surface, bool verbose) {
     SDL_Surface *bitmap_surface = SDL_LoadBMP(filename);
     if (bitmap_surface) {
-        if (verbose) {
-            printf("BMP file loaded successfully: %s", filename);
-        }
         if (surface) {
             SDL_DestroySurface(*surface);
             *surface = SDL_ConvertSurface(bitmap_surface, SDL_PIXELFORMAT_ARGB8888);
@@ -198,6 +197,13 @@ void BaseWindow::readBMP(const char* filename, SDL_Surface **surface, bool verbo
             BMPSurface = SDL_ConvertSurface(bitmap_surface, SDL_PIXELFORMAT_ARGB8888);
         }
         SDL_DestroySurface(bitmap_surface);
+        SDL_free(BMPPath);
+        BMPPath = (char*) SDL_malloc(256);
+        snprintf(BMPPath, 256, "%s", filename);
+        replaceBackslash(BMPPath);
+        if (verbose) {
+            printf("BMP file loaded successfully from path:\n\t%s", filename);
+        }
     } else {
         error("Surface could not be created from BMP file: %s", SDL_GetError());
     }
@@ -212,6 +218,8 @@ void BaseWindow::setStaticPatternPath(const char* filepath,
     SDL_free(StaticPatternPath);
     StaticPatternPath = (char*) SDL_malloc(256);
     snprintf(StaticPatternPath, 256, "%s", filepath);
+    replaceBackslash(StaticPatternPath);
+    // If the window is not created, return
     if (!Window) {
         return;
     }
@@ -264,7 +272,7 @@ void BaseWindow::setDynamicPattern(void* pattern, bool verbose, bool use_paralle
     SDL_RenderTexture(Renderer, Texture, NULL, NULL);
     SDL_RenderPresent(Renderer);
     if (verbose) {
-        printf("Pattern projected successfully.");
+        printf("Dynamic pattern projected successfully.");
     }
     SDL_free(OperationMode);
     OperationMode = (char*) SDL_malloc(256);
@@ -299,12 +307,6 @@ void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
     if (!default_location) {
         default_location = BaseDirectory;
     }
-    if (verbose) {
-        if (default_location)
-            printf("Default location (static pattern): %s", default_location);
-        else
-            printf("Default location (static pattern): NULL");
-    }
     SDL_ShowOpenFileDialog(callbackStaticFileSelect, this, NULL, filters, 2, default_location, false);
     // Delay the return until the user input is received
     SDL_Event event;
@@ -315,6 +317,9 @@ void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
             }
         }
     }
+    if (verbose) {
+        printf("Static pattern is projected from path:\n\t%s", StaticPatternPath);
+    }
 }
 
 void SDLCALL callbackStaticReadFileSelect(void* userdata, const char* const* filelist, int filter) {
@@ -322,7 +327,7 @@ void SDLCALL callbackStaticReadFileSelect(void* userdata, const char* const* fil
     if (!filelist)
         window->error("An error occured during file selection: %s", SDL_GetError());
     else if (!*filelist)
-        window->error("The user did not select any file.");
+        window->warn("The user did not select any file.");
     else {
         window->readBMP(*filelist, NULL, false);
     }
@@ -339,12 +344,6 @@ void BaseWindow::selectAndReadBMP(const char* default_location, bool verbose) {
     if (!default_location) {
         default_location = BaseDirectory;
     }
-    if (verbose) {
-        if (default_location)
-            printf("Default location (BMP file): %s", default_location);
-        else
-            printf("Default location (BMP file): NULL");
-    }
     SDL_ShowOpenFileDialog(callbackStaticReadFileSelect, this, NULL, filters, 2, default_location, false);
     // Delay the return until the user input is received
     SDL_Event event;
@@ -354,6 +353,9 @@ void BaseWindow::selectAndReadBMP(const char* default_location, bool verbose) {
                 return;
             }
         }
+    }
+    if (verbose) {
+        printf("BMP file loaded from path:\n\t%s", StaticPatternPath);
     }
 }
 
@@ -384,16 +386,11 @@ bool BaseWindow::isWindowMinimized() const {
     return SDL_GetWindowFlags(Window) & SDL_WINDOW_MINIMIZED;
 }
 
-int BaseWindow::getWindowHeight() const {
-    if (Window)
-        return WindowHeight;
-    else
-        return 0;
-}
-
-int BaseWindow::getWindowWidth() const {
-    if (Window)
-        return WindowWidth;
-    else
-        return 0;
+void BaseWindow::checkWindowState() {
+    if (!isWindowCreated()) {
+        error("Window is not created.");
+    }
+    if (isWindowMinimized()) {
+        error("Window is minimized.");
+    }
 }

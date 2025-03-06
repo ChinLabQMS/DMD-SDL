@@ -52,8 +52,8 @@ void MexFunction::unlock() {
 }
 
 // Set the path to the static pattern image file
-void MexFunction::setStaticPatternPath(const char* filepath, bool use_parallel) {
-    PatternWindow::setStaticPatternPath(filepath, use_parallel);
+void MexFunction::setStaticPatternPath(const char* filepath, bool verbose, bool use_parallel) {
+    PatternWindow::setStaticPatternPath(filepath, verbose, use_parallel);
     // Update the Matlab array of the static pattern
     if (StaticPatternSurface) {
         uint32_t * pixels = (uint32_t*) StaticPatternSurface->pixels;

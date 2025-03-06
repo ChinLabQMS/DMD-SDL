@@ -20,23 +20,22 @@ const int RENDERER_VSYNC = 1;
 class BaseWindow {
     public:
         ~BaseWindow();
-        virtual void printf(const char* format, ...) const;
-        virtual void error(const char* format, ...) const;
-        virtual void warn(const char* format, ...) const;
-        void init(bool verbose = true);
-        virtual void open(bool verbose = true);
-        virtual void close(bool verbose = true);
-        void displayColor(int r = 0, int g = 0, int b = 0, bool verbose = true);
-        void readBMP(const char* filename, SDL_Surface **surface, bool verbose = true);
-        void setDynamicPattern(void* pattern, bool verbose = true, bool use_parallel = true);
-        void selectAndProject(const char* default_location = NULL, bool verbose = true);
-        void selectAndReadBMP(const char* default_location = NULL, bool verbose = true);
-        void setDisplayIndex(int idx, bool verbose = true);
-        virtual void setStaticPatternPath(const char* filename, bool verbose = true);
+        virtual void printf(const char* format, ...);
+        virtual void error(const char* format, ...);
+        virtual void warn(const char* format, ...);
+        void init(bool verbose);
+        virtual void open(bool verbose);
+        virtual void close(bool verbose);
+        void displayColor(int r, int g, int b, bool verbose);
+        void readBMP(const char* filename, SDL_Surface **surface, bool verbose);
+        void setDynamicPattern(void* pattern, bool verbose, bool use_parallel);
+        void selectAndProject(const char* default_location, bool verbose);
+        void selectAndReadBMP(const char* default_location, bool verbose);
+        void setDisplayIndex(int idx, bool verbose);
+        virtual void setStaticPatternPath(const char* filename, bool verbose);
         bool isWindowCreated() const;
         bool isWindowMinimized() const;
-        int getWindowHeight() const;
-        int getWindowWidth() const;
+        void checkWindowState();
     protected:
         SDL_Window *Window = NULL;
         SDL_Renderer *Renderer = NULL;
@@ -46,8 +45,9 @@ class BaseWindow {
         SDL_DisplayID *Displays = NULL;
         SDL_DisplayID DisplayID;
         SDL_DisplayMode *DisplayMode = NULL;
-        int WindowWidth, WindowHeight, NumDisplays, DisplayIndex;
+        int WindowWidth = 0, WindowHeight = 0, NumDisplays, DisplayIndex;
         int ColorModeR = 0, ColorModeG = 0, ColorModeB = 0;
+        char *BMPPath = NULL;
         char *StaticPatternPath = NULL;
         char *BaseDirectory = NULL;
         char *OperationMode = NULL;

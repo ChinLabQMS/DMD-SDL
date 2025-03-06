@@ -42,12 +42,12 @@ public:
     std::vector<uint32_t> RealCanvas; // Real canvas, size = RealNumPixels
     std::vector<std::vector<uint32_t>> PatternMemory; // Pattern memory, resizable
 
-    ~PixelCanvas();
-    void initCanvas(int nrows, int ncols, std::string arrangement = "Diamond", bool use_parallel = true);
+    PixelCanvas(std::string arrangement = "Diamond");
+    void initCanvas(int nrows, int ncols, bool use_parallel = true);
     void resetBackground(uint32_t background_color = 0xFF0000, bool use_parallel = true);
     void resetPattern(uint32_t pattern_color = 0, bool use_parallel = true);
     void clearPatternMemory();
-    void loadPatternMemory(const uint32_t *pattern, size_t num_elements);
+    virtual void loadPatternMemory(const uint32_t *pattern, size_t num_elements);
     void closeCanvas();
     void updatePattern2Real(bool use_parallel = true);
     void updateReal2Pattern(bool use_parallel = true);
