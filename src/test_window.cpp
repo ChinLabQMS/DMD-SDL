@@ -11,9 +11,9 @@ int main(int argc, char* argv[]){
     measureExecutionTime("Read BMP", &BaseWindow::readBMP, window, (const char*) "../resources/text/CHIN.bmp", (SDL_Surface **) NULL, true);
 
     // Set static pattern
-    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/CHIN.bmp", false);
-    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/QMS.bmp", false);
-    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/RGB.bmp", false);
+    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/CHIN.bmp", true);
+    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/QMS.bmp", true);
+    measureExecutionTime("Set static pattern path", &BaseWindow::setStaticPatternPath, window, (const char*) "../resources/text/RGB.bmp", true);
     SDL_Delay(2000);
 
     // Set dynamic pattern
@@ -55,12 +55,12 @@ int main(int argc, char* argv[]){
     SDL_Delay(2000);
     std::cout << "Testing dynamic pattern projection..." << std::endl;
     measureExecutionTime("Set dynamic pattern", &BaseWindow::setDynamicPattern, window, (void *) pattern[23], false, false);
-    SDL_Delay(10000);
+    SDL_Delay(2000);
 
-    window.selectAndProject();
+    window.selectAndProject(NULL, true);
+    SDL_Delay(2000);
 
     measureExecutionTime("Close window", &BaseWindow::close, window, true);
-
     std::cout << "Test complete." << std::endl;
     std::cout << "Press any key to exit." << std::endl;
     std::cin.get();

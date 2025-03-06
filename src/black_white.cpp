@@ -2,8 +2,8 @@
 
 int main(int argc, char* argv[]){
     BaseWindow window;
-    window.init();
-    window.open();
+    window.init(true);
+    window.open(true);
     
     // Event loop
     SDL_Event event;

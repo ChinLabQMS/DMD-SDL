@@ -41,21 +41,20 @@ public:
     std::vector<uint32_t> PatternCanvas; // Pattern canvas, size = PatternNumPixels
     std::vector<uint32_t> RealCanvas; // Real canvas, size = RealNumPixels
     std::vector<std::vector<uint32_t>> PatternMemory; // Pattern memory, resizable
-
-    PixelCanvas(std::string arrangement = "Diamond");
-    void initCanvas(int nrows, int ncols, bool use_parallel = true);
-    void resetBackground(uint32_t background_color = 0xFF0000, bool use_parallel = true);
-    void resetPattern(uint32_t pattern_color = 0, bool use_parallel = true);
+    
+    void initCanvas(int nrows, int ncols, std::string arrangement, bool use_parallel);
+    void closeCanvas();
+    void resetBackground(uint32_t background_color, bool use_parallel);
+    void resetPattern(uint32_t pattern_color, bool use_parallel);
     void clearPatternMemory();
     virtual void loadPatternMemory(const uint32_t *pattern, size_t num_elements);
-    void closeCanvas();
-    void updatePattern2Real(bool use_parallel = true);
-    void updateReal2Pattern(bool use_parallel = true);
-    std::vector<uint8_t> getPatternCanvasRGB(bool use_parallel = true);
-    std::vector<uint8_t> getRealCanvasRGB(bool use_parallel = true);
-    static std::vector<uint32_t> createSolidPattern(uint32_t color = 0, int num_elements = 0, bool use_parallel = true);
-    static std::vector<uint8_t> convertPattern2RGB(uint8_t *pattern, int height, int width, int pitch, bool use_parallel = true);
-    static std::vector<uint32_t> convertRGB2Pattern(uint8_t *rgb, int height, int width, int pitch, bool use_parallel = true);
+    void drawPixelsOnReal(std::vector<int> real_idx, uint32_t color, bool use_parallel);
+    void drawPixelsOnRealBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel);
+    std::vector<uint8_t> getPatternCanvasRGB(bool use_parallel);
+    std::vector<uint8_t> getRealCanvasRGB(bool use_parallel);
+    static std::vector<uint32_t> createSolidPattern(uint32_t color, int num_elements, bool use_parallel);
+    static std::vector<uint8_t> convertPattern2RGB(uint8_t *pattern, int height, int width, int pitch, bool use_parallel);
+    static std::vector<uint32_t> convertRGB2Pattern(uint8_t *rgb, int height, int width, int pitch, bool use_parallel);
 };
 
 #endif // PIXELCANVAS_H

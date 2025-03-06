@@ -3,10 +3,9 @@
 
 int main(int argc, char* argv[]){
     BaseWindow window;
-    window.init();
-    window.open();
-    window.selectAndProject();
-    window.printf("Finished selecting and projecting.");
+    window.init(true);
+    window.open(true);
+    window.selectAndProject(NULL, true);
     
     // Event loop
     SDL_Event event;

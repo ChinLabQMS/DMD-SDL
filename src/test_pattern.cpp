@@ -3,13 +3,15 @@
 
 int main() {
     PatternWindow window;
+    window.init(true);
     
-    measureExecutionTime("Open window", &PatternWindow::open, window, (std::string) "Diamond", true);
-    measureExecutionTime("Set static pattern path", &PatternWindow::setStaticPatternPath, window, (const char *) "../resources/text/RGB.bmp", true);
-    measureExecutionTime("Close window", &PatternWindow::close, window);
+    measureExecutionTime("Open window", &PatternWindow::open2, window, (std::string) "Diamond", true, true);
+    measureExecutionTime("Set static pattern path", &PatternWindow::setStaticPatternPath2, window, (const char *) "../resources/text/RGB.bmp", true, true);
+    measureExecutionTime("Close window", &PatternWindow::close, window, true);
 
-    window.open("Diamond", true);
-    window.selectAndProject();
+    window.open2("Diamond", true, true);
+    SDL_Delay(10000);
+    window.selectAndProject(NULL, true);
 
     // Set dynamic pattern
     size_t pattern_size = window.getWindowWidth() * window.getWindowHeight();

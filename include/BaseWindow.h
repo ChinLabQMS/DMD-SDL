@@ -35,6 +35,8 @@ class BaseWindow {
         virtual void setStaticPatternPath(const char* filename, bool verbose);
         bool isWindowCreated() const;
         bool isWindowMinimized() const;
+        int getWindowWidth() const;
+        int getWindowHeight() const;
         void checkWindowState();
     protected:
         SDL_Window *Window = NULL;

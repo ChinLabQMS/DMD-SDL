@@ -1,12 +1,9 @@
 #include <PixelCanvas.h>
 
-PixelCanvas::PixelCanvas(std::string arrangement) {
-    PixelArrangement = std::move(arrangement);
-}
-
 // Initialize Canvas to a specific arrangement and size
 // Compute forward and reverse mapping between pattern and real canvas
-void PixelCanvas::initCanvas(int nrows, int ncols, bool use_parallel) {
+void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool use_parallel) {
+    PixelArrangement = std::move(arrangement);
     NumRows = nrows;
     NumCols = ncols;
     PatternNumPixels = NumRows * NumCols;
@@ -35,7 +32,8 @@ void PixelCanvas::initCanvas(int nrows, int ncols, bool use_parallel) {
         }
     }
     else {
-        throw std::invalid_argument("Invalid pixel arrangement.");
+        std::cerr << "Invalid Pixel Arrangement: " << PixelArrangement << std::endl;
+        exit(1);
     }
     // Assign real to pattern index mapping
     Real2PatternIndex.resize(RealNumPixels);
@@ -58,8 +56,26 @@ void PixelCanvas::initCanvas(int nrows, int ncols, bool use_parallel) {
     }
     PatternCanvas.resize(PatternNumPixels, 0);
     RealCanvas.resize(RealNumPixels, 0);
-    resetBackground();
-    resetPattern();
+    resetBackground(0xFFFF0000, use_parallel);
+    resetPattern(0xFF000000, use_parallel);
+}
+
+// Cleanup Function
+void PixelCanvas::closeCanvas() {
+    PixelArrangement.clear();
+    Pattern2RealIndex.clear();
+    Background2RealIndex.clear();
+    Real2PatternIndex.clear();
+    PatternCanvas.clear();
+    RealCanvas.clear();
+    clearPatternMemory();
+    NumRows = 0;
+    NumCols = 0;
+    RealNumRows = 0;
+    RealNumCols = 0;
+    PatternNumPixels = 0;
+    BackgroundNumPixels = 0;
+    RealNumPixels = 0;
 }
 
 // Reset Background
@@ -89,40 +105,43 @@ void PixelCanvas::clearPatternMemory() {
 
 // Load a pattern to PatternMemory
 void PixelCanvas::loadPatternMemory(const uint32_t *pattern, size_t num_elements) {
+    if ((int) num_elements != PatternNumPixels) {
+        std::cerr << "Pattern size (" << num_elements << ") does not match canvas size (" << PatternNumPixels << ")!" << std::endl;
+        exit(1);
+    }
     PatternMemory.push_back(std::vector<uint32_t>(pattern, pattern + num_elements));
 }
 
-// Cleanup Function
-void PixelCanvas::closeCanvas() {
-    PixelArrangement.clear();
-    Pattern2RealIndex.clear();
-    Background2RealIndex.clear();
-    Real2PatternIndex.clear();
-    PatternCanvas.clear();
-    RealCanvas.clear();
-    clearPatternMemory();
-    NumRows = 0;
-    NumCols = 0;
-    RealNumRows = 0;
-    RealNumCols = 0;
-    PatternNumPixels = 0;
-    BackgroundNumPixels = 0;
-    RealNumPixels = 0;
-}
-
-// Update Pattern to Real
-void PixelCanvas::updatePattern2Real(bool use_parallel) {
+// Draw Pixels on Real Canvas
+void PixelCanvas::drawPixelsOnReal(std::vector<int> real_idx, uint32_t color, bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
-    for (size_t i = 0; i < PatternCanvas.size(); ++i) {
-        PatternCanvas[i] = RealCanvas[Pattern2RealIndex[i]];
+    for (size_t i = 0; i < real_idx.size(); ++i) {
+        int reali = real_idx[i];
+        int patterni = Real2PatternIndex[reali];
+        if (patterni != -1) {
+            RealCanvas[reali] = color;
+            PatternCanvas[patterni] = color;
+        }
     }
 }
 
-// Update Real to Pattern
-void PixelCanvas::updateReal2Pattern(bool use_parallel) {
+// Draw Pixels on Real Canvas with Bit Plane
+void PixelCanvas::drawPixelsOnRealBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
-    for (size_t i = 0; i < PatternCanvas.size(); ++i) {
-        RealCanvas[Pattern2RealIndex[i]] = PatternCanvas[i];
+    for (size_t i = 0; i < real_idx.size(); ++i) {
+        uint32_t mask = 1 << bit_plane;
+        int reali = real_idx[i];
+        int patterni = Real2PatternIndex[reali];
+        if (patterni != -1) {
+            if (color) {
+                RealCanvas[reali] |= mask;
+                PatternCanvas[patterni] |= mask;
+            }
+            else {
+                RealCanvas[reali] &= ~mask;
+                PatternCanvas[patterni] &= ~mask;
+            }
+        }
     }
 }
 
@@ -134,16 +153,6 @@ std::vector<uint8_t> PixelCanvas::getPatternCanvasRGB(bool use_parallel) {
 // Get Real Canvas in RGB format
 std::vector<uint8_t> PixelCanvas::getRealCanvasRGB(bool use_parallel) {
     return convertPattern2RGB((uint8_t *) RealCanvas.data(), RealNumRows, RealNumCols, RealNumCols * 4, use_parallel);
-}
-
-// Create a test pattern with solid color
-std::vector<uint32_t> PixelCanvas::createSolidPattern(uint32_t color, int num_elements, bool use_parallel) {
-    std::vector<uint32_t> pattern(num_elements);
-    #pragma omp parallel for if(use_parallel)
-    for (int i = 0; i < num_elements; ++i) {
-        pattern[i] = 0xFF000000 | color;
-    }
-    return pattern;
 }
 
 // Convert Pattern to RGB (pixel takes 3 bytes in RGB format)
@@ -172,6 +181,16 @@ std::vector<uint32_t> PixelCanvas::convertRGB2Pattern(uint8_t *rgb, int height, 
             int pattern_index = i * width + j;
             pattern[pattern_index] = (0xFF000000) | (rgb[pixel_index] << 16) | (rgb[pixel_index + 1] << 8) | rgb[pixel_index + 2];
         }
+    }
+    return pattern;
+}
+
+// Create a test pattern with solid color
+std::vector<uint32_t> PixelCanvas::createSolidPattern(uint32_t color, int num_elements, bool use_parallel) {
+    std::vector<uint32_t> pattern(num_elements);
+    #pragma omp parallel for if(use_parallel)
+    for (int i = 0; i < num_elements; ++i) {
+        pattern[i] = 0xFF000000 | color;
     }
     return pattern;
 }

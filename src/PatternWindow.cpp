@@ -1,20 +1,14 @@
 #include "PatternWindow.h"
 
-PatternWindow::PatternWindow(std::string arrangement) : BaseWindow(), PixelCanvas(arrangement) {}
-
-// Override the BaseWindow open function
 void PatternWindow::open(bool verbose) {
-    BaseWindow::open(verbose);
-    if (Window) {
-        initCanvas(WindowHeight, WindowWidth, true);
-    }
+    error("Please use the overloaded open2 function with additional parameters for canvas initialization.");
 }
 
 // Every time the window is opened, the canvas is initialized
-void PatternWindow::open(bool verbose, bool use_parallel) {
+void PatternWindow::open2(std::string arrangement, bool verbose, bool use_parallel) {
     BaseWindow::open(verbose);
     if (Window) {
-        initCanvas(WindowHeight, WindowWidth, use_parallel);
+        initCanvas(WindowHeight, WindowWidth, arrangement, use_parallel);
     }
 }
 
@@ -26,12 +20,12 @@ void PatternWindow::close(bool verbose) {
 
 // Set the path to the static pattern image file; override the BaseWindow setStaticPatternPath function
 void PatternWindow::setStaticPatternPath(const char *filepath, bool verbose) {
-    this->setStaticPatternPath(filepath, verbose, true);
+    setStaticPatternPath2(filepath, verbose, true);
 }
 
 // Set the path to the static pattern image file with an additional parameter for parallel processing
-void PatternWindow::setStaticPatternPath(const char *filepath, bool verbose, bool use_parallel) {
-    BaseWindow::setStaticPatternPath(filepath, false);
+void PatternWindow::setStaticPatternPath2(const char *filepath, bool verbose, bool use_parallel) {
+    BaseWindow::setStaticPatternPath(filepath, verbose);
     if (StaticPatternSurface) {
         StaticPatternRGB = convertPattern2RGB((uint8_t *) StaticPatternSurface->pixels, 
                                               StaticPatternSurface->h, 
@@ -41,14 +35,6 @@ void PatternWindow::setStaticPatternPath(const char *filepath, bool verbose, boo
     }
     else {
         StaticPatternRGB.clear();
-    }
-}
-
-// Load a pattern memory from an array of pixel data, override the PixelCanvas loadPatternMemory function
-void PatternWindow::loadPatternMemory(const uint32_t *pattern, size_t num_elements) {
-    if (num_elements != PatternNumPixels) {
-        error("Pattern size (%d) does not match canvas size (%d)!", num_elements, PatternNumPixels);
-        return;
     }
 }
 
@@ -68,13 +54,13 @@ void PatternWindow::loadPatternMemoryFromFile(const char *filepath, bool verbose
     }
 }
 
-void PatternWindow::displayPatternMemory(bool use_parallel) {
+void PatternWindow::displayPatternMemory(bool verbose, bool use_parallel) {
     if (!Window) {
         error("Window is not open.");
         return;
     } else {
         for (size_t i = 0; i < PatternMemory.size(); ++i) {
-            setDynamicPattern(PatternMemory[i].data(), false, use_parallel);
+            setDynamicPattern(PatternMemory[i].data(), verbose, use_parallel);
         }
     }
 }

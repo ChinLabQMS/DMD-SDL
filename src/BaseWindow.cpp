@@ -313,12 +313,12 @@ void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
     while (true) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_USER) {
+                if (verbose) {
+                    printf("Static pattern is projected from path:\n\t%s", StaticPatternPath);
+                }
                 return;
             }
         }
-    }
-    if (verbose) {
-        printf("Static pattern is projected from path:\n\t%s", StaticPatternPath);
     }
 }
 
@@ -350,12 +350,12 @@ void BaseWindow::selectAndReadBMP(const char* default_location, bool verbose) {
     while (true) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_USER) {
+                if (verbose) {
+                    printf("BMP file loaded from path:\n\t%s", StaticPatternPath);
+                }
                 return;
             }
         }
-    }
-    if (verbose) {
-        printf("BMP file loaded from path:\n\t%s", StaticPatternPath);
     }
 }
 
@@ -386,11 +386,18 @@ bool BaseWindow::isWindowMinimized() const {
     return SDL_GetWindowFlags(Window) & SDL_WINDOW_MINIMIZED;
 }
 
+int BaseWindow::getWindowWidth() const {
+    return WindowWidth;
+}
+
+int BaseWindow::getWindowHeight() const {
+    return WindowHeight;
+}
+
 void BaseWindow::checkWindowState() {
     if (!isWindowCreated()) {
         error("Window is not created.");
-    }
-    if (isWindowMinimized()) {
+    } else if (isWindowMinimized()) {
         error("Window is minimized.");
     }
 }
