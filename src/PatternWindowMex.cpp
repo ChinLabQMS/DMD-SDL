@@ -113,17 +113,6 @@ StructArray MexFunction::getDisplayModes() {
     return display_modes;
 }
 
-TypedArray<uint32_t> MexFunction::getBMPSurfacePattern() {
-    if (BMPSurface) {
-        return factory.createArray({ (size_t) BMPSurface->h, (size_t) BMPSurface->w }, 
-                                    (uint32_t *) BMPSurface->pixels, 
-                                    (uint32_t *) BMPSurface->pixels + BMPSurface->h * BMPSurface->w, 
-                                    InputLayout::ROW_MAJOR);
-    } else {
-        return factory.createArray({0, 0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
-    }
-}
-
 // Get the pattern canvas as a MATLAB array
 TypedArray<uint32_t> MexFunction::getPatternCanvas() {
     if (PatternCanvas.size() > 0) {
@@ -136,7 +125,7 @@ TypedArray<uint32_t> MexFunction::getPatternCanvas() {
 }
 
 // Get the pattern canvas as a MATLAB RGB array
-TypedArray<uint8_t> MexFunction::getPatternCanvasRGB(bool use_parallel) {
+TypedArray<uint8_t> MexFunction::getPatternCanvasRGBMex(bool use_parallel) {
     if (PatternCanvas.size() > 0) {
         std::vector<uint8_t> pattern_rgb = PixelCanvas::getPatternCanvasRGB(use_parallel);
         return factory.createArray({ (size_t) WindowHeight, (size_t) WindowWidth, 3 },
@@ -159,11 +148,36 @@ TypedArray<uint32_t> MexFunction::getRealCanvas() {
 }
 
 // Get the real canvas as a MATLAB RGB array
-TypedArray<uint8_t> MexFunction::getRealCanvasRGB(bool use_parallel) {
+TypedArray<uint8_t> MexFunction::getRealCanvasRGBMex(bool use_parallel) {
     if (RealCanvas.size() > 0) {
         std::vector<uint8_t> real_rgb = PixelCanvas::getRealCanvasRGB(use_parallel);
         return factory.createArray({ (size_t) RealNumRows, (size_t) RealNumCols, 3 }, 
                                     real_rgb.begin(), real_rgb.end(), 
+                                    InputLayout::ROW_MAJOR);
+    } else {
+        return factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
+    }
+}
+
+TypedArray<double> MexFunction::getNumLoadedPatterns() {
+    return factory.createScalar((double) PatternMemory.size());
+}
+
+TypedArray<uint32_t> MexFunction::getPatternMemory(int index) {
+    if (index < PatternMemory.size()) {
+        return factory.createArray({ (size_t) PatternMemory[index].size() }, 
+                                    PatternMemory[index].begin(), PatternMemory[index].end(), 
+                                    InputLayout::ROW_MAJOR);
+    } else {
+        return factory.createArray({0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
+    }
+}
+
+TypedArray<uint8_t> MexFunction::getPatternMemoryRGBMex(int index, bool use_parallel) {
+    if (index < PatternMemory.size()) {
+        std::vector<uint8_t> pattern_rgb = getPatternMemoryRGB(index, use_parallel);
+        return factory.createArray({ (size_t) NumRows, (size_t) NumCols, 3 }, 
+                                    pattern_rgb.begin(), pattern_rgb.end(), 
                                     InputLayout::ROW_MAJOR);
     } else {
         return factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
@@ -258,9 +272,9 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "getDisplayIndex") {
             outputs[0] = factory.createScalar<double>(DisplayIndex);
         } else if (func[0] == "getWindowHeight") {
-            outputs[0] = factory.createScalar(getWindowHeight());
+            outputs[0] = factory.createScalar(WindowHeight);
         } else if (func[0] == "getWindowWidth") {
-            outputs[0] = factory.createScalar(getWindowWidth());
+            outputs[0] = factory.createScalar(WindowWidth);
         } else if (func[0] == "getOperationMode") {
             outputs[0] = getOperationMode();
         } else if (func[0] == "getStaticPatternPath") {
@@ -272,19 +286,19 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "getPatternCanvas") {
             outputs[0] = getPatternCanvas();
         } else if (func[0] == "getPatternCanvasRGB") {
-            outputs[0] = getPatternCanvasRGB();
+            outputs[0] = getPatternCanvasRGBMex(true);
         } else if (func[0] == "getRealCanvas") {
             outputs[0] = getRealCanvas();
         } else if (func[0] == "getRealCanvasRGB") {
-            outputs[0] = getRealCanvasRGB();
+            outputs[0] = getRealCanvasRGBMex(true);
+        } else if (func[0] == "getNumLoadedPatterns") {
+            outputs[0] = getNumLoadedPatterns();
         } else if (func[0] == "displayColor") {
             displayColor(0, 0, 0, true);
         } else if (func[0] == "selectAndProject") {
             selectAndProject(NULL, true);
-        } else if (func[0] == "selectAndReadBMP") {
-            selectAndReadBMP(NULL, true);
-        } else if (func[0] == "getBMPSurfacePattern") {
-            outputs[0] = getBMPSurfacePattern();
+        } else if (func[0] == "selectAndLoadPatternMemory") {
+            selectAndLoadPatternMemory(NULL, true, true);
         } else {
             error("Invalid function name with zero input.");
         }
@@ -294,18 +308,30 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
     if (inputs.size() == 2) {
         if (func[0] == "open") {
             open(inputs[1][0]);
+        } else if (func[0] == "close") {
+            close(inputs[1][0]);
+        } else if (func[0] == "getPatternMemory") {
+            outputs[0] = getPatternMemory(inputs[1][0]);
+        } else if (func[0] == "getPatternMemoryRGB") {
+            outputs[0] = getPatternMemoryRGBMex(inputs[1][0], true);
         } else if (func[0] == "setDisplayIndex") {
-            setDisplayIndex(inputs[1][0], false);
+            setDisplayIndex(inputs[1][0], true);
         } else if (func[0] == "displayColor") {
             TypedArray<double> color = inputs[1];
             displayColor(color[0], color[1], color[2], true);
         } else if (func[0] == "setStaticPatternPath") {
             StringArray filename = inputs[1];
             setStaticPatternPath2(std::string(filename[0]).c_str(), true, true);
+        } else if (func[0] == "selectAndProject") {
+            selectAndProject(NULL, inputs[1][0]);
+        } else if (func[0] == "selectAndLoadPatternMemory") {
+            selectAndLoadPatternMemory(NULL, inputs[1][0], true);
+        } else if (func[0] == "displayPatternMemory") {
+            displayPatternMemory(inputs[1][0], 0, true, true);
         } else if (func[0] == "convertPattern2RGB") {
-            outputs[0] = convertPattern2RGBMex(inputs[1]);
+            outputs[0] = convertPattern2RGBMex(inputs[1], true);
         } else if (func[0] == "convertRGB2Pattern") {
-            outputs[0] = convertRGB2PatternMex(inputs[1]);
+            outputs[0] = convertRGB2PatternMex(inputs[1], true);
         } else {
             error("Invalid function name with one input.");
         }
@@ -315,15 +341,46 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
     if (inputs.size() == 3) {
         if (func[0] == "open") {
             open2(inputs[1][0], inputs[2][0], true);
+        } else if (func[0] == "getPatternMemoryRGB") {
+            outputs[0] = getPatternMemoryRGBMex(inputs[1][0], inputs[2][0]);
+        } else if (func[0] == "setDisplayIndex") {
+            setDisplayIndex(inputs[1][0], inputs[2][0]);
+        } else if (func[0] == "displayColor") {
+            displayColor(inputs[1][0], inputs[1][1], inputs[1][2], inputs[2][0]);
         } else if (func[0] == "setStaticPatternPath") {
             StringArray filename = inputs[1];
             setStaticPatternPath2(std::string(filename[0]).c_str(), inputs[2][0], true);
+        } else if (func[0] == "selectAndLoadPatternMemory") {
+            selectAndLoadPatternMemory(NULL, inputs[1][0], inputs[2][0]);
+        } else if (func[0] == "displayPatternMemory") {
+            displayPatternMemory(inputs[1][0], inputs[2][0], true, true);
         } else if (func[0] == "convertPattern2RGB") {
             outputs[0] = convertPattern2RGBMex(inputs[1], inputs[2][0]);
         } else if (func[0] == "convertRGB2Pattern") {
             outputs[0] = convertRGB2PatternMex(inputs[1], inputs[2][0]);
         } else {
             error("Invalid function name with two inputs.");
+        }
+        return;
+    }
+
+    if (inputs.size() == 4) {
+        if (func[0] == "open") {
+            open2(inputs[1][0], inputs[2][0], inputs[3][0]);
+        } else if (func[0] == "setStaticPatternPath") {
+            StringArray filename = inputs[1];
+            setStaticPatternPath2(std::string(filename[0]).c_str(), inputs[2][0], inputs[3][0]);
+        } else if (func[0] == "displayPatternMemory") {
+            displayPatternMemory(inputs[1][0], inputs[2][0], inputs[3][0], true);
+        } else {
+            error("Invalid function name with three inputs.");
+        }
+        return;
+    }
+
+    if (inputs.size() == 5) {
+        if (func[0] == "displayPatternMemory") {
+            displayPatternMemory(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0]);
         }
         return;
     }

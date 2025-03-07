@@ -38,32 +38,61 @@ void PatternWindow::setStaticPatternPath2(const char *filepath, bool verbose, bo
     }
 }
 
-// Select files from the file system and load them into the pattern memory
-void PatternWindow::selectAndLoadPatternMemory(const char *default_location, bool verbose, bool use_parallel) {
-    selectAndReadBMP(default_location, verbose);
-    if (BMPSurface) {
-        loadPatternMemory((uint32_t *) BMPSurface->pixels, BMPSurface->h * BMPSurface->w);
-    }
-}
-
 // Load a pattern memory from a file
 void PatternWindow::loadPatternMemoryFromFile(const char *filepath, bool verbose, bool use_parallel) {
-    readBMP(filepath, NULL, verbose);
+    readBMP(filepath, NULL, false);
     if (BMPSurface) {
-        loadPatternMemory((uint32_t *) BMPSurface->pixels, BMPSurface->h * BMPSurface->w);
+        if (BMPSurface->h * BMPSurface->w == WindowHeight * WindowWidth) {
+            loadPatternMemory((uint32_t *) BMPSurface->pixels, BMPSurface->h * BMPSurface->w);
+            if (verbose) {
+                printf("Pattern memory loaded from file: %s", filepath);
+            }
+        } else {
+            warn("Pattern size does not match the canvas size, skipping file: %s", filepath);
+        }
     }
 }
 
-void PatternWindow::displayPatternMemory(uint32_t wait, bool verbose, bool use_parallel) {
+// Select files from the file system and load them into the pattern memory
+void PatternWindow::selectAndLoadPatternMemory(const char *default_location, bool verbose, bool use_parallel) {
+    if (!default_location) {
+        default_location = BaseDirectory;
+    }
+    SDL_ShowOpenFileDialog(callback, this, NULL, filters, 2, default_location, true);
+    // Delay the return until the user input is received
+    SDL_Event event;
+    while (true) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_USER) {
+                if (event.user.code == -1) {
+                    error("An error occured during file selection: %s", SDL_GetError());
+                }
+                if (event.user.code == 1) {
+                    warn("The user did not select any file.");
+                }
+                if ((verbose) & (event.user.code == 0)) {
+                    for (int i = 0; i < *((int*) event.user.data1); i++) {
+                        loadPatternMemoryFromFile(((char**) event.user.data2)[i], verbose, use_parallel);
+                    }
+                }
+                return;
+            }
+        }
+    }
+}
+
+void PatternWindow::displayPatternMemory(int index, uint32_t delay, bool verbose, bool use_parallel) {
     if (!Window) {
         error("Window is not open.");
         return;
     } else {
-        for (size_t i = 0; i < PatternMemory.size(); ++i) {
-            setDynamicPattern(PatternMemory[i].data(), verbose, use_parallel);
-            if (wait > 0) {
-                SDL_Delay(wait);
-            }
+        if ((index < 0) | (index >= PatternMemory.size())) {
+            error("Invalid pattern memory index.");
+            return;
+        }
+        setDynamicPattern(PatternMemory[index].data(), verbose, use_parallel);
+        if (delay > 0) {
+            SDL_Delay(delay);
         }
     }
 }

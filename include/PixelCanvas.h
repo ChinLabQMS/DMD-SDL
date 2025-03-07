@@ -52,6 +52,7 @@ public:
     void drawPixelsOnRealBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel);
     std::vector<uint8_t> getPatternCanvasRGB(bool use_parallel);
     std::vector<uint8_t> getRealCanvasRGB(bool use_parallel);
+    std::vector<uint8_t> getPatternMemoryRGB(int index, bool use_parallel);
     static std::vector<uint32_t> createSolidPattern(uint32_t color, int num_elements, bool use_parallel);
     static std::vector<uint8_t> convertPattern2RGB(uint8_t *pattern, int height, int width, int pitch, bool use_parallel);
     static std::vector<uint32_t> convertRGB2Pattern(uint8_t *rgb, int height, int width, int pitch, bool use_parallel);

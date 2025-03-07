@@ -31,10 +31,7 @@ void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool
                                            realDiamondY(nrows, ncols, x, y));
         }
     }
-    else {
-        std::cerr << "Invalid Pixel Arrangement: " << PixelArrangement << std::endl;
-        exit(1);
-    }
+
     // Assign real to pattern index mapping
     Real2PatternIndex.resize(RealNumPixels);
     #pragma omp parallel for if(use_parallel)
@@ -105,10 +102,6 @@ void PixelCanvas::clearPatternMemory() {
 
 // Load a pattern to PatternMemory
 void PixelCanvas::loadPatternMemory(const uint32_t *pattern, size_t num_elements) {
-    if ((int) num_elements != PatternNumPixels) {
-        std::cerr << "Pattern size (" << num_elements << ") does not match canvas size (" << PatternNumPixels << ")!" << std::endl;
-        exit(1);
-    }
     PatternMemory.push_back(std::vector<uint32_t>(pattern, pattern + num_elements));
 }
 
@@ -153,6 +146,14 @@ std::vector<uint8_t> PixelCanvas::getPatternCanvasRGB(bool use_parallel) {
 // Get Real Canvas in RGB format
 std::vector<uint8_t> PixelCanvas::getRealCanvasRGB(bool use_parallel) {
     return convertPattern2RGB((uint8_t *) RealCanvas.data(), RealNumRows, RealNumCols, RealNumCols * 4, use_parallel);
+}
+
+// Get Pattern Memory in RGB format
+std::vector<uint8_t> PixelCanvas::getPatternMemoryRGB(int index, bool use_parallel) {
+    if (index < PatternMemory.size()) {
+        return convertPattern2RGB((uint8_t *) PatternMemory[index].data(), NumRows, NumCols, NumCols * 4, use_parallel);
+    }
+    return std::vector<uint8_t>();
 }
 
 // Convert Pattern to RGB (pixel takes 3 bytes in RGB format)

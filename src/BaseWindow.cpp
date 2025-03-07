@@ -140,7 +140,9 @@ void BaseWindow::open(bool verbose) {
             if (!StaticPatternPath) {
                 displayColor(0, 0, 0, verbose);
             } else {
-                setStaticPatternPath(StaticPatternPath, verbose);
+                char *path = SDL_strdup(StaticPatternPath);
+                setStaticPatternPath(path, verbose);
+                SDL_free(path);
             }
         } else {
             error("Renderer could not be created: %s", SDL_GetError());}
@@ -175,8 +177,7 @@ void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     SDL_RenderClear(Renderer);
     SDL_RenderPresent(Renderer);
     SDL_free(OperationMode);
-    OperationMode = (char*) SDL_malloc(256);
-    snprintf(OperationMode, 256, "Color");
+    OperationMode = SDL_strdup("Color");
     ColorModeR = r;
     ColorModeG = g;
     ColorModeB = b;
@@ -198,11 +199,10 @@ void BaseWindow::readBMP(const char* filename, SDL_Surface **surface, bool verbo
         }
         SDL_DestroySurface(bitmap_surface);
         SDL_free(BMPPath);
-        BMPPath = (char*) SDL_malloc(256);
-        snprintf(BMPPath, 256, "%s", filename);
+        BMPPath = SDL_strdup(filename);
         replaceBackslash(BMPPath);
         if (verbose) {
-            printf("BMP file loaded successfully from path:\n\t%s", filename);
+            printf("BMP file loaded successfully from path:\n\t%s", BMPPath);
         }
     } else {
         error("Surface could not be created from BMP file: %s", SDL_GetError());
@@ -216,8 +216,7 @@ void BaseWindow::setStaticPatternPath(const char* filepath,
         return;
     }
     SDL_free(StaticPatternPath);
-    StaticPatternPath = (char*) SDL_malloc(256);
-    snprintf(StaticPatternPath, 256, "%s", filepath);
+    StaticPatternPath = SDL_strdup(filepath);
     replaceBackslash(StaticPatternPath);
     // If the window is not created, return
     if (!Window) {
@@ -242,13 +241,13 @@ void BaseWindow::setStaticPatternPath(const char* filepath,
         SDL_DestroySurface(bitmap_surface);
         SDL_RenderPresent(Renderer);
         SDL_free(OperationMode);
-        OperationMode = (char*) SDL_malloc(256);
-        snprintf(OperationMode, 256, "Static");
+        OperationMode = SDL_strdup("Static");
         if (verbose)
             printf("Pattern projected successfully from path:\n\t%s.", StaticPatternPath);
     }
-    else
+    else {
         printf("Surface could not be created from BMP file: %s", SDL_GetError());
+    }
 }
 
 
@@ -275,29 +274,31 @@ void BaseWindow::setDynamicPattern(void* pattern, bool verbose, bool use_paralle
         printf("Dynamic pattern projected successfully.");
     }
     SDL_free(OperationMode);
-    OperationMode = (char*) SDL_malloc(256);
-    snprintf(OperationMode, 256, "Dynamic");
+    OperationMode = SDL_strdup("Dynamic");
 }
 
-const SDL_DialogFileFilter filters[] = {
-    {"BMP images",  "bmp"},
-    {"All files",   "*"}
-};
-
-void SDLCALL callbackStaticFileSelect(void* userdata, const char* const* filelist, int filter) {
-    BaseWindow *window = (BaseWindow*) userdata;
+void SDLCALL callback(void* userdata, const char* const* filelist, int filter) {
     SDL_Event user_event;
     SDL_zero(user_event);
     user_event.type = SDL_EVENT_USER;
-    user_event.user.data1 = NULL;
-    user_event.user.data2 = NULL;
+    user_event.user.data1 = SDL_malloc(sizeof(int)); // Number of files selected
+    user_event.user.data2 = NULL; // File path
     if (!filelist) {
         user_event.user.code = -1;
     } else if (!*filelist) {
         user_event.user.code = 1;
     } else {
-        window->setStaticPatternPath(*filelist, false);
         user_event.user.code = 0;
+        int count = 0;
+        while (filelist[count]) {
+            count++;            
+        }
+        user_event.user.data2 = (char**) (SDL_malloc(count * sizeof(char*)));
+        for (int i = 0; i < count; i++) {
+            ((char**) user_event.user.data2)[i] = SDL_strdup(filelist[i]);
+            replaceBackslash(((char**) user_event.user.data2)[i]);
+        }
+        *((int*) user_event.user.data1) = count;
     }
     SDL_PushEvent(&user_event);
 }
@@ -307,7 +308,7 @@ void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
     if (!default_location) {
         default_location = BaseDirectory;
     }
-    SDL_ShowOpenFileDialog(callbackStaticFileSelect, this, NULL, filters, 2, default_location, false);
+    SDL_ShowOpenFileDialog(callback, NULL, NULL, filters, 2, default_location, false);
     // Delay the return until the user input is received
     SDL_Event event;
     while (true) {
@@ -319,50 +320,8 @@ void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
                 if (event.user.code == 1) {
                     warn("The user did not select any file.");
                 }
-                if ((verbose) & (event.user.code == 0)) {
-                    printf("Static pattern is projected from path:\n\t%s", StaticPatternPath);
-                }
-                return;
-            }
-        }
-    }
-}
-
-void SDLCALL callbackStaticReadFileSelect(void* userdata, const char* const* filelist, int filter) {
-    BaseWindow *window = (BaseWindow*) userdata;
-    SDL_Event user_event;
-    SDL_zero(user_event);
-    user_event.type = SDL_EVENT_USER;
-    user_event.user.data1 = NULL;
-    user_event.user.data2 = NULL;
-    if (!filelist) {
-        user_event.user.code = -1;
-    } else if (!*filelist) {
-        user_event.user.code = 1;
-    } else {
-        user_event.user.code = 0;
-    }
-    SDL_PushEvent(&user_event);
-}
-
-void BaseWindow::selectAndReadBMP(const char* default_location, bool verbose) {
-    if (!default_location) {
-        default_location = BaseDirectory;
-    }
-    SDL_ShowOpenFileDialog(callbackStaticReadFileSelect, this, NULL, filters, 2, default_location, false);
-    // Delay the return until the user input is received
-    SDL_Event event;
-    while (true) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_USER) {
-                if (event.user.code == -1) {
-                    error("An error occured during file selection: %s", SDL_GetError());
-                }
-                if (event.user.code == 1) {
-                    warn("The user did not select any file.");
-                }
-                if ((verbose) & (event.user.code == 0)) {
-                    printf("BMP file loaded from path:\n\t%s", StaticPatternPath);
+                if (event.user.code == 0) {
+                    setStaticPatternPath(((char**) event.user.data2)[0], verbose);
                 }
                 return;
             }

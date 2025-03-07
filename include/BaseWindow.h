@@ -17,6 +17,13 @@ const int RENDERER_VSYNC = 0;
 const int RENDERER_VSYNC = 1;
 #endif
 
+const SDL_DialogFileFilter filters[] = {
+    {"BMP images",  "bmp"},
+    {"All files",   "*"}
+};
+
+void SDLCALL callback(void* userdata, const char* const* filelist, int filter);
+
 class BaseWindow {
     public:
         ~BaseWindow();
@@ -30,7 +37,6 @@ class BaseWindow {
         void readBMP(const char* filename, SDL_Surface **surface, bool verbose);
         void setDynamicPattern(void* pattern, bool verbose, bool use_parallel);
         void selectAndProject(const char* default_location, bool verbose);
-        void selectAndReadBMP(const char* default_location, bool verbose);
         void setDisplayIndex(int idx, bool verbose);
         virtual void setStaticPatternPath(const char* filename, bool verbose);
         bool isWindowCreated() const;

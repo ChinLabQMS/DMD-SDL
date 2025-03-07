@@ -58,7 +58,7 @@ It will build two executables: `static.exe` and `static_debug.exe` in the `bin` 
 The `static_debug.exe` is built with a different default window size and is used for debugging purposes (e.g. to see the pattern on an actual monitor instead of DMD).
 
 ## Test pattern refresh rate
-`black_white.cpp` Create an opaque window with target size, and render a black and white pattern to the window. The pattern will switch between black and white at the rate specified by VSNYC signal. By default, SDL3 will use the primary monitor's refresh rate for VSYNC, so it is recommended to set DMD as the primary monitor to test the refresh rate.
+`black_white.cpp` Create an opaque window with target size, and render a black and white pattern to the window. The pattern will switch between black and white at the rate specified by VSNYC signal. Most of the time SDL3 will use the primary monitor's refresh rate for VSYNC, so it is recommended to set DMD as the primary monitor to test the refresh rate.
 
 ## Interface to MATLAB
 `PatternWindowMex.cpp` is a MATLAB interface to the pattern window. 
@@ -83,17 +83,21 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 
 #### Available functions in C++ Mex file
 
+**Basic window/Mex file state control**
 - `PatternWindowMex()` - toggle window state (open/close)
-- `PatternWindowMex("open", pixel_arrangement="Diamond", use_parallel=true)` - open the window with specified pixel arrangement ("Diamond" or "Square") and parallel processing (true/false)
-- `PatternWindowMex("close")` - close the window
+- `PatternWindowMex("open", pixel_arrangement="Diamond", verbose=true, use_parallel=true)` - open the window with specified pixel arrangement ("Diamond" or "Square") and parallel processing (true/false)
+- `PatternWindowMex("close", verbose=true)` - close the window
 - `PatternWindowMex("lock")` - lock the Mex file such that it won't be cleared with `clear mex` command
 - `PatternWindowMex("unlock")` - unlock the Mex file to allow it to be cleared with `clear mex` command
+
+**Pattern window query**
 - `PatternWindowMex("getLockState")` - get the lock state of the Mex file 
 - `PatternWindowMex("getMexName")` - get the name of the Mex file
 - `PatternWindowMex("getBaseDirectory")` - get the working directory of the Mex file
 - `PatternWindowMex("isWindowCreated")` - check if the window is open
 - `PatternWindowMex("isWindowMinimized")` - check if the window is minimized
 - `PatternWindowMex("getDisplayModes")` - get the display modes of all the monitors connected to the system as a struct array
+- `PatternWindowMex("getDisplayIndex")` - get the target display index of the window, window may not be created
 - `PatternWindowMex("getWindowHeight")` - get the height of the window if it is open, otherwise return 0
 - `PatternWindowMex("getWindowWidth")` - get the width of the window if it is open, otherwise return 0
 - `PatternWindowMex("getOperationMode")` - get the mode of the window (static/dynamic/color)
@@ -104,9 +108,18 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("getPatternCanvasRGB")` - get the pattern canvas of the window in RGB format, which should be in sync with window content in static mode
 - `PatternWindowMex("getRealCanvas")` - get the real-space canvas of the window, which should be in sync with window content in static mode
 - `PatternWindowMex("getRealCanvasRGB")` - get the real-space pattern canvas of the window in RGB format, which should be in sync with window content in static mode
-- `PatternWindowMex("setDisplayIndex", display_index)` - set the display index (0-index integer) of the window to the specified display, the order is the same as the one returned by `PatternWindowMex("getDisplayModes")`
-- `PatternWindowMex("displayColor", color=[0,0,0])` - display a color on the window, color is a 1x3 vector with RGB values
-- `PatternWindowMex("setStaticPatternPath", path, use_parallel=true)` - set the static pattern to be displayed on the window, path is the path to the BMP file
-- `PatternWindowMex("loadPatternMemoryFromPath", path, use_parallel=true)` - load the pattern memory from the BMP file, path is the path to the BMP file
+- `PatternWindowMex("getNumLoadedPatterns")` - get the number of patterns loaded to the pattern memory
+- `PatternWindowMex("getPatternMemory", index)` - get the pattern memory at the specified index, index is an integer
+- `PatternWindowMex("getPatternMemoryRGB", index, use_parallel=true)` - get the pattern memory at the specified index in RGB format, index is an integer
+
+**Pattern window configuration**
+- `PatternWindowMex("setDisplayIndex", display_index, verbose=true)` - set the display index (0-index integer) of the window to the specified display, the order is the same as the one returned by `PatternWindowMex("getDisplayModes")`
+- `PatternWindowMex("displayColor", color=[0,0,0], verbose=true)` - display a color on the window, color is a 1x3 vector with RGB values
+- `PatternWindowMex("setStaticPatternPath", path, verbose=true, use_parallel=true)` - set the static pattern to be displayed on the window, path is the path to the BMP file
+- `PatternWindowMex("selectAndProject", verbose=true)` - open a file selection dialog to select a BMP file and project it to the window as a static pattern
+- `PatternWindowMex("selectAndLoadPatternMemory", verbose=true, use_parallel=true)` - open a file selection dialog to select one/more BMP file and load it to the pattern memory
+- `PatternWindowMex("displayPatternMemory", index, delay=0, verbose=true, use_parallel=true)` - display the pattern memory at the specified index, index is an integer starting from 0, and delay is the delay in milliseconds after displaying the pattern
+
+**Utility**
 - `PatternWindowMex("convertPattern2RGB", pattern, use_parallel=true)` - convert the pattern to RGB format with parallel processing (true/false), pattern is an array of uint32 values, return the RGB pattern as a 3D array of uint8 values
 - `PatternWindowMex("convertRGB2Pattern", rgb_pattern, use_parallel=true)` - convert the RGB pattern to pattern with parallel processing (true/false), rgb_pattern is a 3D array of uint8 values, return the pattern as an array of uint32 values
