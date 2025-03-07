@@ -323,7 +323,7 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
     
     if (inputs.size() == 2) {
         if (func[0] == "open") {
-            open(inputs[1][0]);
+            open2(inputs[1][0], true, true);
         } else if (func[0] == "close") {
             close(inputs[1][0]);
         } else if (func[0] == "getPatternMemory") {
