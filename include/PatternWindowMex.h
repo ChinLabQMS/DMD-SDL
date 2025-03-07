@@ -34,8 +34,7 @@ public:
     void error(const char* format, ...) override;
     void lock();
     void unlock();
-    void setStaticPatternPath(const char* filepath, bool verbose) override;
-    void setStaticPatternPath(const char* filepath, bool verbose, bool use_parallel) override;
+    void setStaticPatternPath2(const char* filepath, bool verbose, bool use_parallel) override;
     CharArray getOperationMode();
     CharArray getBaseDirectory();
     CharArray getStaticPatternPath();

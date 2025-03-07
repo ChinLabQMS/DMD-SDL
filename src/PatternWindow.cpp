@@ -1,7 +1,7 @@
 #include "PatternWindow.h"
 
 void PatternWindow::open(bool verbose) {
-    error("Please use the overloaded open2 function with additional parameters for canvas initialization.");
+    error("Please use the open2 function with additional parameters for canvas initialization.");
 }
 
 // Every time the window is opened, the canvas is initialized
@@ -54,13 +54,16 @@ void PatternWindow::loadPatternMemoryFromFile(const char *filepath, bool verbose
     }
 }
 
-void PatternWindow::displayPatternMemory(bool verbose, bool use_parallel) {
+void PatternWindow::displayPatternMemory(uint32_t wait, bool verbose, bool use_parallel) {
     if (!Window) {
         error("Window is not open.");
         return;
     } else {
         for (size_t i = 0; i < PatternMemory.size(); ++i) {
             setDynamicPattern(PatternMemory[i].data(), verbose, use_parallel);
+            if (wait > 0) {
+                SDL_Delay(wait);
+            }
         }
     }
 }

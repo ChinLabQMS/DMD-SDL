@@ -47,7 +47,7 @@ public:
     void resetBackground(uint32_t background_color, bool use_parallel);
     void resetPattern(uint32_t pattern_color, bool use_parallel);
     void clearPatternMemory();
-    virtual void loadPatternMemory(const uint32_t *pattern, size_t num_elements);
+    void loadPatternMemory(const uint32_t *pattern, size_t num_elements);
     void drawPixelsOnReal(std::vector<int> real_idx, uint32_t color, bool use_parallel);
     void drawPixelsOnRealBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel);
     std::vector<uint8_t> getPatternCanvasRGB(bool use_parallel);

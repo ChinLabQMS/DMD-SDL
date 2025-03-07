@@ -12,10 +12,10 @@ class PatternWindow : public BaseWindow, public PixelCanvas {
         virtual void open2(std::string arrangement, bool verbose, bool use_parallel);
         virtual void close(bool verbose) override;
         virtual void setStaticPatternPath(const char *filepath, bool verbose) override; 
-        virtual void setStaticPatternPath2(const char *filepath, bool verbose, bool use_parallel); // Overload the setStaticPatternPath function with additional parameter
+        virtual void setStaticPatternPath2(const char *filepath, bool verbose, bool use_parallel); // Add additional parameter to control parallelism
         void loadPatternMemoryFromFile(const char *filepath, bool verbose, bool use_parallel);
         void selectAndLoadPatternMemory(const char *default_location, bool verbose, bool use_parallel);
-        void displayPatternMemory(bool verbose, bool use_parallel);
+        void displayPatternMemory(uint32_t wait, bool verbose, bool use_parallel);
 };
 
 #endif // PATTERNWINDOW_H

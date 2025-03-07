@@ -286,19 +286,19 @@ const SDL_DialogFileFilter filters[] = {
 
 void SDLCALL callbackStaticFileSelect(void* userdata, const char* const* filelist, int filter) {
     BaseWindow *window = (BaseWindow*) userdata;
-    if (!filelist)
-        window->error("An error occured during file selection: %s", SDL_GetError());
-    else if (!*filelist)
-        window->warn("The user did not select any file.");
-    else {
-        window->setStaticPatternPath(*filelist, false);
-    }
     SDL_Event user_event;
     SDL_zero(user_event);
     user_event.type = SDL_EVENT_USER;
-    user_event.user.code = 0;
     user_event.user.data1 = NULL;
     user_event.user.data2 = NULL;
+    if (!filelist) {
+        user_event.user.code = -1;
+    } else if (!*filelist) {
+        user_event.user.code = 1;
+    } else {
+        window->setStaticPatternPath(*filelist, false);
+        user_event.user.code = 0;
+    }
     SDL_PushEvent(&user_event);
 }
 
@@ -313,7 +313,13 @@ void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
     while (true) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_USER) {
-                if (verbose) {
+                if (event.user.code == -1) {
+                    error("An error occured during file selection: %s", SDL_GetError());
+                }
+                if (event.user.code == 1) {
+                    warn("The user did not select any file.");
+                }
+                if ((verbose) & (event.user.code == 0)) {
                     printf("Static pattern is projected from path:\n\t%s", StaticPatternPath);
                 }
                 return;
@@ -324,19 +330,18 @@ void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
 
 void SDLCALL callbackStaticReadFileSelect(void* userdata, const char* const* filelist, int filter) {
     BaseWindow *window = (BaseWindow*) userdata;
-    if (!filelist)
-        window->error("An error occured during file selection: %s", SDL_GetError());
-    else if (!*filelist)
-        window->warn("The user did not select any file.");
-    else {
-        window->readBMP(*filelist, NULL, false);
-    }
     SDL_Event user_event;
     SDL_zero(user_event);
     user_event.type = SDL_EVENT_USER;
-    user_event.user.code = 0;
     user_event.user.data1 = NULL;
     user_event.user.data2 = NULL;
+    if (!filelist) {
+        user_event.user.code = -1;
+    } else if (!*filelist) {
+        user_event.user.code = 1;
+    } else {
+        user_event.user.code = 0;
+    }
     SDL_PushEvent(&user_event);
 }
 
@@ -350,7 +355,13 @@ void BaseWindow::selectAndReadBMP(const char* default_location, bool verbose) {
     while (true) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_USER) {
-                if (verbose) {
+                if (event.user.code == -1) {
+                    error("An error occured during file selection: %s", SDL_GetError());
+                }
+                if (event.user.code == 1) {
+                    warn("The user did not select any file.");
+                }
+                if ((verbose) & (event.user.code == 0)) {
                     printf("BMP file loaded from path:\n\t%s", StaticPatternPath);
                 }
                 return;

@@ -21,6 +21,12 @@ int main() {
     measureExecutionTime("Load PatternMemory", &PixelCanvas::loadPatternMemory, canvas, (const uint32_t *) pixels.data(), (size_t) pixels.size());
     measureExecutionTime("Load PatternMemory", &PixelCanvas::loadPatternMemory, canvas, (const uint32_t *) pixels.data(), (size_t) pixels.size());
     measureExecutionTime("Load PatternMemory", &PixelCanvas::loadPatternMemory, canvas, (const uint32_t *) pixels.data(), (size_t) pixels.size());
+
+    std::cout << "PatternMemory[0][0] = " << canvas.PatternMemory[0][0] << std::endl;
+    std::cout << "PatternMemory[1][0] = " << canvas.PatternMemory[1][0] << std::endl;
+    std::cout << "PatternMemory[2][0] = " << canvas.PatternMemory[2][0] << std::endl;
+    std::cout << "PatternMemory[3][0] = " << canvas.PatternMemory[3][0] << std::endl;
+
     measureExecutionTime("Clear PatternMemory", &PixelCanvas::clearPatternMemory, canvas);
 
     // Measure execution time of static methods
