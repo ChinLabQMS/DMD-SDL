@@ -100,11 +100,6 @@ void PixelCanvas::clearPatternMemory() {
     PatternMemory.clear();
 }
 
-// Load a pattern to PatternMemory
-void PixelCanvas::loadPatternMemory(const uint32_t *pattern, size_t num_elements) {
-    PatternMemory.push_back(std::vector<uint32_t>(pattern, pattern + num_elements));
-}
-
 // Draw Pixels on Real Canvas
 void PixelCanvas::drawPixelsOnReal(std::vector<int> real_idx, uint32_t color, bool use_parallel) {
     #pragma omp parallel for if(use_parallel)
@@ -154,6 +149,16 @@ std::vector<uint8_t> PixelCanvas::getPatternMemoryRGB(int index, bool use_parall
         return convertPattern2RGB((uint8_t *) PatternMemory[index].data(), NumRows, NumCols, NumCols * 4, use_parallel);
     }
     return std::vector<uint8_t>();
+}
+
+// Convert Pattern to Real Canvas, assuming pattern has the same size as the pattern canvas
+std::vector<uint32_t> PixelCanvas::convertPattern2Real(const uint32_t *pattern, uint32_t background_color, bool use_parallel) {
+    std::vector<uint32_t> real_canvas(RealNumPixels, background_color);
+    #pragma omp parallel for if(use_parallel)
+    for (size_t i = 0; i < PatternNumPixels; ++i) {
+        real_canvas[Pattern2RealIndex[i]] = pattern[i];
+    }
+    return real_canvas;
 }
 
 // Convert Pattern to RGB (pixel takes 3 bytes in RGB format)

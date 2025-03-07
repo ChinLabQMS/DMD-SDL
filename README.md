@@ -90,7 +90,7 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("lock")` - lock the Mex file such that it won't be cleared with `clear mex` command
 - `PatternWindowMex("unlock")` - unlock the Mex file to allow it to be cleared with `clear mex` command
 
-**Pattern window query**
+**Query value of properties**
 - `PatternWindowMex("getLockState")` - get the lock state of the Mex file 
 - `PatternWindowMex("getMexName")` - get the name of the Mex file
 - `PatternWindowMex("getBaseDirectory")` - get the working directory of the Mex file
@@ -104,6 +104,8 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("getStaticPatternPath")` - get the path of the static pattern loaded to the window if it is in static mode (empty if not in static mode)
 - `PatternWindowMex("getStaticPattern")` - get the static pattern loaded to the window
 - `PatternWindowMex("getStaticPatternRGB")` - get the static pattern in RGB format
+- `PatternWindowMex("getStaticPatternReal")` - get the static pattern in real-space format
+- `PatternWindowMex("getStaticPatternRealRGB")` - get the static pattern in real-space RGB format
 - `PatternWindowMex("getPatternCanvas")` - get the pattern canvas of the window, which should be in sync with window content in static mode
 - `PatternWindowMex("getPatternCanvasRGB")` - get the pattern canvas of the window in RGB format, which should be in sync with window content in static mode
 - `PatternWindowMex("getRealCanvas")` - get the real-space canvas of the window, which should be in sync with window content in static mode
@@ -118,7 +120,7 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("setStaticPatternPath", path, verbose=true, use_parallel=true)` - set the static pattern to be displayed on the window, path is the path to the BMP file
 - `PatternWindowMex("selectAndProject", verbose=true)` - open a file selection dialog to select a BMP file and project it to the window as a static pattern
 - `PatternWindowMex("selectAndLoadPatternMemory", verbose=true, use_parallel=true)` - open a file selection dialog to select one/more BMP file and load it to the pattern memory
-- `PatternWindowMex("displayPatternMemory", index, delay=0, verbose=true, use_parallel=true)` - display the pattern memory at the specified index, index is an integer starting from 0, and delay is the delay in milliseconds after displaying the pattern
+- `PatternWindowMex("displayPatternMemory", index, delay=0, verbose=true, use_parallel=true)` - display the pattern memory at the specified index, index is an integer starting from 0, and delay is the wait time in milliseconds after displaying the pattern
 
 **Utility**
 - `PatternWindowMex("convertPattern2RGB", pattern, use_parallel=true)` - convert the pattern to RGB format with parallel processing (true/false), pattern is an array of uint32 values, return the RGB pattern as a 3D array of uint8 values

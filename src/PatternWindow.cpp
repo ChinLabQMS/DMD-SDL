@@ -32,9 +32,17 @@ void PatternWindow::setStaticPatternPath2(const char *filepath, bool verbose, bo
                                               StaticPatternSurface->w, 
                                               StaticPatternSurface->pitch, 
                                               use_parallel);
+        StaticPatternReal = convertPattern2Real((uint32_t *) StaticPatternSurface->pixels, 0xFFFF0000, use_parallel);
+        StaticPatternRealRGB = convertPattern2RGB((uint8_t *) StaticPatternReal.data(), 
+                                                  RealNumRows, 
+                                                  RealNumCols, 
+                                                  RealNumCols * 4, 
+                                                  use_parallel);
     }
     else {
         StaticPatternRGB.clear();
+        StaticPatternReal.clear();
+        StaticPatternRealRGB.clear();
     }
 }
 
@@ -42,8 +50,9 @@ void PatternWindow::setStaticPatternPath2(const char *filepath, bool verbose, bo
 void PatternWindow::loadPatternMemoryFromFile(const char *filepath, bool verbose, bool use_parallel) {
     readBMP(filepath, NULL, false);
     if (BMPSurface) {
-        if (BMPSurface->h * BMPSurface->w == WindowHeight * WindowWidth) {
-            loadPatternMemory((uint32_t *) BMPSurface->pixels, BMPSurface->h * BMPSurface->w);
+        if (BMPSurface->h * BMPSurface->w == PatternNumPixels) {
+            uint32_t *pixels = (uint32_t*) BMPSurface->pixels;
+            PatternMemory.push_back(std::vector<uint32_t>(pixels, pixels + BMPSurface->h * BMPSurface->w));
             if (verbose) {
                 printf("Pattern memory loaded from file: %s", filepath);
             }
@@ -81,6 +90,8 @@ void PatternWindow::selectAndLoadPatternMemory(const char *default_location, boo
     }
 }
 
+// Display a pattern from the pattern memory
+// If the delay is greater than 0, the function will wait for the specified time before returning
 void PatternWindow::displayPatternMemory(int index, uint32_t delay, bool verbose, bool use_parallel) {
     if (!Window) {
         error("Window is not open.");

@@ -7,6 +7,8 @@
 class PatternWindow : public BaseWindow, public PixelCanvas {
     protected:
         std::vector<uint8_t> StaticPatternRGB;
+        std::vector<uint32_t> StaticPatternReal;
+        std::vector<uint8_t> StaticPatternRealRGB;
     public:
         virtual void open(bool verbose) override;
         virtual void open2(std::string arrangement, bool verbose, bool use_parallel);

@@ -22,10 +22,14 @@ private:
     std::shared_ptr<matlab::engine::MATLABEngine> matlab = getEngine();
     ArrayFactory factory;
     bool LockState = false;
-    TypedArray<uint8_t> StaticPatternRGBMex = factory.createArray({0, 0, 3}, 
-                                              (uint8_t *) nullptr, (uint8_t *) nullptr);
     TypedArray<uint32_t> StaticPatternMex = factory.createArray({0, 0}, 
                                               (uint32_t *) nullptr, (uint32_t *) nullptr);
+    TypedArray<uint8_t> StaticPatternRGBMex = factory.createArray({0, 0, 3}, 
+                                              (uint8_t *) nullptr, (uint8_t *) nullptr);
+    TypedArray<uint32_t> StaticPatternRealMex = factory.createArray({0, 0}, 
+                                              (uint32_t *) nullptr, (uint32_t *) nullptr);
+    TypedArray<uint8_t> StaticPatternRealRGBMex = factory.createArray({0, 0, 3},
+                                              (uint8_t *) nullptr, (uint8_t *) nullptr);                                      
     void checkArguments(ArgumentList outputs, ArgumentList inputs);
 public:
     MexFunction();

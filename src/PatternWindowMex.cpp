@@ -57,18 +57,30 @@ void MexFunction::setStaticPatternPath2(const char* filepath, bool verbose, bool
     // Update the Matlab array of the static pattern
     if (StaticPatternSurface) {
         uint32_t * pixels = (uint32_t*) StaticPatternSurface->pixels;
-        StaticPatternMex = factory.createArray({ (size_t) StaticPatternSurface->h, (size_t) StaticPatternSurface->w }, 
-                                                pixels, 
-                                                pixels + StaticPatternSurface->h * StaticPatternSurface->w, 
-                                                InputLayout::ROW_MAJOR);
+        StaticPatternMex = factory.createArray({ 
+            (size_t) StaticPatternSurface->h, (size_t) StaticPatternSurface->w }, 
+            pixels, 
+            pixels + StaticPatternSurface->h * StaticPatternSurface->w, 
+            InputLayout::ROW_MAJOR);
         StaticPatternRGBMex = factory.createArray(
             { (size_t) WindowHeight, (size_t) WindowWidth, 3 }, 
             StaticPatternRGB.begin(), StaticPatternRGB.end(), 
+            InputLayout::ROW_MAJOR);
+        StaticPatternRealMex = factory.createArray(
+            { (size_t) RealNumRows, (size_t) RealNumCols }, 
+            StaticPatternReal.begin(), 
+            StaticPatternReal.end(),
+            InputLayout::ROW_MAJOR);
+        StaticPatternRealRGBMex = factory.createArray(
+            { (size_t) RealNumRows, (size_t) RealNumCols, 3 }, 
+            StaticPatternRealRGB.begin(), StaticPatternRealRGB.end(), 
             InputLayout::ROW_MAJOR);
     }
     else {
         StaticPatternMex = factory.createArray({0, 0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
         StaticPatternRGBMex = factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
+        StaticPatternRealMex = factory.createArray({0, 0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
+        StaticPatternRealRGBMex = factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
     }
 }
 
@@ -283,6 +295,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             outputs[0] = StaticPatternMex;
         } else if (func[0] == "getStaticPatternRGB") {
             outputs[0] = StaticPatternRGBMex;
+        } else if (func[0] == "getStaticPatternReal") {
+            outputs[0] = StaticPatternRealMex;
+        } else if (func[0] == "getStaticPatternRealRGB") {
+            outputs[0] = StaticPatternRealRGBMex;
         } else if (func[0] == "getPatternCanvas") {
             outputs[0] = getPatternCanvas();
         } else if (func[0] == "getPatternCanvasRGB") {
