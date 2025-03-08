@@ -137,13 +137,7 @@ void BaseWindow::open(bool verbose) {
         if (Renderer) {
             // Create a streaming texture for dynamic pattern projection
             Texture = SDL_CreateTexture(Renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WindowWidth, WindowHeight);
-            if (!StaticPatternPath) {
-                displayColor(0, 0, 0, verbose);
-            } else {
-                char *path = SDL_strdup(StaticPatternPath);
-                setStaticPatternPath(path, verbose);
-                SDL_free(path);
-            }
+            displayColor(0, 0, 0, verbose);
         } else {
             error("Renderer could not be created: %s", SDL_GetError());}
     } else {

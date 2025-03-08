@@ -7,8 +7,11 @@ void PatternWindow::open(bool verbose) {
 // Every time the window is opened, the canvas is initialized
 void PatternWindow::open2(std::string arrangement, bool verbose, bool use_parallel) {
     BaseWindow::open(verbose);
-    if (Window) {
-        initCanvas(WindowHeight, WindowWidth, arrangement, use_parallel);
+    initCanvas(WindowHeight, WindowWidth, arrangement, use_parallel);
+    if (StaticPatternPath) {
+        char *path = SDL_strdup(StaticPatternPath);
+        setStaticPatternPath(path, verbose);
+        SDL_free(path);
     }
 }
 
@@ -27,17 +30,21 @@ void PatternWindow::setStaticPatternPath(const char *filepath, bool verbose) {
 void PatternWindow::setStaticPatternPath2(const char *filepath, bool verbose, bool use_parallel) {
     BaseWindow::setStaticPatternPath(filepath, verbose);
     if (StaticPatternSurface) {
-        StaticPatternRGB = convertPattern2RGB((uint8_t *) StaticPatternSurface->pixels, 
-                                              StaticPatternSurface->h, 
-                                              StaticPatternSurface->w, 
-                                              StaticPatternSurface->pitch, 
-                                              use_parallel);
-        StaticPatternReal = convertPattern2Real((uint32_t *) StaticPatternSurface->pixels, 0xFFFF0000, use_parallel);
-        StaticPatternRealRGB = convertPattern2RGB((uint8_t *) StaticPatternReal.data(), 
-                                                  RealNumRows, 
-                                                  RealNumCols, 
-                                                  RealNumCols * 4, 
-                                                  use_parallel);
+        StaticPatternRGB = convertPattern2RGB(
+            (uint8_t *) StaticPatternSurface->pixels, 
+            StaticPatternSurface->h,
+            StaticPatternSurface->w,
+            StaticPatternSurface->pitch, 
+            use_parallel);
+        StaticPatternReal = convertPattern2Real(
+            (uint32_t *) StaticPatternSurface->pixels, 
+            0xFFFF0000, use_parallel);
+        StaticPatternRealRGB = convertPattern2RGB(
+            (uint8_t *) StaticPatternReal.data(), 
+            RealNumRows, 
+            RealNumCols, 
+            RealNumCols * 4,
+            use_parallel);
     }
     else {
         StaticPatternRGB.clear();
@@ -64,6 +71,7 @@ void PatternWindow::loadPatternMemoryFromFile(const char *filepath, bool verbose
 
 // Select files from the file system and load them into the pattern memory
 void PatternWindow::selectAndLoadPatternMemory(const char *default_location, bool verbose, bool use_parallel) {
+    clearPatternMemory();
     if (!default_location) {
         default_location = BaseDirectory;
     }
@@ -79,7 +87,7 @@ void PatternWindow::selectAndLoadPatternMemory(const char *default_location, boo
                 if (event.user.code == 1) {
                     warn("The user did not select any file.");
                 }
-                if ((verbose) & (event.user.code == 0)) {
+                if (event.user.code == 0) {
                     for (int i = 0; i < *((int*) event.user.data1); i++) {
                         loadPatternMemoryFromFile(((char**) event.user.data2)[i], verbose, use_parallel);
                     }
@@ -96,14 +104,13 @@ void PatternWindow::displayPatternMemory(int index, uint32_t delay, bool verbose
     if (!Window) {
         error("Window is not open.");
         return;
-    } else {
-        if ((index < 0) | (index >= PatternMemory.size())) {
-            error("Invalid pattern memory index.");
-            return;
-        }
-        setDynamicPattern(PatternMemory[index].data(), verbose, use_parallel);
-        if (delay > 0) {
-            SDL_Delay(delay);
-        }
+    }
+    if ((index < 0) | (index >= PatternMemory.size())) {
+        error("Invalid pattern memory index.");
+        return;
+    }
+    setDynamicPattern(PatternMemory[index].data(), verbose, use_parallel);
+    if (delay > 0) {
+        SDL_Delay(delay);
     }
 }

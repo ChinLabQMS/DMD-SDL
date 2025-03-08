@@ -185,11 +185,36 @@ TypedArray<uint32_t> MexFunction::getPatternMemory(int index) {
     }
 }
 
+TypedArray<uint32_t> MexFunction::getPatternMemoryReal(int index, uint32_t background_color, bool use_parallel) {
+    if ((index < PatternMemory.size()) & (index >= 0)) {
+        std::vector<uint32_t> pattern_real = convertPattern2Real(PatternMemory[index].data(), background_color, use_parallel);
+        return factory.createArray({ (size_t) NumRows, (size_t) NumCols }, 
+                                    pattern_real.begin(), pattern_real.end(), 
+                                    InputLayout::ROW_MAJOR);
+    } else {
+        return factory.createArray({0, 0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
+    }
+}
+
 TypedArray<uint8_t> MexFunction::getPatternMemoryRGBMex(int index, bool use_parallel) {
     if (index < PatternMemory.size()) {
         std::vector<uint8_t> pattern_rgb = getPatternMemoryRGB(index, use_parallel);
         return factory.createArray({ (size_t) NumRows, (size_t) NumCols, 3 }, 
                                     pattern_rgb.begin(), pattern_rgb.end(), 
+                                    InputLayout::ROW_MAJOR);
+    } else {
+        return factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
+    }
+}
+
+TypedArray<uint8_t> MexFunction::getPatternMemoryRealRGB(int index, uint32_t background_color, bool use_parallel) {
+    if (index < PatternMemory.size()) {
+        std::vector<uint32_t> pattern_real = convertPattern2Real(
+            PatternMemory[index].data(), background_color, use_parallel);
+        std::vector<uint8_t> pattern_real_rgb = convertPattern2RGB(
+            (uint8_t *) pattern_real.data(), RealNumRows, RealNumCols, RealNumCols * 4, use_parallel);
+        return factory.createArray({ (size_t) RealNumRows, (size_t) RealNumCols, 3 }, 
+                                    pattern_real_rgb.begin(), pattern_real_rgb.end(), 
                                     InputLayout::ROW_MAJOR);
     } else {
         return factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
@@ -330,6 +355,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             outputs[0] = getPatternMemory(inputs[1][0]);
         } else if (func[0] == "getPatternMemoryRGB") {
             outputs[0] = getPatternMemoryRGBMex(inputs[1][0], true);
+        } else if (func[0] == "getPatternMemoryReal") {
+            outputs[0] = getPatternMemoryReal(inputs[1][0], 0xFFFF0000, true);
+        } else if (func[0] == "getPatternMemoryRealRGB") {
+            outputs[0] = getPatternMemoryRealRGB(inputs[1][0], 0xFFFF0000, true);
         } else if (func[0] == "setDisplayIndex") {
             setDisplayIndex(inputs[1][0], true);
         } else if (func[0] == "displayColor") {
@@ -359,6 +388,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             open2(inputs[1][0], inputs[2][0], true);
         } else if (func[0] == "getPatternMemoryRGB") {
             outputs[0] = getPatternMemoryRGBMex(inputs[1][0], inputs[2][0]);
+        } else if (func[0] == "getPatternMemoryReal") {
+            outputs[0] = getPatternMemoryReal(inputs[1][0], inputs[2][0], true);
+        } else if (func[0] == "getPatternMemoryRealRGB") {
+            outputs[0] = getPatternMemoryRealRGB(inputs[1][0], inputs[2][0], true);
         } else if (func[0] == "setDisplayIndex") {
             setDisplayIndex(inputs[1][0], inputs[2][0]);
         } else if (func[0] == "displayColor") {
@@ -383,6 +416,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
     if (inputs.size() == 4) {
         if (func[0] == "open") {
             open2(inputs[1][0], inputs[2][0], inputs[3][0]);
+        } else if (func[0] == "getPatternMemoryReal") {
+            outputs[0] = getPatternMemoryReal(inputs[1][0], inputs[2][0], inputs[3][0]);
+        } else if (func[0] == "getPatternMemoryRealRGB") {
+            outputs[0] = getPatternMemoryRealRGB(inputs[1][0], inputs[2][0], inputs[3][0]);
         } else if (func[0] == "setStaticPatternPath") {
             StringArray filename = inputs[1];
             setStaticPatternPath2(std::string(filename[0]).c_str(), inputs[2][0], inputs[3][0]);

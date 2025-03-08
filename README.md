@@ -113,6 +113,8 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("getNumLoadedPatterns")` - get the number of patterns loaded to the pattern memory
 - `PatternWindowMex("getPatternMemory", index)` - get the pattern memory at the specified index, index is an integer
 - `PatternWindowMex("getPatternMemoryRGB", index, use_parallel=true)` - get the pattern memory at the specified index in RGB format, index is an integer
+- `PatternWindowMex("getPatternMemoryReal", index, bg_color=0xFFFF0000, use_parallel=true)` - get the pattern memory at the specified index in real-space format, index is an integer
+- `PatternWindowMex("getPatternMemoryRealRGB", index, bg_color=0xFFFF0000, use_parallel=true)` - get the pattern memory at the specified index in real-space RGB format, index is an integer
 
 **Pattern window configuration**
 - `PatternWindowMex("setDisplayIndex", display_index, verbose=true)` - set the display index (0-index integer) of the window to the specified display, the order is the same as the one returned by `PatternWindowMex("getDisplayModes")`
