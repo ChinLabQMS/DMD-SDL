@@ -340,6 +340,8 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             selectAndProject(NULL, true);
         } else if (func[0] == "selectAndLoadPatternMemory") {
             selectAndLoadPatternMemory(NULL, true, true);
+        } else if (func[0] == "clearPatternMemory") {
+            clearPatternMemory();
         } else {
             error("Invalid function name with zero input.");
         }

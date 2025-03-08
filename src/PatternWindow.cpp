@@ -71,7 +71,6 @@ void PatternWindow::loadPatternMemoryFromFile(const char *filepath, bool verbose
 
 // Select files from the file system and load them into the pattern memory
 void PatternWindow::selectAndLoadPatternMemory(const char *default_location, bool verbose, bool use_parallel) {
-    clearPatternMemory();
     if (!default_location) {
         default_location = BaseDirectory;
     }
