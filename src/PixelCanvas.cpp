@@ -100,6 +100,14 @@ void PixelCanvas::clearPatternMemory() {
     PatternMemory.clear();
 }
 
+// Clear Specific Pattern Memory
+void PixelCanvas::clearPatternMemory(int index) {
+    if (index < PatternMemory.size()) {
+        PatternMemory[index].clear();
+    }
+    PatternMemory.erase(PatternMemory.begin() + index);
+}
+
 // Draw Pixels on Real Canvas
 void PixelCanvas::drawPixelsOnReal(std::vector<int> real_idx, uint32_t color, bool use_parallel) {
     #pragma omp parallel for if(use_parallel)

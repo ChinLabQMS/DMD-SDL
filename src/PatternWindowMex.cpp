@@ -375,6 +375,8 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             selectAndLoadPatternMemory(NULL, inputs[1][0], true);
         } else if (func[0] == "displayPatternMemory") {
             displayPatternMemory(inputs[1][0], 0, true, true);
+        } else if (func[0] == "clearPatternMemory") {
+            clearPatternMemory(inputs[1][0]);
         } else if (func[0] == "convertPattern2RGB") {
             outputs[0] = convertPattern2RGBMex(inputs[1], true);
         } else if (func[0] == "convertRGB2Pattern") {
