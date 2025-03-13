@@ -120,6 +120,7 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("setDisplayIndex", display_index, verbose=true)` - set the display index (0-index integer) of the window to the specified display, the order is the same as the one returned by `PatternWindowMex("getDisplayModes")`
 - `PatternWindowMex("displayColor", color=[0,0,0], verbose=true)` - display a color on the window, color is a 1x3 vector with RGB values
 - `PatternWindowMex("setStaticPatternPath", path, verbose=true, use_parallel=true)` - set the static pattern to be displayed on the window, path is the path to the BMP file
+- `PatternWindowMex("loadPatternMemoryFromPath", path, verbose=true, use_parallel=true)` - load the pattern memory from the BMP file at the specified path
 - `PatternWindowMex("selectAndProject", verbose=true)` - open a file selection dialog to select a BMP file and project it to the window as a static pattern
 - `PatternWindowMex("selectAndLoadPatternMemory", verbose=true, use_parallel=true)` - open a file selection dialog to select one/more BMP file and load it to the pattern memory
 - `PatternWindowMex("displayPatternMemory", index, delay=0, verbose=true, use_parallel=true)` - display the pattern memory at the specified index, index is an integer starting from 0, and delay is the wait time in milliseconds after displaying the pattern

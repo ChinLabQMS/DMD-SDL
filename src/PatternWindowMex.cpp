@@ -369,6 +369,9 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "setStaticPatternPath") {
             StringArray filename = inputs[1];
             setStaticPatternPath2(std::string(filename[0]).c_str(), true, true);
+        } else if (func[0] == "loadPatternMemoryFromPath") {
+            StringArray filename = inputs[1];
+            loadPatternMemoryFromFile(std::string(filename[0]).c_str(), true, true);
         } else if (func[0] == "selectAndProject") {
             selectAndProject(NULL, inputs[1][0]);
         } else if (func[0] == "selectAndLoadPatternMemory") {
@@ -403,6 +406,9 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "setStaticPatternPath") {
             StringArray filename = inputs[1];
             setStaticPatternPath2(std::string(filename[0]).c_str(), inputs[2][0], true);
+        } else if (func[0] == "loadPatternMemoryFromPath") {
+            StringArray filename = inputs[1];
+            loadPatternMemoryFromFile(std::string(filename[0]).c_str(), inputs[2][0], true);
         } else if (func[0] == "selectAndLoadPatternMemory") {
             selectAndLoadPatternMemory(NULL, inputs[1][0], inputs[2][0]);
         } else if (func[0] == "displayPatternMemory") {
@@ -427,6 +433,9 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "setStaticPatternPath") {
             StringArray filename = inputs[1];
             setStaticPatternPath2(std::string(filename[0]).c_str(), inputs[2][0], inputs[3][0]);
+        } else if (func[0] == "loadPatternMemoryFromPath") {
+            StringArray filename = inputs[1];
+            loadPatternMemoryFromFile(std::string(filename[0]).c_str(), inputs[2][0], inputs[3][0]);
         } else if (func[0] == "displayPatternMemory") {
             displayPatternMemory(inputs[1][0], inputs[2][0], inputs[3][0], true);
         } else {
