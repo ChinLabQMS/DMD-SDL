@@ -165,7 +165,8 @@ void BaseWindow::close(bool verbose) {
 // Display a solid color on the window
 void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     if (!Window) {
-        open(verbose);
+        error("Window not created, cannot display color.");
+        return;
     }
     SDL_SetRenderDrawColor(Renderer, r, g, b, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(Renderer);

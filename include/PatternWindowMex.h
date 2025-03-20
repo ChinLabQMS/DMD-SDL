@@ -54,6 +54,7 @@ public:
     TypedArray<uint8_t> getPatternMemoryRealRGB(int index, uint32_t background_color, bool use_parallel);
     TypedArray<uint8_t> convertPattern2RGBMex(const TypedArray<uint32_t> pattern, bool use_parallel);
     TypedArray<uint32_t> convertRGB2PatternMex(const TypedArray<uint8_t> rgb, bool use_parallel);
+    TypedArray<bool> displayPatternMemory(const TypedArray<double> indices, uint32_t delay, bool verbose, bool use_parallel);
     void operator()(ArgumentList outputs, ArgumentList inputs) override;
 };
 

@@ -221,6 +221,15 @@ TypedArray<uint8_t> MexFunction::getPatternMemoryRealRGB(int index, uint32_t bac
     }
 }
 
+TypedArray<bool> MexFunction::displayPatternMemory(const TypedArray<double> indices, uint32_t delay, bool verbose, bool use_parallel) {
+    // Convert the input to a vector of integers
+    std::vector<uint32_t> index_vector(indices.getNumberOfElements());
+    for (size_t i = 0; i < indices.getNumberOfElements(); ++i) {
+        index_vector[i] = static_cast<uint32_t>(indices[i]);
+    }
+    return factory.createScalar(PatternWindow::displayPatternMemory(index_vector, delay, verbose, use_parallel));
+}
+
 // Check the arguments of the MEX function
 void MexFunction::checkArguments(ArgumentList outputs, ArgumentList inputs) {
     // Check number of arguments: if empty, assume init function
@@ -377,7 +386,7 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "selectAndLoadPatternMemory") {
             selectAndLoadPatternMemory(NULL, inputs[1][0], true);
         } else if (func[0] == "displayPatternMemory") {
-            displayPatternMemory(inputs[1][0], 0, true, true);
+            outputs[0] = displayPatternMemory(inputs[1], 0, true, true);
         } else if (func[0] == "clearPatternMemory") {
             clearPatternMemory(inputs[1][0]);
         } else if (func[0] == "convertPattern2RGB") {
@@ -412,7 +421,7 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "selectAndLoadPatternMemory") {
             selectAndLoadPatternMemory(NULL, inputs[1][0], inputs[2][0]);
         } else if (func[0] == "displayPatternMemory") {
-            displayPatternMemory(inputs[1][0], inputs[2][0], true, true);
+            outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], true, true);
         } else if (func[0] == "convertPattern2RGB") {
             outputs[0] = convertPattern2RGBMex(inputs[1], inputs[2][0]);
         } else if (func[0] == "convertRGB2Pattern") {
@@ -437,7 +446,7 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             StringArray filename = inputs[1];
             loadPatternMemoryFromFile(std::string(filename[0]).c_str(), inputs[2][0], inputs[3][0]);
         } else if (func[0] == "displayPatternMemory") {
-            displayPatternMemory(inputs[1][0], inputs[2][0], inputs[3][0], true);
+            outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], inputs[3][0], true);
         } else {
             error("Invalid function name with three inputs.");
         }
@@ -446,7 +455,7 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
 
     if (inputs.size() == 5) {
         if (func[0] == "displayPatternMemory") {
-            displayPatternMemory(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0]);
+            outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], inputs[3][0], inputs[4][0]);
         }
         return;
     }

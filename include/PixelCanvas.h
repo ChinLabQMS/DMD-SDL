@@ -54,9 +54,9 @@ public:
     std::vector<uint8_t> getRealCanvasRGB(bool use_parallel);
     std::vector<uint8_t> getPatternMemoryRGB(int index, bool use_parallel);
     std::vector<uint32_t> convertPattern2Real(const uint32_t *pattern, uint32_t background_color, bool use_parallel);
-    static std::vector<uint32_t> createSolidPattern(uint32_t color, int num_elements, bool use_parallel);
     static std::vector<uint8_t> convertPattern2RGB(uint8_t *pattern, int height, int width, int pitch, bool use_parallel);
     static std::vector<uint32_t> convertRGB2Pattern(uint8_t *rgb, int height, int width, int pitch, bool use_parallel);
+    static std::vector<uint32_t> createSolidPattern(uint32_t color, int num_elements, bool use_parallel);
 };
 
 #endif // PIXELCANVAS_H
