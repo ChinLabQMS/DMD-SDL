@@ -118,7 +118,7 @@ bool PatternWindow::displayPatternMemory(std::vector<uint32_t> indices, uint32_t
     }
     // Check if the time delay is greater than the expected refresh rate
     float elapsed_time = (SDL_GetTicksNS() - start_time) / 1000000.0; // in ms
-    float expected_delay = (1000 / DisplayMode->refresh_rate) * (indices.size() + 1); // in ms
+    float expected_delay = (1000 / DisplayMode->refresh_rate) * (indices.size() + 1) + delay * indices.size(); // in ms
     if (elapsed_time > expected_delay) {
         warn("The display time is %.2f ms, which exceeded the expected maximum delay of %.2f ms for %d frames.", elapsed_time, expected_delay, indices.size());
         return false;

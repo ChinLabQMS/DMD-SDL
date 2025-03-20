@@ -123,7 +123,7 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("loadPatternMemoryFromPath", path, verbose=true, use_parallel=true)` - load the pattern memory from the BMP file at the specified path
 - `PatternWindowMex("selectAndProject", verbose=true)` - open a file selection dialog to select a BMP file and project it to the window as a static pattern
 - `PatternWindowMex("selectAndLoadPatternMemory", verbose=true, use_parallel=true)` - open a file selection dialog to select one/more BMP file and load it to the pattern memory
-- `PatternWindowMex("displayPatternMemory", index, delay=0, verbose=true, use_parallel=true)` - display the pattern memory at the specified index, index is an integer starting from 0, and delay is the wait time in milliseconds after displaying the pattern
+- `success = PatternWindowMex("displayPatternMemory", index_list, delay=0, verbose=true, use_parallel=true)` - display the pattern memory at the specified index (0-start) and delay is the wait time in milliseconds after displaying each pattern. Function will return a boolean value indicating if the display timing is expected for the current refresh rate in case of a dropped frame
 
 **Utility**
 - `PatternWindowMex("convertPattern2RGB", pattern, use_parallel=true)` - convert the pattern to RGB format with parallel processing (true/false), pattern is an array of uint32 values, return the RGB pattern as a 3D array of uint8 values
