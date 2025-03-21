@@ -99,14 +99,14 @@ void PatternWindow::selectAndLoadPatternMemory(const char *default_location, boo
 
 // Display multiple patterns from the pattern memory
 // If the delay is greater than 0, the function will wait for the specified time before returning
-bool PatternWindow::displayPatternMemory(const uint32_t * indices, uint32_t num_frames, uint32_t delay, bool verbose, bool use_parallel) {
+bool PatternWindow::displayPatternMemory(const uint32_t * indices, size_t num_frames, uint32_t delay, bool verbose, bool use_parallel) {
     if (!Window) {
         error("Window is not open.");
         return false;
     }
     // Check the time delay of the execution
     uint64_t start_time = SDL_GetTicksNS();
-    for (int i = 0; i < num_frames; i++) {
+    for (size_t i = 0; i < num_frames; i++) {
         uint32_t index = indices[i];
         if ((index < 0) | (index >= PatternMemory.size())) {
             error("Invalid pattern memory index: %d", index);
@@ -125,4 +125,48 @@ bool PatternWindow::displayPatternMemory(const uint32_t * indices, uint32_t num_
         return false;
     }
     return true;
+}
+
+// Display the pattern canvas
+bool PatternWindow::displayPatternCanvas(bool verbose, bool use_parallel) {
+    if (!Window) {
+        error("Window is not open.");
+        return false;
+    }
+    uint64_t start_time = SDL_GetTicksNS();
+    setDynamicPattern(PatternCanvas.data(), verbose, use_parallel);
+    float elapsed_time = (SDL_GetTicksNS() - start_time) / 1000000.0; // in ms
+    float expected_delay = (1000 / DisplayMode->refresh_rate) * 2; // in ms
+    if (elapsed_time > expected_delay) {
+        warn("The display time is %.2f ms, which exceeded the expected maximum delay of %.2f ms.", elapsed_time, expected_delay);
+        return false;
+    }
+    return true;
+}
+
+void PatternWindow::savePatternAsBMP(const char *filepath, bool verbose) {
+    if (PatternCanvas.empty()) {
+        error("Pattern canvas is empty.");
+        return;
+    }
+    int pitch = NumCols * 4;
+    savePixelsAsBMP(filepath, (void *) PatternCanvas.data(), NumCols, NumRows, pitch, verbose);
+}
+
+void PatternWindow::saveRealAsBMP(const char *filepath, bool verbose) {
+    if (RealCanvas.empty()) {
+        error("Real canvas is empty.");
+        return;
+    }
+    int pitch = RealNumCols * 4;
+    savePixelsAsBMP(filepath, (void *) RealCanvas.data(), RealNumCols, RealNumRows, pitch, verbose);
+}
+
+void PatternWindow::savePatternMemoryAsBMP(size_t index, const char *filepath, bool verbose) {
+    if (index >= PatternMemory.size()) {
+        error("Invalid pattern memory index: %d", index);
+        return;
+    }
+    int pitch = NumCols * 4;
+    savePixelsAsBMP(filepath, (void *) PatternMemory[index].data(), NumCols, NumRows, pitch, verbose);
 }

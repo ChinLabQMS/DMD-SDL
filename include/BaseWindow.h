@@ -44,6 +44,7 @@ class BaseWindow {
         int getWindowWidth() const;
         int getWindowHeight() const;
         void checkWindowState();
+        void savePixelsAsBMP(const char* filename, void *pixels, int width, int height, int pitch, bool verbose);
     protected:
         SDL_Window *Window = NULL;
         SDL_Renderer *Renderer = NULL;

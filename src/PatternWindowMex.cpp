@@ -350,6 +350,12 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             selectAndLoadPatternMemory(NULL, true, true);
         } else if (func[0] == "clearPatternMemory") {
             clearPatternMemory();
+        } else if (func[0] == "resetBackground") {
+            resetBackground(0xFFFF0000, true);  
+        } else if (func[0] == "resetPattern") {
+            resetPattern(0xFF000000, true);
+        } else if (func[0] == "displayPatternCanvas") {
+            displayPatternCanvas(true, true);
         } else {
             error("Invalid function name with zero input.");
         }
@@ -388,6 +394,18 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             outputs[0] = displayPatternMemory(inputs[1], 0, true, true);
         } else if (func[0] == "clearPatternMemory") {
             clearPatternMemory(inputs[1][0]);
+        } else if (func[0] == "resetBackground") {
+            resetBackground(inputs[1][0], true);  
+        } else if (func[0] == "resetPattern") {
+            resetPattern(inputs[1][0], true);
+        } else if (func[0] == "displayPatternCanvas") {
+            displayPatternCanvas(inputs[1][0], true);
+        } else if (func[0] == "savePatternAsBMP") { 
+            StringArray filename = inputs[1];
+            savePatternAsBMP(std::string(filename[0]).c_str(), true);
+        } else if (func[0] == "saveRealAsBMP") {
+            StringArray filename = inputs[1];
+            saveRealAsBMP(std::string(filename[0]).c_str(), true);
         } else if (func[0] == "convertPattern2RGB") {
             outputs[0] = convertPattern2RGBMex(inputs[1], true);
         } else if (func[0] == "convertRGB2Pattern") {
@@ -421,6 +439,18 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             selectAndLoadPatternMemory(NULL, inputs[1][0], inputs[2][0]);
         } else if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], true, true);
+        } else if (func[0] == "resetBackground") {
+            resetBackground(inputs[1][0], inputs[2][0]);  
+        } else if (func[0] == "resetPattern") {
+            resetPattern(inputs[1][0], inputs[2][0]);
+        } else if (func[0] == "displayPatternCanvas") {
+            displayPatternCanvas(inputs[1][0], inputs[2][0]); 
+        } else if (func[0] == "savePatternAsBMP") {
+            StringArray filename = inputs[1];
+            savePatternAsBMP(std::string(filename[0]).c_str(), inputs[2][0]);
+        } else if (func[0] == "saveRealAsBMP") {
+            StringArray filename = inputs[1];
+            saveRealAsBMP(std::string(filename[0]).c_str(), inputs[2][0]);
         } else if (func[0] == "convertPattern2RGB") {
             outputs[0] = convertPattern2RGBMex(inputs[1], inputs[2][0]);
         } else if (func[0] == "convertRGB2Pattern") {
@@ -455,6 +485,22 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
     if (inputs.size() == 5) {
         if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], inputs[3][0], inputs[4][0]);
+        } else if (func[0] == "drawLineOnReal") {
+            drawLineOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], 0xFFFFFFFF, true);
+        }
+        return;
+    }
+
+    if (inputs.size() == 6) {
+        if (func[0] == "drawLineOnReal") {
+            drawLineOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], inputs[5][0], true);
+        }
+        return;
+    }
+
+    if (inputs.size() == 7) {
+        if (func[0] == "drawLineOnReal") {
+            drawLineOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], inputs[5][0], inputs[6][0]);
         }
         return;
     }

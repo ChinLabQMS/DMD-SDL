@@ -366,3 +366,13 @@ void BaseWindow::checkWindowState() {
         error("Window is minimized.");
     }
 }
+
+void BaseWindow::savePixelsAsBMP(const char* filename, void *pixels, int width, int height, int pitch, bool verbose) {
+    SDL_Surface *surface = SDL_CreateSurfaceFrom(width, height, SDL_PIXELFORMAT_ARGB8888, 
+        pixels, pitch);
+    SDL_SaveBMP(surface, filename);
+    SDL_DestroySurface(surface);
+    if (verbose) {
+        printf("Pixels data saved to BMP file: %s", filename);
+    }
+}

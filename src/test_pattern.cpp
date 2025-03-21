@@ -15,7 +15,8 @@ int main() {
     SDL_Delay(5000);
 
     window.selectAndLoadPatternMemory(NULL, true, true);
-    window.displayPatternMemory(1000, true, true);
+    uint32_t indices[] = {0};
+    window.displayPatternMemory(indices, 1, 0, true, true);
     
     std::cout << "Test completed, press any key to exit." << std::endl;
     std::cin.get();

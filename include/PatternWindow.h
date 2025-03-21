@@ -17,7 +17,11 @@ class PatternWindow : public BaseWindow, public PixelCanvas {
         virtual void setStaticPatternPath2(const char *filepath, bool verbose, bool use_parallel); // Add additional parameter to control parallelism
         void loadPatternMemoryFromFile(const char *filepath, bool verbose, bool use_parallel);
         void selectAndLoadPatternMemory(const char *default_location, bool verbose, bool use_parallel);
-        bool displayPatternMemory(const uint32_t * indices, uint32_t num_frames, uint32_t delay, bool verbose, bool use_parallel);
+        bool displayPatternMemory(const uint32_t * indices, size_t num_frames, uint32_t delay, bool verbose, bool use_parallel);
+        bool displayPatternCanvas(bool verbose, bool use_parallel);
+        void savePatternAsBMP(const char *filepath, bool verbose);
+        void saveRealAsBMP(const char *filepath, bool verbose);
+        void savePatternMemoryAsBMP(size_t index, const char *filepath, bool verbose);
 };
 
 #endif // PATTERNWINDOW_H

@@ -40,12 +40,12 @@ mingw32-make
 
 ## Structure
 The main components are: `BaseWindow`, `PatternWindow`, and `PixelCanvas`.
-<img src="docs/diagram.png" alt="black" width="400"/>
+<img src="docs/diagram.png" alt="black" width="800"/>
 
 If only require the basic window functionalities, use `BaseWindow` class. 
 If using the C++ code for generating patterns, use `PixelCanvas` class.
-If require pixel pattern drawing with window functionality, use `PatternWindow` class. 
-If require MATLAB interface, use `PatternWindowMex` class.
+If require both pixel pattern drawing and window functionality, use `PatternWindow` class. 
+To interface with MATLAB, use `PatternWindowMex` class to compile mex function.
 
 ## Static pattern projection
 `static.cpp` Create an opaque window with target size, and open a file selection dialog to select a BMP file, then render a static pattern loaded from BMP to the window.
@@ -116,7 +116,7 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("getPatternMemoryReal", index, bg_color=0xFFFF0000, use_parallel=true)` - get the pattern memory at the specified index in real-space format, index is an integer
 - `PatternWindowMex("getPatternMemoryRealRGB", index, bg_color=0xFFFF0000, use_parallel=true)` - get the pattern memory at the specified index in real-space RGB format, index is an integer
 
-**Pattern window configuration**
+**Pattern/window configuration**
 - `PatternWindowMex("setDisplayIndex", display_index, verbose=true)` - set the display index (0-index integer) of the window to the specified display, the order is the same as the one returned by `PatternWindowMex("getDisplayModes")`
 - `PatternWindowMex("displayColor", color=[0,0,0], verbose=true)` - display a color on the window, color is a 1x3 vector with RGB values
 - `PatternWindowMex("setStaticPatternPath", path, verbose=true, use_parallel=true)` - set the static pattern to be displayed on the window, path is the path to the BMP file
@@ -124,6 +124,14 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("selectAndProject", verbose=true)` - open a file selection dialog to select a BMP file and project it to the window as a static pattern
 - `PatternWindowMex("selectAndLoadPatternMemory", verbose=true, use_parallel=true)` - open a file selection dialog to select one/more BMP file and load it to the pattern memory
 - `success = PatternWindowMex("displayPatternMemory", index_list, delay=0, verbose=true, use_parallel=true)` - display the pattern memory at the specified index (0-start) and delay is the wait time in milliseconds after displaying each pattern. Function will return a boolean value indicating if the display timing is expected for the current refresh rate in case of a dropped frame
+- `PatternWindowMex("clearPatternMemory")` - clear all the pattern memory
+- `PatternWindowMex("clearPatternMemory", index)` - clear the pattern memory at the specified index
+- `PatternWindowMex("resetBackground", bg_color=0xFFFF0000, use_parallel=true)` - reset the background color of the window, bg_color is the color in uint32 format
+- `PatternWindowMex("resetPattern", color=0xFF000000, use_parallel=true)` - reset the pattern canvas of the window, color is the color in uint32 format
+- `PatternWindowMex("drawLineOnReal", A, B, C, d, color=0xFFFFFFFF, use_parallel=true)` - draw a line on the real-space canvas of the window, A, B, C, d are the line parameters (center Ax + By + C = 0, width d), color is the color in uint32 format
+- `PatternWindowMex("displayPatternCanvas", verbose=true, use_parallel=true)` - display the pattern canvas on the window
+- `PatternWindowMex("savePatternAsBMP", path, verbose=true)` - save the pattern canvas to a BMP file at the specified path
+- `PatternWindowMex("saveRealAsBMP", path, verbose=true)` - save the real-space pattern canvas to a BMP file at the specified path
 
 **Utility**
 - `PatternWindowMex("convertPattern2RGB", pattern, use_parallel=true)` - convert the pattern to RGB format with parallel processing (true/false), pattern is an array of uint32 values, return the RGB pattern as a 3D array of uint8 values
