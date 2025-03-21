@@ -222,12 +222,9 @@ TypedArray<uint8_t> MexFunction::getPatternMemoryRealRGB(int index, uint32_t bac
 }
 
 TypedArray<bool> MexFunction::displayPatternMemory(const TypedArray<double> indices, uint32_t delay, bool verbose, bool use_parallel) {
-    // Convert the input to a vector of integers
-    std::vector<uint32_t> index_vector(indices.getNumberOfElements());
-    for (size_t i = 0; i < indices.getNumberOfElements(); ++i) {
-        index_vector[i] = static_cast<uint32_t>(indices[i]);
-    }
-    return factory.createScalar(PatternWindow::displayPatternMemory(index_vector, delay, verbose, use_parallel));
+    TypedArray<uint32_t> index_array = indices;
+    const uint32_t *index_vector = getDataPtr<uint32_t>(index_array);
+    return factory.createScalar(PatternWindow::displayPatternMemory(index_vector, indices.getNumberOfElements(), delay, verbose, use_parallel));
 }
 
 // Check the arguments of the MEX function

@@ -99,14 +99,15 @@ void PatternWindow::selectAndLoadPatternMemory(const char *default_location, boo
 
 // Display multiple patterns from the pattern memory
 // If the delay is greater than 0, the function will wait for the specified time before returning
-bool PatternWindow::displayPatternMemory(std::vector<uint32_t> indices, uint32_t delay, bool verbose, bool use_parallel) {
+bool PatternWindow::displayPatternMemory(const uint32_t * indices, uint32_t num_frames, uint32_t delay, bool verbose, bool use_parallel) {
     if (!Window) {
         error("Window is not open.");
         return false;
     }
     // Check the time delay of the execution
     uint64_t start_time = SDL_GetTicksNS();
-    for (int index : indices) {
+    for (int i = 0; i < num_frames; i++) {
+        uint32_t index = indices[i];
         if ((index < 0) | (index >= PatternMemory.size())) {
             error("Invalid pattern memory index: %d", index);
             return false;
@@ -118,9 +119,9 @@ bool PatternWindow::displayPatternMemory(std::vector<uint32_t> indices, uint32_t
     }
     // Check if the time delay is greater than the expected refresh rate
     float elapsed_time = (SDL_GetTicksNS() - start_time) / 1000000.0; // in ms
-    float expected_delay = (1000 / DisplayMode->refresh_rate) * (indices.size() + 1) + delay * indices.size(); // in ms
+    float expected_delay = (1000 / DisplayMode->refresh_rate) * (num_frames + 1) + delay * num_frames; // in ms
     if (elapsed_time > expected_delay) {
-        warn("The display time is %.2f ms, which exceeded the expected maximum delay of %.2f ms for %d frames.", elapsed_time, expected_delay, indices.size());
+        warn("The display time is %.2f ms, which exceeded the expected maximum delay of %.2f ms for %d frames.", elapsed_time, expected_delay, num_frames);
         return false;
     }
     return true;
