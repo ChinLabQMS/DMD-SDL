@@ -148,8 +148,8 @@ void PixelCanvas::drawLineOnReal(double A, double B, double C, double d, uint32_
     }
     if (B == 0) {
         double x0 = -C / A;
-        int x_min = std::max(0, int(x0 - d / 2 + 1 / 2));
-        int x_max = std::min(RealNumRows, int(x0 + d / 2 + 1 / 2));
+        int x_min = std::max(0, int(x0 - d / 2));
+        int x_max = std::min(RealNumRows, int(x0 + d / 2));
         int num_pixels = std::max(0, (x_max - x_min) * RealNumCols);
         std::vector<int> real_idx(num_pixels);
         #pragma omp parallel for if(use_parallel)
@@ -164,8 +164,8 @@ void PixelCanvas::drawLineOnReal(double A, double B, double C, double d, uint32_
         for (int x = 0; x < RealNumRows; ++x) {
             double y0 = (-C - A * x) / B;
             double dy = d * sqrt(1 + A * A / (B * B));
-            int y_min = std::max(0, int(y0 - dy / 2 + 1 / 2));
-            int y_max = std::min(RealNumCols, int(y0 + dy / 2 + 1 / 2));
+            int y_min = std::max(0, int(y0 - dy / 2 + 1));
+            int y_max = std::min(RealNumCols, int(y0 + dy / 2 + 1));
             for (int y = y_min; y < y_max; ++y) {
                 real_idx.push_back(sub2ind(RealNumRows, RealNumCols, x, y));
             }
