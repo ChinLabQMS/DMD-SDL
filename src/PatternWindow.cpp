@@ -61,10 +61,10 @@ void PatternWindow::loadPatternMemoryFromFile(const char *filepath, bool verbose
             uint32_t *pixels = (uint32_t*) BMPSurface->pixels;
             PatternMemory.push_back(std::vector<uint32_t>(pixels, pixels + BMPSurface->h * BMPSurface->w));
             if (verbose) {
-                printf("Pattern memory loaded from file: %s", filepath);
+                printf("Pattern memory loaded from file:\n\t%s", filepath);
             }
         } else {
-            warn("Pattern size does not match the canvas size, skipping file: %s", filepath);
+            warn("Pattern size does not match the canvas size, skipping file:\n\t%s", filepath);
         }
     }
 }

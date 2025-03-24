@@ -50,6 +50,7 @@ public:
     void drawPixelsOnReal(std::vector<int> real_idx, uint32_t color, bool use_parallel);
     void drawPixelsOnRealBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel);
     void drawLineOnReal(double A, double B, double C, double d, uint32_t color, bool use_parallel);
+    void drawCircleOnReal(double x0, double y0, double r, uint32_t color, bool use_parallel);
     std::vector<uint8_t> getPatternCanvasRGB(bool use_parallel);
     std::vector<uint8_t> getRealCanvasRGB(bool use_parallel);
     std::vector<uint8_t> getPatternMemoryRGB(size_t index, bool use_parallel);

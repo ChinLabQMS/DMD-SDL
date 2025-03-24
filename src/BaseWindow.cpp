@@ -376,3 +376,28 @@ void BaseWindow::savePixelsAsBMP(const char* filename, void *pixels, int width, 
         printf("Pixels data saved to BMP file: %s", filename);
     }
 }
+
+void BaseWindow::selectAndSavePixelsAsBMP(const char* default_location, void *pixels, int width, int height, int pitch, bool verbose) {
+    if (!default_location) {
+        default_location = BaseDirectory;
+    }
+    SDL_ShowSaveFileDialog(callback, NULL, NULL, filters, 2, default_location);
+    // Delay the return until the user input is received
+    SDL_Event event;
+    while (true) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_USER) {
+                if (event.user.code == -1) {
+                    error("An error occured during file selection: %s", SDL_GetError());
+                }
+                if (event.user.code == 1) {
+                    warn("The user did not select any file.");
+                }
+                if (event.user.code == 0) {
+                    savePixelsAsBMP(((char**) event.user.data2)[0], pixels, width, height, pitch, verbose);
+                }
+                return;
+            }
+        }
+    }
+}

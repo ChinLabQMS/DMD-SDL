@@ -148,8 +148,8 @@ void PixelCanvas::drawLineOnReal(double A, double B, double C, double d, uint32_
     }
     if (B == 0) {
         double x0 = -C / A;
-        int x_min = std::max(0, int(x0 - d / 2));
-        int x_max = std::min(RealNumRows, int(x0 + d / 2));
+        int x_min = std::max(0, int(x0 - d / 2 + 1));
+        int x_max = std::min(RealNumRows, int(x0 + d / 2 + 1));
         int num_pixels = std::max(0, (x_max - x_min) * RealNumCols);
         std::vector<int> real_idx(num_pixels);
         #pragma omp parallel for if(use_parallel)
@@ -172,6 +172,23 @@ void PixelCanvas::drawLineOnReal(double A, double B, double C, double d, uint32_
         }
         drawPixelsOnReal(real_idx, color, use_parallel);
     }
+}
+
+// Draw Circle on Real Canvas with center (x0, y0) and radius r
+void PixelCanvas::drawCircleOnReal(double x0, double y0, double r, uint32_t color, bool use_parallel) {
+    int x_min = std::max(0, int(x0 - r + 1));
+    int x_max = std::min(RealNumRows, int(x0 + r + 1));
+    int y_min = std::max(0, int(y0 - r + 1));
+    int y_max = std::min(RealNumCols, int(y0 + r + 1));
+    std::vector<int> real_idx;
+    for (int x = x_min; x < x_max; ++x) {
+        for (int y = y_min; y < y_max; ++y) {
+            if ((x - x0) * (x - x0) + (y - y0) * (y - y0) <= r * r) {
+                real_idx.push_back(sub2ind(RealNumRows, RealNumCols, x, y));
+            }
+        }
+    }
+    drawPixelsOnReal(real_idx, color, use_parallel);
 }
 
 // Get Pattern Canvas in RGB format

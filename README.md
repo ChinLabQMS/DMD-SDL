@@ -129,8 +129,11 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("resetBackground", bg_color=0xFFFF0000, use_parallel=true)` - reset the background color of the window, bg_color is the color in uint32 format
 - `PatternWindowMex("resetPattern", color=0xFF000000, use_parallel=true)` - reset the pattern canvas of the window, color is the color in uint32 format
 - `PatternWindowMex("drawLineOnReal", A, B, C, d, color=0xFFFFFFFF, use_parallel=true)` - draw a line on the real-space canvas of the window, A, B, C, d are the line parameters (center Ax + By + C = 0, width d), color is the color in uint32 format
+- `PatternWindowMex("drawCircleOnReal", x, y, r, color=0xFFFFFFFF, use_parallel=true)` - draw a circle on the real-space canvas of the window, x, y, r are the circle parameters (center (x, y), radius r), color is the color in uint32 format
 - `PatternWindowMex("displayPatternCanvas", verbose=true, use_parallel=true)` - display the pattern canvas on the window
 - `PatternWindowMex("savePatternAsBMP", path, verbose=true)` - save the pattern canvas to a BMP file at the specified path
+- `PatternWindowMex("selectAndSavePatternAsBMP", verbose=true)` - open a save file selection dialog to select a BMP filename and location and save the pattern canvas to the selected path
+- `PatternWindowMex("selectAndSaveRealAsBMP", verbose=true)` - open a save file selection dialog to select a BMP filename and location and save the real-space pattern canvas to the selected path
 - `PatternWindowMex("saveRealAsBMP", path, verbose=true)` - save the real-space pattern canvas to a BMP file at the specified path
 
 **Utility**

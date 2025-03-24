@@ -356,6 +356,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             resetPattern(0xFF000000, true);
         } else if (func[0] == "displayPatternCanvas") {
             displayPatternCanvas(true, true);
+        } else if (func[0] == "selectAndSavePatternAsBMP") {
+            selectAndSavePixelsAsBMP(NULL, (void *) PatternCanvas.data(), NumCols, NumRows, NumCols * 4, true);
+        } else if (func[0] == "selectAndSaveRealAsBMP") {
+            selectAndSavePixelsAsBMP(NULL, (void *) RealCanvas.data(), RealNumCols, RealNumRows, RealNumCols * 4, true);
         } else {
             error("Invalid function name with zero input.");
         }
@@ -406,6 +410,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "saveRealAsBMP") {
             StringArray filename = inputs[1];
             saveRealAsBMP(std::string(filename[0]).c_str(), true);
+        } else if (func[0] == "selectAndSavePatternAsBMP") {
+            selectAndSavePixelsAsBMP(NULL, (void *) PatternCanvas.data(), NumCols, NumRows, NumCols * 4, inputs[1][0]);
+        } else if (func[0] == "selectAndSaveRealAsBMP") {
+            selectAndSavePixelsAsBMP(NULL, (void *) RealCanvas.data(), RealNumCols, RealNumRows, RealNumCols * 4, inputs[1][0]);
         } else if (func[0] == "convertPattern2RGB") {
             outputs[0] = convertPattern2RGBMex(inputs[1], true);
         } else if (func[0] == "convertRGB2Pattern") {
@@ -476,6 +484,8 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             loadPatternMemoryFromFile(std::string(filename[0]).c_str(), inputs[2][0], inputs[3][0]);
         } else if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], inputs[3][0], true);
+        } else if (func[0] == "drawCircleOnReal") {
+            drawCircleOnReal(inputs[1][0], inputs[2][0], inputs[3][0], 0xFFFFFFFF, true);
         } else {
             error("Invalid function name with three inputs.");
         }
@@ -487,6 +497,8 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], inputs[3][0], inputs[4][0]);
         } else if (func[0] == "drawLineOnReal") {
             drawLineOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], 0xFFFFFFFF, true);
+        } else if (func[0] == "drawCircleOnReal") {
+            drawCircleOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], true);
         }
         return;
     }
@@ -494,6 +506,8 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
     if (inputs.size() == 6) {
         if (func[0] == "drawLineOnReal") {
             drawLineOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], inputs[5][0], true);
+        } else if (func[0] == "drawCircleOnReal") {
+            drawCircleOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], inputs[5][0]);
         }
         return;
     }
