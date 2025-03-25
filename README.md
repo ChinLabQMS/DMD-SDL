@@ -138,4 +138,4 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 
 **Utility**
 - `PatternWindowMex("convertPattern2RGB", pattern, use_parallel=true)` - convert the pattern to RGB format with parallel processing (true/false), pattern is an array of uint32 values, return the RGB pattern as a 3D array of uint8 values
-- `PatternWindowMex("convertRGB2Pattern", rgb_pattern, use_parallel=true)` - convert the RGB pattern to pattern with parallel processing (true/false), rgb_pattern is a 3D array of uint8 values, return the pattern as an array of uint32 values
+- `PatternWindowMex("convertRGB2Pattern", rgb_pattern, use_parallel=true)` - convert the RGB pattern to uint32 pattern with parallel processing (true/false), rgb_pattern is a 3D array of uint8 values, return the pattern as an array of uint32 values
