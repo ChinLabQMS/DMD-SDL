@@ -39,12 +39,9 @@ protected:
     std::vector<int> Real2PatternIndex; // Real to Pattern index mapping, size = RealNumPixels
 public:
     std::vector<uint32_t> PatternCanvas; // Pattern canvas, size = PatternNumPixels
-    std::vector<uint32_t> RealCanvas; // Real canvas, size = RealNumPixels
     std::vector<std::vector<uint32_t>> PatternMemory; // Pattern memory, resizable    
     void initCanvas(int nrows, int ncols, std::string arrangement, bool use_parallel);
     void closeCanvas();
-    void resetBackground(uint32_t background_color, bool use_parallel);
-    void resetPattern(uint32_t pattern_color, bool use_parallel);
     void clearPatternMemory();
     void clearPatternMemory(size_t index);
     void drawPixelsOnReal(std::vector<int> real_idx, uint32_t color, bool use_parallel);
