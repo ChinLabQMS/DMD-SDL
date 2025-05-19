@@ -15,7 +15,6 @@ BaseWindow::~BaseWindow() {
     SDL_free(StaticPatternPath);
     SDL_free(BaseDirectory);
     SDL_DestroySurface(BMPSurface);
-    BMPSurface = NULL;
     Displays = NULL;
     StaticPatternPath = NULL;
     BaseDirectory = NULL;
@@ -181,6 +180,7 @@ void BaseWindow::displayColor(int r, int g, int b, bool verbose) {
     }
 }
 
+// Read a BMP file and create a surface from it
 void BaseWindow::readBMP(const char* filename, SDL_Surface **surface, bool verbose) {
     SDL_Surface *bitmap_surface = SDL_LoadBMP(filename);
     if (bitmap_surface) {
@@ -272,6 +272,7 @@ void BaseWindow::setDynamicPattern(void* pattern, bool verbose, bool use_paralle
     OperationMode = SDL_strdup("Dynamic");
 }
 
+// Callback function for file selection dialog
 void SDLCALL callback(void* userdata, const char* const* filelist, int filter) {
     SDL_Event user_event;
     SDL_zero(user_event);
@@ -298,7 +299,7 @@ void SDLCALL callback(void* userdata, const char* const* filelist, int filter) {
     SDL_PushEvent(&user_event);
 }
 
-// Select files from the file system
+// Select files from the file system and project on the window
 void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
     if (!default_location) {
         default_location = BaseDirectory;
@@ -324,6 +325,8 @@ void BaseWindow::selectAndProject(const char* default_location, bool verbose) {
     }
 }
 
+// Set the display index to the specified value
+// If the index is out of range, do nothing
 void BaseWindow::setDisplayIndex(int idx, bool verbose) {
     if ((idx >= 0) & (idx < NumDisplays) & (idx != DisplayIndex)) {
         DisplayIndex = idx;
@@ -340,10 +343,13 @@ void BaseWindow::setDisplayIndex(int idx, bool verbose) {
     }
 }
 
+// Check if the window is created
 bool BaseWindow::isWindowCreated() const {
     return Window != NULL;
 }
 
+// Check if the window is minimized
+// If the window is not created, return false
 bool BaseWindow::isWindowMinimized() const {
     if (!Window) {
         return false;
@@ -351,14 +357,20 @@ bool BaseWindow::isWindowMinimized() const {
     return SDL_GetWindowFlags(Window) & SDL_WINDOW_MINIMIZED;
 }
 
+// Get the width of the window
 int BaseWindow::getWindowWidth() const {
     return WindowWidth;
 }
 
+// Get the height of the window
 int BaseWindow::getWindowHeight() const {
     return WindowHeight;
 }
 
+// Check the state of the window
+// If the window is not created, print an error message
+// If the window is minimized, print a warning message
+// If the window is created and not minimized, do nothing
 void BaseWindow::checkWindowState() {
     if (!isWindowCreated()) {
         error("Window is not created.");
@@ -367,6 +379,10 @@ void BaseWindow::checkWindowState() {
     }
 }
 
+// Save pixel data to a BMP file
+// The pixel data is assumed to be in ARGB format, pitch is 4 * width + padding
+// If verbose is true, print messages to the console
+// The filename is the full path to the file, including the file name and extension
 void BaseWindow::savePixelsAsBMP(const char* filename, void *pixels, int width, int height, int pitch, bool verbose) {
     SDL_Surface *surface = SDL_CreateSurfaceFrom(width, height, SDL_PIXELFORMAT_ARGB8888, 
         pixels, pitch);
@@ -377,6 +393,10 @@ void BaseWindow::savePixelsAsBMP(const char* filename, void *pixels, int width, 
     }
 }
 
+// Select a file from the file system and save pixel data to it
+// The pixel data is assumed to be in ARGB format, pitch is 4 * width + padding
+// If verbose is true, print messages to the console
+// The filename is the full path to the file, including the file name and extension
 void BaseWindow::selectAndSavePixelsAsBMP(const char* default_location, void *pixels, int width, int height, int pitch, bool verbose) {
     if (!default_location) {
         default_location = BaseDirectory;

@@ -37,7 +37,7 @@ class BaseWindow {
         void readBMP(const char* filename, SDL_Surface **surface, bool verbose);
         void setDynamicPattern(void* pattern, bool verbose, bool use_parallel);
         void selectAndProject(const char* default_location, bool verbose);
-        void setDisplayIndex(int idx, bool verbose);
+        virtual void setDisplayIndex(int idx, bool verbose);
         virtual void setStaticPatternPath(const char* filename, bool verbose);
         bool isWindowCreated() const;
         bool isWindowMinimized() const;

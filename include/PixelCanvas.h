@@ -35,26 +35,23 @@ protected:
     int RealNumPixels = 0; // Number of pixels in the real canvas
     std::string PixelArrangement = "Diamond"; // Pixel arrangement, default to Diamond
     std::vector<int> Pattern2RealIndex; // Pattern to Real index mapping, size = PatternNumPixels
-    std::vector<int> Background2RealIndex; // Background to Real index mapping, size = BackgroundNumPixels
     std::vector<int> Real2PatternIndex; // Real to Pattern index mapping, size = RealNumPixels
 public:
-    std::vector<uint32_t> PatternCanvas; // Pattern canvas, size = PatternNumPixels
-    std::vector<std::vector<uint32_t>> PatternMemory; // Pattern memory, resizable    
+    std::vector<std::vector<uint32_t>> PatternMemory; // Pattern memory, resizable, to store patterns loaded from files
+    std::vector<std::vector<uint32_t>> DynamicMemory; // Dynamic memory, resizable, to store patterns computed on the fly
     void initCanvas(int nrows, int ncols, std::string arrangement, bool use_parallel);
     void closeCanvas();
-    void clearPatternMemory();
-    void clearPatternMemory(size_t index);
-    void drawPixelsOnReal(std::vector<int> real_idx, uint32_t color, bool use_parallel);
-    void drawPixelsOnRealBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel);
-    void drawLineOnReal(double A, double B, double C, double d, uint32_t color, bool use_parallel);
-    void drawCircleOnReal(double x0, double y0, double r, uint32_t color, bool use_parallel);
-    std::vector<uint8_t> getPatternCanvasRGB(bool use_parallel);
-    std::vector<uint8_t> getRealCanvasRGB(bool use_parallel);
-    std::vector<uint8_t> getPatternMemoryRGB(size_t index, bool use_parallel);
+    void resetDynamicMemory(uint32_t color, bool use_parallel);
+    void clearDynamicMemoryAll();
+    void clearPatternMemoryAll();
+    void drawPixelsDynamic(std::vector<int> real_idx, uint32_t color, bool use_parallel);
+    void drawPixelsDynamicBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel);
+    std::vector<int> drawCirclesOnReal(const std::vector<double>& x0, const std::vector<double>& y0, double r, bool use_parallel);
+    std::vector<uint8_t> getDynamicMemoryRGB(int index, bool use_parallel);
+    std::vector<uint8_t> getPatternMemoryRGB(int index, bool use_parallel);
     std::vector<uint32_t> convertPattern2Real(const uint32_t *pattern, uint32_t background_color, bool use_parallel);
-    static std::vector<uint8_t> convertPattern2RGB(uint8_t *pattern, int height, int width, int pitch, bool use_parallel);
-    static std::vector<uint32_t> convertRGB2Pattern(uint8_t *rgb, int height, int width, int pitch, bool use_parallel);
-    static std::vector<uint32_t> createSolidPattern(uint32_t color, int num_elements, bool use_parallel);
+    static std::vector<uint8_t> convertPattern2RGB(const uint32_t *pattern, int height, int width, int pitch, bool use_parallel);
+    static std::vector<uint32_t> convertRGB2Pattern(const uint8_t *rgb, int height, int width, int pitch, bool use_parallel);
 };
 
 #endif // PIXELCANVAS_H

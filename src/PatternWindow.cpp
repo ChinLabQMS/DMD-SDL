@@ -1,34 +1,26 @@
 #include "PatternWindow.h"
 
 void PatternWindow::open(bool verbose) {
-    error("Please use the open2 function with additional parameters for canvas initialization.");
+    open2("Diamond", verbose, true);
 }
 
 // Every time the window is opened, the canvas is initialized
 void PatternWindow::open2(std::string arrangement, bool verbose, bool use_parallel) {
     BaseWindow::open(verbose);
-    initCanvas(WindowHeight, WindowWidth, arrangement, use_parallel);
+    if (NumRows != WindowHeight || NumCols != WindowWidth || PixelArrangement != arrangement) {
+        if (verbose) {
+            printf("Reinitializing canvas with arrangement: %s\n", arrangement.c_str());
+        }
+        initCanvas(WindowHeight, WindowWidth, arrangement, use_parallel);
+    }
     if (StaticPatternPath) {
         char *path = SDL_strdup(StaticPatternPath);
-        setStaticPatternPath(path, verbose);
+        setStaticPatternPath2(path, verbose, use_parallel);
         SDL_free(path);
     }
 }
 
-// Close the window and free canvas resources; override the BaseWindow close function
-void PatternWindow::close(bool verbose) {
-    BaseWindow::close(verbose);
-    closeCanvas();
-}
-
-// Set the path to the static pattern image file; override the BaseWindow setStaticPatternPath function
-void PatternWindow::setStaticPatternPath(const char *filepath, bool verbose) {
-    setStaticPatternPath2(filepath, verbose, true);
-}
-
-// Set the path to the static pattern image file with an additional parameter for parallel processing
-void PatternWindow::setStaticPatternPath2(const char *filepath, bool verbose, bool use_parallel) {
-    BaseWindow::setStaticPatternPath(filepath, verbose);
+void PatternWindow::updateStaticPatternProperties(bool use_parallel) {
     if (StaticPatternSurface) {
         StaticPatternRGB = convertPattern2RGB(
             (uint8_t *) StaticPatternSurface->pixels, 
@@ -51,6 +43,27 @@ void PatternWindow::setStaticPatternPath2(const char *filepath, bool verbose, bo
         StaticPatternReal.clear();
         StaticPatternRealRGB.clear();
     }
+}
+
+// Set the display index for the window
+void PatternWindow::setDisplayIndex(int idx, bool verbose) {
+    BaseWindow::setDisplayIndex(idx, verbose);
+    if (StaticPatternPath) {
+        char *path = SDL_strdup(StaticPatternPath);
+        setStaticPatternPath2(path, verbose, true);
+        SDL_free(path);
+    }
+}
+
+// Set the path to the static pattern image file; override the BaseWindow setStaticPatternPath function
+void PatternWindow::setStaticPatternPath(const char *filepath, bool verbose) {
+    setStaticPatternPath2(filepath, verbose, true);
+}
+
+// Set the path to the static pattern image file with an additional parameter for parallel processing
+void PatternWindow::setStaticPatternPath2(const char *filepath, bool verbose, bool use_parallel) {
+    BaseWindow::setStaticPatternPath(filepath, verbose);
+    updateStaticPatternProperties(use_parallel);
 }
 
 // Load a pattern memory from a file
@@ -127,46 +140,11 @@ bool PatternWindow::displayPatternMemory(const uint32_t * indices, size_t num_fr
     return true;
 }
 
-// Display the pattern canvas
-bool PatternWindow::displayPatternCanvas(bool verbose, bool use_parallel) {
-    if (!Window) {
-        error("Window is not open.");
-        return false;
-    }
-    uint64_t start_time = SDL_GetTicksNS();
-    setDynamicPattern(PatternCanvas.data(), verbose, use_parallel);
-    float elapsed_time = (SDL_GetTicksNS() - start_time) / 1000000.0; // in ms
-    float expected_delay = (1000 / DisplayMode->refresh_rate) * 2; // in ms
-    if (elapsed_time > expected_delay) {
-        warn("The display time is %.2f ms, which exceeded the expected maximum delay of %.2f ms.", elapsed_time, expected_delay);
-        return false;
-    }
-    return true;
-}
-
-void PatternWindow::savePatternAsBMP(const char *filepath, bool verbose) {
+void PatternWindow::selectAndSavePatternAsBMP(const char *default_location, bool verbose) {
     if (PatternCanvas.empty()) {
         error("Pattern canvas is empty.");
         return;
     }
     int pitch = NumCols * 4;
-    savePixelsAsBMP(filepath, (void *) PatternCanvas.data(), NumCols, NumRows, pitch, verbose);
-}
-
-void PatternWindow::saveRealAsBMP(const char *filepath, bool verbose) {
-    if (RealCanvas.empty()) {
-        error("Real canvas is empty.");
-        return;
-    }
-    int pitch = RealNumCols * 4;
-    savePixelsAsBMP(filepath, (void *) RealCanvas.data(), RealNumCols, RealNumRows, pitch, verbose);
-}
-
-void PatternWindow::savePatternMemoryAsBMP(size_t index, const char *filepath, bool verbose) {
-    if (index >= PatternMemory.size()) {
-        error("Invalid pattern memory index: %d", index);
-        return;
-    }
-    int pitch = NumCols * 4;
-    savePixelsAsBMP(filepath, (void *) PatternMemory[index].data(), NumCols, NumRows, pitch, verbose);
+    selectAndSavePixelsAsBMP(default_location, (void *) PatternCanvas.data(), NumCols, NumRows, pitch, verbose);
 }

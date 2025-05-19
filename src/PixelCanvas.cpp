@@ -41,26 +41,19 @@ void PixelCanvas::initCanvas(int nrows, int ncols, std::string arrangement, bool
     for (int i = 0; i < PatternNumPixels; ++i) {
         Real2PatternIndex[Pattern2RealIndex[i]] = i;
     }
-    // Assign background to real index mapping
     BackgroundNumPixels = RealNumPixels - PatternNumPixels;
-    Background2RealIndex.resize(BackgroundNumPixels);
-    int bg_idx = 0;
-    for (int i = 0; i < RealNumPixels; ++i) {
-        if (Real2PatternIndex[i] == -1) {
-            Background2RealIndex[bg_idx++] = i;
-        }
-    }
-    PatternCanvas.resize(PatternNumPixels, 0);
+    clearPatternMemoryAll();
+    clearDynamicMemoryAll();
+    resetDynamicMemory(0xFFFFFFFF, use_parallel);
 }
 
 // Cleanup Function
 void PixelCanvas::closeCanvas() {
     PixelArrangement.clear();
     Pattern2RealIndex.clear();
-    Background2RealIndex.clear();
     Real2PatternIndex.clear();
-    PatternCanvas.clear();
-    clearPatternMemory();
+    clearPatternMemoryAll();
+    clearDynamicMemoryAll();
     NumRows = 0;
     NumCols = 0;
     RealNumRows = 0;
@@ -70,24 +63,42 @@ void PixelCanvas::closeCanvas() {
     RealNumPixels = 0;
 }
 
-// Clear Pattern Memory
-void PixelCanvas::clearPatternMemory() {
+// Reset last canvas to a specific color
+void PixelCanvas::resetDynamicMemory(uint32_t color, bool use_parallel) {
+    if (DynamicMemory.empty()) {
+        DynamicMemory.resize(1);
+        DynamicMemory[0].resize(PatternNumPixels, color);
+        return;
+    }
+    int last_index = DynamicMemory.size() - 1;
+    #pragma omp parallel for if(use_parallel)
+    for (int i = 0; i < PatternNumPixels; ++i) {
+        DynamicMemory[last_index][i] = color;
+    }
+}
+
+// Clear all patterns stored in DynamicMemory
+void PixelCanvas::clearDynamicMemoryAll() {
+    for (auto& pattern : DynamicMemory) {
+        pattern.clear();
+    }
+    DynamicMemory.clear();
+}
+
+// Clear all patterns stored in PatternMemory
+void PixelCanvas::clearPatternMemoryAll() {
     for (auto& pattern : PatternMemory) {
         pattern.clear();
     }
     PatternMemory.clear();
 }
 
-// Clear Specific Pattern Memory
-void PixelCanvas::clearPatternMemory(size_t index) {
-    if (index < PatternMemory.size()) {
-        PatternMemory[index].clear();
-    }
-    PatternMemory.erase(PatternMemory.begin() + index);
-}
-
 // Draw Pixels with coordinates on Real Canvas
-void PixelCanvas::drawPixelsOnReal(std::vector<int> real_idx, uint32_t color, bool use_parallel) {
+void PixelCanvas::drawPixelsDynamic(std::vector<int> real_idx, uint32_t color, bool use_parallel) {
+    if (DynamicMemory.empty()) {
+        return;
+    }
+    std::vector<uint32_t>& PatternCanvas = DynamicMemory.back();
     #pragma omp parallel for if(use_parallel)
     for (size_t i = 0; i < real_idx.size(); ++i) {
         int reali = real_idx[i];
@@ -99,7 +110,14 @@ void PixelCanvas::drawPixelsOnReal(std::vector<int> real_idx, uint32_t color, bo
 }
 
 // Draw Pixels with coordinates on Real Canvas with specified Bit Plane
-void PixelCanvas::drawPixelsOnRealBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel) {
+void PixelCanvas::drawPixelsDynamicBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel) {
+    if (DynamicMemory.empty()) {
+        return;
+    }
+    if (bit_plane < 0 || bit_plane > 31) {
+        return;
+    }
+    std::vector<uint32_t>& PatternCanvas = DynamicMemory.back();
     #pragma omp parallel for if(use_parallel)
     for (size_t i = 0; i < real_idx.size(); ++i) {
         uint32_t mask = 1 << bit_plane;
@@ -116,77 +134,58 @@ void PixelCanvas::drawPixelsOnRealBit(std::vector<int> real_idx, int bit_plane, 
     }
 }
 
-// Draw Lines on Real Canvas from Ax + By + C = 0 with d pixel width
-void PixelCanvas::drawLineOnReal(double A, double B, double C, double d, uint32_t color, bool use_parallel) {
-    if (A == 0 && B == 0) {
-        return;
-    }
-    if (B == 0) {
-        double x0 = -C / A;
-        int x_min = std::max(0, int(x0 - d / 2 + 1));
-        int x_max = std::min(RealNumRows, int(x0 + d / 2 + 1));
-        int num_pixels = std::max(0, (x_max - x_min) * RealNumCols);
-        std::vector<int> real_idx(num_pixels);
-        #pragma omp parallel for if(use_parallel)
-        for (int y = 0; y < RealNumCols; ++y) {
-            for (int x = x_min; x < x_max; ++x) {
-                real_idx[(x - x_min) * RealNumCols + y] = sub2ind(RealNumRows, RealNumCols, x, y);
-            }
-        }
-        drawPixelsOnReal(real_idx, color, use_parallel);
-    } else {
-        std::vector<int> real_idx;
-        for (int x = 0; x < RealNumRows; ++x) {
-            double y0 = (-C - A * x) / B;
-            double dy = d * sqrt(1 + A * A / (B * B));
-            int y_min = std::max(0, int(y0 - dy / 2 + 1));
-            int y_max = std::min(RealNumCols, int(y0 + dy / 2 + 1));
+std::vector<int> PixelCanvas::drawCirclesOnReal(
+                                    const std::vector<double>& x0, 
+                                    const std::vector<double>& y0, 
+                                    double r, 
+                                    bool use_parallel) {
+    std::vector<uint8_t> mask(RealNumPixels, 0);  // binary mask
+    const double r2 = r * r;
+    const int n_circles = static_cast<int>(x0.size());
+    #pragma omp parallel for if(use_parallel)
+    for (int i = 0; i < n_circles; ++i) {
+        const double cx = x0[i];
+        const double cy = y0[i];
+        int x_min = std::max(0, static_cast<int>(std::floor(cx - r)));
+        int x_max = std::min(RealNumRows, static_cast<int>(std::ceil(cx + r)));
+        int y_min = std::max(0, static_cast<int>(std::floor(cy - r)));
+        int y_max = std::min(RealNumCols, static_cast<int>(std::ceil(cy + r)));
+        for (int x = x_min; x < x_max; ++x) {
+            double dx2 = (x - cx) * (x - cx);
             for (int y = y_min; y < y_max; ++y) {
-                real_idx.push_back(sub2ind(RealNumRows, RealNumCols, x, y));
-            }
-        }
-        drawPixelsOnReal(real_idx, color, use_parallel);
-    }
-}
-
-// Draw Circle on Real Canvas with center (x0, y0) and radius r
-void PixelCanvas::drawCircleOnReal(double x0, double y0, double r, uint32_t color, bool use_parallel) {
-    int x_min = std::max(0, int(x0 - r + 1));
-    int x_max = std::min(RealNumRows, int(x0 + r + 1));
-    int y_min = std::max(0, int(y0 - r + 1));
-    int y_max = std::min(RealNumCols, int(y0 + r + 1));
-    std::vector<int> real_idx;
-    for (int x = x_min; x < x_max; ++x) {
-        for (int y = y_min; y < y_max; ++y) {
-            if ((x - x0) * (x - x0) + (y - y0) * (y - y0) <= r * r) {
-                real_idx.push_back(sub2ind(RealNumRows, RealNumCols, x, y));
+                double dy2 = (y - cy) * (y - cy);
+                if (dx2 + dy2 <= r2) {
+                    int idx = x * RealNumCols + y;
+                    mask[idx] = 1;
+                }
             }
         }
     }
-    drawPixelsOnReal(real_idx, color, use_parallel);
+    std::vector<int> idx_to_draw;
+    for (int idx = 0; idx < RealNumPixels; ++idx) {
+        if (mask[idx]) idx_to_draw.push_back(idx);
+    }
+    return idx_to_draw;
 }
 
 // Get Pattern Canvas in RGB format
-std::vector<uint8_t> PixelCanvas::getPatternCanvasRGB(bool use_parallel) {
-    return convertPattern2RGB((uint8_t *) PatternCanvas.data(), NumRows, NumCols, NumCols * 4, use_parallel);
-}
-
-// Get Real Canvas in RGB format
-std::vector<uint8_t> PixelCanvas::getRealCanvasRGB(bool use_parallel) {
-    std::vector<uint32_t> RealCanvas = convertPattern2Real(PatternCanvas.data(), 0xFFFF0000, use_parallel);
-    return convertPattern2RGB((uint8_t *) RealCanvas.data(), RealNumRows, RealNumCols, RealNumCols * 4, use_parallel);
+std::vector<uint8_t> PixelCanvas::getDynamicMemoryRGB(int index, bool use_parallel) {
+    if ((index < (int) DynamicMemory.size()) && (index >= 0)) {
+        return convertPattern2RGB(DynamicMemory[index].data(), NumRows, NumCols, NumCols * 4, use_parallel);
+    }
+    return std::vector<uint8_t>();
 }
 
 // Get Pattern Memory in RGB format
-std::vector<uint8_t> PixelCanvas::getPatternMemoryRGB(size_t index, bool use_parallel) {
-    if (index < PatternMemory.size()) {
-        return convertPattern2RGB((uint8_t *) PatternMemory[index].data(), NumRows, NumCols, NumCols * 4, use_parallel);
+std::vector<uint8_t> PixelCanvas::getPatternMemoryRGB(int index, bool use_parallel) {
+    if ((index < (int) PatternMemory.size()) && (index >= 0)) {
+        return convertPattern2RGB(PatternMemory[index].data(), NumRows, NumCols, NumCols * 4, use_parallel);
     }
     return std::vector<uint8_t>();
 }
 
 // Convert Pattern to Real Canvas, assuming pattern has the same size as the pattern canvas
-std::vector<uint32_t> PixelCanvas::convertPattern2Real(const uint32_t *pattern, uint32_t background_color, bool use_parallel) {
+std::vector<uint32_t> PixelCanvas::convertPattern2Real(const uint32_t* pattern, uint32_t background_color, bool use_parallel) {
     std::vector<uint32_t> real_canvas(RealNumPixels, background_color);
     #pragma omp parallel for if(use_parallel)
     for (int i = 0; i < PatternNumPixels; ++i) {
@@ -196,41 +195,33 @@ std::vector<uint32_t> PixelCanvas::convertPattern2Real(const uint32_t *pattern, 
 }
 
 // Convert Pattern to RGB (pixel takes 3 bytes in RGB format)
-std::vector<uint8_t> PixelCanvas::convertPattern2RGB(uint8_t *pattern, int height, int width, int pitch, bool use_parallel) {
+std::vector<uint8_t> PixelCanvas::convertPattern2RGB(const uint32_t *pattern, int height, int width, int pitch, bool use_parallel) {
     std::vector<uint8_t> rgb(3 * width * height);
     #pragma omp parallel for if(use_parallel)
     for (int i = 0; i < height; ++i) {
         for (int j = 0; j < width; ++j) {
-            int pixel_index = i * pitch + 4 * j;
-            int rgb_index = 3 * (i * width + j);
-            rgb[rgb_index] = pattern[pixel_index + 2]; // R
-            rgb[rgb_index + 1] = pattern[pixel_index + 1]; // G
-            rgb[rgb_index + 2] = pattern[pixel_index]; // B
+            int idx = i * width + j;
+            uint32_t pixel = pattern[idx];
+            rgb[3 * idx + 0] = (pixel >> 16) & 0xFF;  // R
+            rgb[3 * idx + 1] = (pixel >> 8)  & 0xFF;  // G
+            rgb[3 * idx + 2] = (pixel >> 0)  & 0xFF;  // B
         }
     }
     return rgb;
 }
 
 // Convert RGB to Pattern (uint32_t 4 bytes format)
-std::vector<uint32_t> PixelCanvas::convertRGB2Pattern(uint8_t *rgb, int height, int width, int pitch, bool use_parallel) {
+std::vector<uint32_t> PixelCanvas::convertRGB2Pattern(const uint8_t *rgb, int height, int width, int pitch, bool use_parallel) {
     std::vector<uint32_t> pattern(width * height);
     #pragma omp parallel for if(use_parallel)
     for (int i = 0; i < height; ++i) {
         for (int j = 0; j < width; ++j) {
-            int pixel_index = i * pitch + 3 * j;
-            int pattern_index = i * width + j;
-            pattern[pattern_index] = (0xFF000000) | (rgb[pixel_index] << 16) | (rgb[pixel_index + 1] << 8) | rgb[pixel_index + 2];
+            int idx = i * width + j;
+            uint8_t r = rgb[3 * idx + 0];
+            uint8_t g = rgb[3 * idx + 1];
+            uint8_t b = rgb[3 * idx + 2];
+            pattern[idx] = (0xFF << 24) | (r << 16) | (g << 8) | b;
         }
-    }
-    return pattern;
-}
-
-// Create a test pattern with solid color
-std::vector<uint32_t> PixelCanvas::createSolidPattern(uint32_t color, int num_elements, bool use_parallel) {
-    std::vector<uint32_t> pattern(num_elements);
-    #pragma omp parallel for if(use_parallel)
-    for (int i = 0; i < num_elements; ++i) {
-        pattern[i] = 0xFF000000 | color;
     }
     return pattern;
 }
