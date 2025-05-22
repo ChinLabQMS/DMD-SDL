@@ -106,15 +106,15 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("getStaticPatternRGB")` - get the static pattern in RGB format
 - `PatternWindowMex("getStaticPatternReal")` - get the static pattern in real-space format
 - `PatternWindowMex("getStaticPatternRealRGB")` - get the static pattern in real-space RGB format
-- `PatternWindowMex("getPatternCanvas")` - get the pattern canvas of the window, which should be in sync with window content in static mode
-- `PatternWindowMex("getPatternCanvasRGB")` - get the pattern canvas of the window in RGB format, which should be in sync with window content in static mode
-- `PatternWindowMex("getRealCanvas")` - get the real-space canvas of the window, which should be in sync with window content in static mode
-- `PatternWindowMex("getRealCanvasRGB")` - get the real-space pattern canvas of the window in RGB format, which should be in sync with window content in static mode
 - `PatternWindowMex("getNumLoadedPatterns")` - get the number of patterns loaded to the pattern memory
 - `PatternWindowMex("getPatternMemory", index)` - get the pattern memory at the specified index, index is an integer
 - `PatternWindowMex("getPatternMemoryRGB", index, use_parallel=true)` - get the pattern memory at the specified index in RGB format, index is an integer
 - `PatternWindowMex("getPatternMemoryReal", index, bg_color=0xFFFF0000, use_parallel=true)` - get the pattern memory at the specified index in real-space format, index is an integer
 - `PatternWindowMex("getPatternMemoryRealRGB", index, bg_color=0xFFFF0000, use_parallel=true)` - get the pattern memory at the specified index in real-space RGB format, index is an integer
+- `PatternWindowMex("getDynamicMemory", index)` - get the dynamic memory at the specified index, index is an integer
+- `PatternWindowMex("getDynamicMemoryRGB", index, use_parallel=true)` - get the dynamic memory at the specified index in RGB format, index is an integer
+- `PatternWindowMex("getDynamicMemoryReal", index, bg_color=0xFFFF0000, use_parallel=true)` - get the dynamic memory at the specified index in real-space format, index is an integer
+- `PatternWindowMex("getDynamicMemoryRealRGB", index, bg_color=0xFFFF0000, use_parallel=true)` - get the dynamic memory at the specified index in real-space RGB format, index is an integer
 
 **Pattern/window configuration**
 - `PatternWindowMex("setDisplayIndex", display_index, verbose=true)` - set the display index (0-index integer) of the window to the specified display, the order is the same as the one returned by `PatternWindowMex("getDisplayModes")`
@@ -125,16 +125,8 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("selectAndLoadPatternMemory", verbose=true, use_parallel=true)` - open a file selection dialog to select one/more BMP file and load it to the pattern memory
 - `success = PatternWindowMex("displayPatternMemory", index_list, delay=0, verbose=true, use_parallel=true)` - display the pattern memory at the specified index (0-start) and delay is the wait time in milliseconds after displaying each pattern. Function will return a boolean value indicating if the display timing is expected for the current refresh rate in case of a dropped frame
 - `PatternWindowMex("clearPatternMemory")` - clear all the pattern memory
-- `PatternWindowMex("clearPatternMemory", index)` - clear the pattern memory at the specified index
-- `PatternWindowMex("resetBackground", bg_color=0xFFFF0000, use_parallel=true)` - reset the background color of the window, bg_color is the color in uint32 format
-- `PatternWindowMex("resetPattern", color=0xFF000000, use_parallel=true)` - reset the pattern canvas of the window, color is the color in uint32 format
-- `PatternWindowMex("drawLineOnReal", A, B, C, d, color=0xFFFFFFFF, use_parallel=true)` - draw a line on the real-space canvas of the window, A, B, C, d are the line parameters (center Ax + By + C = 0, width d), color is the color in uint32 format
-- `PatternWindowMex("drawCircleOnReal", x, y, r, color=0xFFFFFFFF, use_parallel=true)` - draw a circle on the real-space canvas of the window, x, y, r are the circle parameters (center (x, y), radius r), color is the color in uint32 format
-- `PatternWindowMex("displayPatternCanvas", verbose=true, use_parallel=true)` - display the pattern canvas on the window
-- `PatternWindowMex("savePatternAsBMP", path, verbose=true)` - save the pattern canvas to a BMP file at the specified path
-- `PatternWindowMex("selectAndSavePatternAsBMP", verbose=true)` - open a save file selection dialog to select a BMP filename and location and save the pattern canvas to the selected path
-- `PatternWindowMex("selectAndSaveRealAsBMP", verbose=true)` - open a save file selection dialog to select a BMP filename and location and save the real-space pattern canvas to the selected path
-- `PatternWindowMex("saveRealAsBMP", path, verbose=true)` - save the real-space pattern canvas to a BMP file at the specified path
+- `PatternWindowMex("clearDynamicMemory")` - clear all the dynamic memory
+- `PatternWindowMex("projectBlackTweezerPattern", coord, radius, shift_per_move, num_RGB_buffer, num_moving_frames, delay=0, use_parallel=true)` - project a black tweezer pattern to the window, coord is a Nx2 double array of coordinates in pixel, radius (double) is the radius of the tweezer in pixel, shift_per_move (double) is the 1x2 distance to move the tweezer in pixel, num_RGB_buffer is the number of RGB buffer to use, num_moving_frames is the number of frames to move the tweezer, delay is the delay time in milliseconds between each frame, use_parallel is a boolean value indicating if parallel processing should be used. Return a boolean value indicating if the display timing is expected for the current refresh rate in case of a dropped frame
 
 **Utility**
 - `PatternWindowMex("convertPattern2RGB", pattern, use_parallel=true)` - convert the pattern to RGB format with parallel processing (true/false), pattern is an array of uint32 values, return the RGB pattern as a 3D array of uint8 values

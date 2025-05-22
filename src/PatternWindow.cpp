@@ -112,7 +112,7 @@ void PatternWindow::selectAndLoadPatternMemory(const char *default_location, boo
 
 // Display multiple patterns from the pattern memory
 // If the delay is greater than 0, the function will wait for the specified time before returning
-bool PatternWindow::displayPatternMemory(const uint32_t * indices, size_t num_frames, uint32_t delay, bool verbose, bool use_parallel) {
+bool PatternWindow::displayPatternMemory(const uint32_t* indices, size_t num_frames, uint32_t delay, bool verbose, bool use_parallel) {
     if (!Window) {
         error("Window is not open.");
         return false;
@@ -138,4 +138,39 @@ bool PatternWindow::displayPatternMemory(const uint32_t * indices, size_t num_fr
         return false;
     }
     return true;
+}
+
+// Project a black tweezer pattern with the specified number of tweezers
+bool PatternWindow::projectBlackTweezerPattern(int num_tweezers, 
+                                               const double *x0, 
+                                               const double *y0, 
+                                               double r, 
+                                               double dx,
+                                               double dy,
+                                               int num_RGB_buffer,
+                                               int num_frames,
+                                               uint32_t delay,
+                                               bool use_parallel) {
+    if (!Window) {
+        error("Window is not open.");
+        return false;
+    }
+    generateBlackTweezerPattern(num_tweezers, x0, y0, r, dx, dy, num_RGB_buffer, num_frames, use_parallel);
+    size_t num_display_frames = DynamicMemory.size();
+    // Check the time delay of the execution
+    uint64_t start_time = SDL_GetTicksNS();
+    for (size_t i = 0; i < num_display_frames; i++) {
+        setDynamicPattern(DynamicMemory[i].data(), false, use_parallel);
+        if (delay > 0) {
+            SDL_Delay(delay);
+        }
+    }
+    // Check if the time delay is greater than the expected refresh rate
+    float elapsed_time = (SDL_GetTicksNS() - start_time) / 1000000.0; // in ms
+    float expected_delay = (1000 / DisplayMode->refresh_rate) * (num_display_frames + 1) +  delay * num_display_frames;; // in ms
+    if (elapsed_time > expected_delay) {
+        warn("The display time is %.2f ms, which exceeded the expected maximum delay of %.2f ms for %d frames.", elapsed_time, expected_delay, num_display_frames);
+        return false;
+    }
+    return true;    
 }

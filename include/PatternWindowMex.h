@@ -43,15 +43,15 @@ public:
     CharArray getBaseDirectory();
     CharArray getStaticPatternPath();
     StructArray getDisplayModes();
-    TypedArray<uint32_t> getPatternCanvas();
-    TypedArray<uint8_t> getPatternCanvasRGBMex(bool use_parallel);
-    TypedArray<uint32_t> getRealCanvas();
-    TypedArray<uint8_t> getRealCanvasRGBMex(bool use_parallel);
     TypedArray<double> getNumLoadedPatterns();
     TypedArray<uint32_t> getPatternMemory(int index);
     TypedArray<uint32_t> getPatternMemoryReal(int index, uint32_t background_color, bool use_parallel);
-    TypedArray<uint8_t> getPatternMemoryRGBMex(int index, bool use_parallel);
+    TypedArray<uint8_t> getPatternMemoryRGB(int index, bool use_parallel);
     TypedArray<uint8_t> getPatternMemoryRealRGB(int index, uint32_t background_color, bool use_parallel);
+    TypedArray<uint32_t> getDynamicMemory(int index);
+    TypedArray<uint32_t> getDynamicMemoryReal(int index, uint32_t background_color, bool use_parallel);
+    TypedArray<uint8_t> getDynamicMemoryRGB(int index, bool use_parallel);
+    TypedArray<uint8_t> getDynamicMemoryRealRGB(int index, uint32_t background_color, bool use_parallel);
     TypedArray<uint8_t> convertPattern2RGBMex(const TypedArray<uint32_t> pattern, bool use_parallel);
     TypedArray<uint32_t> convertRGB2PatternMex(const TypedArray<uint8_t> rgb, bool use_parallel);
     // Overload the displayPatternMemory function to accept MATLAB arrays

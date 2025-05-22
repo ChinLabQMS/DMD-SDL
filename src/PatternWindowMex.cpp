@@ -125,58 +125,12 @@ StructArray MexFunction::getDisplayModes() {
     return display_modes;
 }
 
-// Get the pattern canvas as a MATLAB array
-TypedArray<uint32_t> MexFunction::getPatternCanvas() {
-    if (PatternCanvas.size() > 0) {
-        return factory.createArray({ (size_t) WindowHeight, (size_t) WindowWidth }, 
-                                    PatternCanvas.begin(), PatternCanvas.end(), 
-                                    InputLayout::ROW_MAJOR);
-    } else {
-        return factory.createArray({0, 0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
-    }
-}
-
-// Get the pattern canvas as a MATLAB RGB array
-TypedArray<uint8_t> MexFunction::getPatternCanvasRGBMex(bool use_parallel) {
-    if (PatternCanvas.size() > 0) {
-        std::vector<uint8_t> pattern_rgb = PixelCanvas::getPatternCanvasRGB(use_parallel);
-        return factory.createArray({ (size_t) WindowHeight, (size_t) WindowWidth, 3 },
-                                    pattern_rgb.begin(), pattern_rgb.end(), 
-                                    InputLayout::ROW_MAJOR);
-    } else {
-        return factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
-    }
-}
-
-// Get the real canvas as a MATLAB array
-TypedArray<uint32_t> MexFunction::getRealCanvas() {
-    if (RealCanvas.size() > 0) {
-        return factory.createArray({ (size_t) RealNumRows, (size_t) RealNumCols }, 
-                                    RealCanvas.begin(), RealCanvas.end(), 
-                                    InputLayout::ROW_MAJOR);
-    } else {
-        return factory.createArray({0, 0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
-    }
-}
-
-// Get the real canvas as a MATLAB RGB array
-TypedArray<uint8_t> MexFunction::getRealCanvasRGBMex(bool use_parallel) {
-    if (RealCanvas.size() > 0) {
-        std::vector<uint8_t> real_rgb = PixelCanvas::getRealCanvasRGB(use_parallel);
-        return factory.createArray({ (size_t) RealNumRows, (size_t) RealNumCols, 3 }, 
-                                    real_rgb.begin(), real_rgb.end(), 
-                                    InputLayout::ROW_MAJOR);
-    } else {
-        return factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
-    }
-}
-
 TypedArray<double> MexFunction::getNumLoadedPatterns() {
     return factory.createScalar((double) PatternMemory.size());
 }
 
 TypedArray<uint32_t> MexFunction::getPatternMemory(int index) {
-    if (index < PatternMemory.size()) {
+    if  ((index >= 0) && (index < PatternMemory.size())) {
         return factory.createArray({ (size_t) PatternMemory[index].size() }, 
                                     PatternMemory[index].begin(), PatternMemory[index].end(), 
                                     InputLayout::ROW_MAJOR);
@@ -186,9 +140,9 @@ TypedArray<uint32_t> MexFunction::getPatternMemory(int index) {
 }
 
 TypedArray<uint32_t> MexFunction::getPatternMemoryReal(int index, uint32_t background_color, bool use_parallel) {
-    if ((index < PatternMemory.size()) & (index >= 0)) {
-        std::vector<uint32_t> pattern_real = convertPattern2Real(PatternMemory[index].data(), background_color, use_parallel);
-        return factory.createArray({ (size_t) NumRows, (size_t) NumCols }, 
+    if  ((index >= 0) && (index < PatternMemory.size())) {
+        std::vector<uint32_t> pattern_real = PixelCanvas::getPatternMemoryReal(index, background_color, use_parallel);
+        return factory.createArray({ (size_t) RealNumRows, (size_t) RealNumCols }, 
                                     pattern_real.begin(), pattern_real.end(), 
                                     InputLayout::ROW_MAJOR);
     } else {
@@ -196,9 +150,9 @@ TypedArray<uint32_t> MexFunction::getPatternMemoryReal(int index, uint32_t backg
     }
 }
 
-TypedArray<uint8_t> MexFunction::getPatternMemoryRGBMex(int index, bool use_parallel) {
-    if (index < PatternMemory.size()) {
-        std::vector<uint8_t> pattern_rgb = getPatternMemoryRGB(index, use_parallel);
+TypedArray<uint8_t> MexFunction::getPatternMemoryRGB(int index, bool use_parallel) {
+    if  ((index >= 0) && (index < PatternMemory.size())) {
+        std::vector<uint8_t> pattern_rgb = PixelCanvas::getPatternMemoryRGB(index, use_parallel);
         return factory.createArray({ (size_t) NumRows, (size_t) NumCols, 3 }, 
                                     pattern_rgb.begin(), pattern_rgb.end(), 
                                     InputLayout::ROW_MAJOR);
@@ -208,11 +162,55 @@ TypedArray<uint8_t> MexFunction::getPatternMemoryRGBMex(int index, bool use_para
 }
 
 TypedArray<uint8_t> MexFunction::getPatternMemoryRealRGB(int index, uint32_t background_color, bool use_parallel) {
-    if (index < PatternMemory.size()) {
-        std::vector<uint32_t> pattern_real = convertPattern2Real(
-            PatternMemory[index].data(), background_color, use_parallel);
-        std::vector<uint8_t> pattern_real_rgb = convertPattern2RGB(
-            (uint8_t *) pattern_real.data(), RealNumRows, RealNumCols, RealNumCols * 4, use_parallel);
+    if  ((index >= 0) && (index < PatternMemory.size())) {
+        std::vector<uint8_t> pattern_real_rgb = PixelCanvas::getPatternMemoryRealRGB(index, background_color, use_parallel);
+        return factory.createArray({ (size_t) RealNumRows, (size_t) RealNumCols, 3 }, 
+                                    pattern_real_rgb.begin(), pattern_real_rgb.end(), 
+                                    InputLayout::ROW_MAJOR);
+    } else {
+        return factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
+    }
+}
+
+// Get the pattern canvas as a MATLAB array
+TypedArray<uint32_t> MexFunction::getDynamicMemory(int index) {
+    if  ((index >= 0) && (index < DynamicMemory.size())) {
+        return factory.createArray({ (size_t) NumRows, (size_t) NumCols }, 
+                                    DynamicMemory[index].begin(), DynamicMemory[index].end(), 
+                                    InputLayout::ROW_MAJOR);
+    } else {
+        return factory.createArray({0, 0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
+    }
+}
+
+// Get the real canvas as a MATLAB array
+TypedArray<uint32_t> MexFunction::getDynamicMemoryReal(int index, uint32_t background_color, bool use_parallel) {
+    if  ((index >= 0) && (index < DynamicMemory.size())) {
+        std::vector<uint32_t> pattern_real = PixelCanvas::getDynamicMemoryReal(index, background_color, use_parallel);
+        return factory.createArray({ (size_t) RealNumRows, (size_t) RealNumCols }, 
+                                    pattern_real.begin(), pattern_real.end(), 
+                                    InputLayout::ROW_MAJOR);
+    } else {
+        return factory.createArray({0, 0}, (uint32_t *) nullptr, (uint32_t *) nullptr);
+    }
+}
+
+// Get the pattern canvas as a MATLAB RGB array
+TypedArray<uint8_t> MexFunction::getDynamicMemoryRGB(int index, bool use_parallel) {
+    if  ((index >= 0) && (index < DynamicMemory.size())) {
+        std::vector<uint8_t> pattern_rgb = PixelCanvas::getDynamicMemoryRGB(index, use_parallel);
+        return factory.createArray({ (size_t) NumRows, (size_t) NumCols, 3 },
+                                    pattern_rgb.begin(), pattern_rgb.end(), 
+                                    InputLayout::ROW_MAJOR);
+    } else {
+        return factory.createArray({0, 0, 3}, (uint8_t *) nullptr, (uint8_t *) nullptr);
+    }
+}
+
+// Get the real canvas as a MATLAB RGB array
+TypedArray<uint8_t> MexFunction::getDynamicMemoryRealRGB(int index, uint32_t background_color, bool use_parallel) {
+    if  ((index >= 0) && (index < DynamicMemory.size())) {
+        std::vector<uint8_t> pattern_real_rgb = PixelCanvas::getDynamicMemoryRealRGB(index, background_color, use_parallel);
         return factory.createArray({ (size_t) RealNumRows, (size_t) RealNumCols, 3 }, 
                                     pattern_real_rgb.begin(), pattern_real_rgb.end(), 
                                     InputLayout::ROW_MAJOR);
@@ -332,14 +330,6 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             outputs[0] = StaticPatternRealMex;
         } else if (func[0] == "getStaticPatternRealRGB") {
             outputs[0] = StaticPatternRealRGBMex;
-        } else if (func[0] == "getPatternCanvas") {
-            outputs[0] = getPatternCanvas();
-        } else if (func[0] == "getPatternCanvasRGB") {
-            outputs[0] = getPatternCanvasRGBMex(true);
-        } else if (func[0] == "getRealCanvas") {
-            outputs[0] = getRealCanvas();
-        } else if (func[0] == "getRealCanvasRGB") {
-            outputs[0] = getRealCanvasRGBMex(true);
         } else if (func[0] == "getNumLoadedPatterns") {
             outputs[0] = getNumLoadedPatterns();
         } else if (func[0] == "displayColor") {
@@ -349,17 +339,7 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "selectAndLoadPatternMemory") {
             selectAndLoadPatternMemory(NULL, true, true);
         } else if (func[0] == "clearPatternMemory") {
-            clearPatternMemory();
-        } else if (func[0] == "resetBackground") {
-            resetBackground(0xFFFF0000, true);  
-        } else if (func[0] == "resetPattern") {
-            resetPattern(0xFF000000, true);
-        } else if (func[0] == "displayPatternCanvas") {
-            displayPatternCanvas(true, true);
-        } else if (func[0] == "selectAndSavePatternAsBMP") {
-            selectAndSavePixelsAsBMP(NULL, (void *) PatternCanvas.data(), NumCols, NumRows, NumCols * 4, true);
-        } else if (func[0] == "selectAndSaveRealAsBMP") {
-            selectAndSavePixelsAsBMP(NULL, (void *) RealCanvas.data(), RealNumCols, RealNumRows, RealNumCols * 4, true);
+            clearPatternMemoryAll();
         } else {
             error("Invalid function name with zero input.");
         }
@@ -374,11 +354,19 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         } else if (func[0] == "getPatternMemory") {
             outputs[0] = getPatternMemory(inputs[1][0]);
         } else if (func[0] == "getPatternMemoryRGB") {
-            outputs[0] = getPatternMemoryRGBMex(inputs[1][0], true);
+            outputs[0] = getPatternMemoryRGB(inputs[1][0], true);
         } else if (func[0] == "getPatternMemoryReal") {
             outputs[0] = getPatternMemoryReal(inputs[1][0], 0xFFFF0000, true);
         } else if (func[0] == "getPatternMemoryRealRGB") {
             outputs[0] = getPatternMemoryRealRGB(inputs[1][0], 0xFFFF0000, true);
+        } else if (func[0] == "getDynamicMemory") {
+            outputs[0] = getDynamicMemory(inputs[1][0]);
+        } else if (func[0] == "getDynamicMemoryRGB") {
+            outputs[0] = getDynamicMemoryRGB(inputs[1][0], true);
+        } else if (func[0] == "getDynamicMemoryReal") {
+            outputs[0] = getDynamicMemoryReal(inputs[1][0], 0xFFFF0000, true);
+        } else if (func[0] == "getDynamicMemoryRealRGB") {
+            outputs[0] = getDynamicMemoryRealRGB(inputs[1][0], 0xFFFF0000, true);
         } else if (func[0] == "setDisplayIndex") {
             setDisplayIndex(inputs[1][0], true);
         } else if (func[0] == "displayColor") {
@@ -396,24 +384,6 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             selectAndLoadPatternMemory(NULL, inputs[1][0], true);
         } else if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], 0, true, true);
-        } else if (func[0] == "clearPatternMemory") {
-            clearPatternMemory(inputs[1][0]);
-        } else if (func[0] == "resetBackground") {
-            resetBackground(inputs[1][0], true);  
-        } else if (func[0] == "resetPattern") {
-            resetPattern(inputs[1][0], true);
-        } else if (func[0] == "displayPatternCanvas") {
-            displayPatternCanvas(inputs[1][0], true);
-        } else if (func[0] == "savePatternAsBMP") { 
-            StringArray filename = inputs[1];
-            savePatternAsBMP(std::string(filename[0]).c_str(), true);
-        } else if (func[0] == "saveRealAsBMP") {
-            StringArray filename = inputs[1];
-            saveRealAsBMP(std::string(filename[0]).c_str(), true);
-        } else if (func[0] == "selectAndSavePatternAsBMP") {
-            selectAndSavePixelsAsBMP(NULL, (void *) PatternCanvas.data(), NumCols, NumRows, NumCols * 4, inputs[1][0]);
-        } else if (func[0] == "selectAndSaveRealAsBMP") {
-            selectAndSavePixelsAsBMP(NULL, (void *) RealCanvas.data(), RealNumCols, RealNumRows, RealNumCols * 4, inputs[1][0]);
         } else if (func[0] == "convertPattern2RGB") {
             outputs[0] = convertPattern2RGBMex(inputs[1], true);
         } else if (func[0] == "convertRGB2Pattern") {
@@ -428,11 +398,17 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
         if (func[0] == "open") {
             open2(inputs[1][0], inputs[2][0], true);
         } else if (func[0] == "getPatternMemoryRGB") {
-            outputs[0] = getPatternMemoryRGBMex(inputs[1][0], inputs[2][0]);
+            outputs[0] = getPatternMemoryRGB(inputs[1][0], inputs[2][0]);
         } else if (func[0] == "getPatternMemoryReal") {
             outputs[0] = getPatternMemoryReal(inputs[1][0], inputs[2][0], true);
         } else if (func[0] == "getPatternMemoryRealRGB") {
             outputs[0] = getPatternMemoryRealRGB(inputs[1][0], inputs[2][0], true);
+        } else if (func[0] == "getDynamicMemoryRGB") {
+            outputs[0] = getDynamicMemoryRGB(inputs[1][0], inputs[2][0]);
+        } else if (func[0] == "getDynamicMemoryReal") {
+            outputs[0] = getDynamicMemoryReal(inputs[1][0], inputs[2][0], true);
+        } else if (func[0] == "getDynamicMemoryRealRGB") {
+            outputs[0] = getDynamicMemoryRealRGB(inputs[1][0], inputs[2][0], true);
         } else if (func[0] == "setDisplayIndex") {
             setDisplayIndex(inputs[1][0], inputs[2][0]);
         } else if (func[0] == "displayColor") {
@@ -447,18 +423,6 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             selectAndLoadPatternMemory(NULL, inputs[1][0], inputs[2][0]);
         } else if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], true, true);
-        } else if (func[0] == "resetBackground") {
-            resetBackground(inputs[1][0], inputs[2][0]);  
-        } else if (func[0] == "resetPattern") {
-            resetPattern(inputs[1][0], inputs[2][0]);
-        } else if (func[0] == "displayPatternCanvas") {
-            displayPatternCanvas(inputs[1][0], inputs[2][0]); 
-        } else if (func[0] == "savePatternAsBMP") {
-            StringArray filename = inputs[1];
-            savePatternAsBMP(std::string(filename[0]).c_str(), inputs[2][0]);
-        } else if (func[0] == "saveRealAsBMP") {
-            StringArray filename = inputs[1];
-            saveRealAsBMP(std::string(filename[0]).c_str(), inputs[2][0]);
         } else if (func[0] == "convertPattern2RGB") {
             outputs[0] = convertPattern2RGBMex(inputs[1], inputs[2][0]);
         } else if (func[0] == "convertRGB2Pattern") {
@@ -484,8 +448,6 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             loadPatternMemoryFromFile(std::string(filename[0]).c_str(), inputs[2][0], inputs[3][0]);
         } else if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], inputs[3][0], true);
-        } else if (func[0] == "drawCircleOnReal") {
-            drawCircleOnReal(inputs[1][0], inputs[2][0], inputs[3][0], 0xFFFFFFFF, true);
         } else {
             error("Invalid function name with three inputs.");
         }
@@ -495,26 +457,66 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
     if (inputs.size() == 5) {
         if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], inputs[3][0], inputs[4][0]);
-        } else if (func[0] == "drawLineOnReal") {
-            drawLineOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], 0xFFFFFFFF, true);
-        } else if (func[0] == "drawCircleOnReal") {
-            drawCircleOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], true);
         }
         return;
     }
 
     if (inputs.size() == 6) {
-        if (func[0] == "drawLineOnReal") {
-            drawLineOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], inputs[5][0], true);
-        } else if (func[0] == "drawCircleOnReal") {
-            drawCircleOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], inputs[5][0]);
+        if (func[0] == "projectBlackTweezerPattern") {
+            if (inputs[1].getDimensions()[1]!= 2) {
+                error("Second input must be a 2D array with two columns.");
+            }
+            int num_tweezers = inputs[1].getDimensions()[0];
+            std::vector<double> x0(num_tweezers);
+            std::vector<double> y0(num_tweezers);
+            for (int i = 0; i < num_tweezers; i++) {
+                x0[i] = inputs[1][i][0];
+                y0[i] = inputs[1][i][1];
+            }
+            projectBlackTweezerPattern(num_tweezers, x0.data(), y0.data(), 
+                inputs[2][0], inputs[3][0], inputs[3][1], inputs[4][0], inputs[5][0], 0, true);
+        } else {
+            error("Invalid function name with five inputs.");
         }
         return;
     }
 
     if (inputs.size() == 7) {
-        if (func[0] == "drawLineOnReal") {
-            drawLineOnReal(inputs[1][0], inputs[2][0], inputs[3][0], inputs[4][0], inputs[5][0], inputs[6][0]);
+        if (func[0] == "projectBlackTweezerPattern") {
+            if (inputs[1].getDimensions()[1]!= 2) {
+                error("Second input must be a 2D array with two columns.");
+            }
+            int num_tweezers = inputs[1].getDimensions()[0];
+            std::vector<double> x0(num_tweezers);
+            std::vector<double> y0(num_tweezers);
+            for (int i = 0; i < num_tweezers; i++) {
+                x0[i] = inputs[1][i][0];
+                y0[i] = inputs[1][i][1];
+            }
+            projectBlackTweezerPattern(num_tweezers, x0.data(), y0.data(), 
+                inputs[2][0], inputs[3][0], inputs[3][1], inputs[4][0], inputs[5][0], inputs[6][0], true);
+        } else {
+            error("Invalid function name with six inputs.");
+        }
+        return;
+    }
+
+    if (inputs.size() == 8) {
+        if (func[0] == "projectBlackTweezerPattern") {
+            if (inputs[1].getDimensions()[1]!= 2) {
+                error("Second input must be a 2D array with two columns.");
+            }
+            int num_tweezers = inputs[1].getDimensions()[0];
+            std::vector<double> x0(num_tweezers);
+            std::vector<double> y0(num_tweezers);
+            for (int i = 0; i < num_tweezers; i++) {
+                x0[i] = inputs[1][i][0];
+                y0[i] = inputs[1][i][1];
+            }
+            projectBlackTweezerPattern(num_tweezers, x0.data(), y0.data(), 
+                inputs[2][0], inputs[3][0], inputs[3][1], inputs[4][0], inputs[5][0], inputs[6][0], inputs[7][0]);
+        } else {
+            error("Invalid function name with eight inputs.");
         }
         return;
     }

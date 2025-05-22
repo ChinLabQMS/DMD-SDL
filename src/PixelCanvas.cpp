@@ -94,44 +94,99 @@ void PixelCanvas::clearPatternMemoryAll() {
 }
 
 // Draw Pixels with coordinates on Real Canvas
-void PixelCanvas::drawPixelsDynamic(std::vector<int> real_idx, uint32_t color, bool use_parallel) {
-    if (DynamicMemory.empty()) {
+void PixelCanvas::drawPixelsDynamic(int index,
+                                    std::vector<int> pattern_idx, 
+                                    uint32_t color, 
+                                    bool use_parallel) {
+    if (index >= (int) DynamicMemory.size()) {
         return;
     }
-    std::vector<uint32_t>& PatternCanvas = DynamicMemory.back();
+    std::vector<uint32_t>& PatternCanvas = DynamicMemory[index];
     #pragma omp parallel for if(use_parallel)
-    for (size_t i = 0; i < real_idx.size(); ++i) {
-        int reali = real_idx[i];
-        int patterni = Real2PatternIndex[reali];
-        if (patterni != -1) {
-            PatternCanvas[patterni] = color;
-        }
+    for (size_t i = 0; i < pattern_idx.size(); ++i) {
+        PatternCanvas[pattern_idx[i]] = color;
     }
 }
 
 // Draw Pixels with coordinates on Real Canvas with specified Bit Plane
-void PixelCanvas::drawPixelsDynamicBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel) {
-    if (DynamicMemory.empty()) {
+void PixelCanvas::drawPixelsDynamicBit(int index, 
+                                       int bit_plane, 
+                                       std::vector<int> pattern_idx,
+                                       bool color, 
+                                       bool use_parallel) {
+    if (index >= (int) DynamicMemory.size()) {
         return;
     }
-    if (bit_plane < 0 || bit_plane > 31) {
+    if (bit_plane < 0 || bit_plane > 23) {
         return;
     }
-    std::vector<uint32_t>& PatternCanvas = DynamicMemory.back();
+    std::vector<uint32_t>& PatternCanvas = DynamicMemory[index];
     #pragma omp parallel for if(use_parallel)
-    for (size_t i = 0; i < real_idx.size(); ++i) {
+    for (size_t i = 0; i < pattern_idx.size(); ++i) {
         uint32_t mask = 1 << bit_plane;
-        int reali = real_idx[i];
-        int patterni = Real2PatternIndex[reali];
-        if (patterni != -1) {
-            if (color) {
-                PatternCanvas[patterni] |= mask;
-            }
-            else {
-                PatternCanvas[patterni] &= ~mask;
-            }
+        if (color) {
+                PatternCanvas[pattern_idx[i]] |= mask;
+        }
+        else {
+                PatternCanvas[pattern_idx[i]] &= ~mask;
         }
     }
+}
+
+// Project a black tweezer pattern with the specified number of tweezers
+void PixelCanvas::generateBlackTweezerPattern(int num_tweezers, 
+                                              const double *x0, 
+                                              const double *y0, 
+                                              double r, 
+                                              double dx, 
+                                              double dy,
+                                              int num_RGB_buffers,
+                                              int num_frames,
+                                              bool use_parallel) {
+    std::vector<int> start_indices = drawCirclesOnReal(num_tweezers, x0, y0, r, use_parallel);
+    int num_RGB = (num_frames + 23) / 24;
+    int num_residual = num_RGB * 24 - num_frames;
+    DynamicMemory.resize(num_RGB_buffers + num_RGB);
+    #pragma omp parallel for if(use_parallel)
+    for (int i = 0; i < num_RGB_buffers; i++) {
+        // Draw buffer frames
+        DynamicMemory[i].resize(PatternNumPixels, 0xFFFFFFFF);
+        drawPixelsDynamic(i, start_indices, 0xFF000000, use_parallel);
+    }
+    // Draw moving tweezers
+    double * x = new double[num_tweezers];
+    double * y = new double[num_tweezers];
+    for (int j = 0; j < num_tweezers; j++) {
+        x[j] = x0[j];
+        y[j] = y0[j];
+    }
+    for (int i = 0; i < (num_frames + num_residual); i++) {
+        if (i < num_frames) {
+            for (int j = 0; j < num_tweezers; j++) {
+                x[j] += dx;
+                y[j] += dy;
+            }
+        }
+        std::vector<int> new_indices = drawCirclesOnReal(num_tweezers, x, y, r, use_parallel);
+        int RGB_index = num_RGB_buffers + i / 24;
+        int bit_index = i % 24;
+        int bit_plane;
+        if (bit_index < 8) {
+            // First 8 bits to Green
+            bit_plane = bit_index + 8;
+        } else if (bit_index < 16) {
+            // Next 8 bits to Red
+            bit_plane = bit_index + 8;
+        } else {
+            // Last 8 bits to Blue
+            bit_plane = bit_index - 16;
+        }
+        // Draw the tweezers on the RGB buffer
+        DynamicMemory[RGB_index].resize(PatternNumPixels, 0xFFFFFFFF);
+        drawPixelsDynamicBit(RGB_index, bit_plane, new_indices, false, use_parallel);
+    }
+    delete[] x;
+    delete[] y;
 }
 
 std::vector<int> PixelCanvas::drawCirclesOnReal(
@@ -142,7 +197,8 @@ std::vector<int> PixelCanvas::drawCirclesOnReal(
                                     bool use_parallel) {
     const double r2 = r * r;
     std::vector<int> idx_to_draw;
-    #pragma omp parallel if(use_parallel) {
+    #pragma omp parallel if(use_parallel) 
+    {
     std::vector<int> local_idx;
     #pragma omp for nowait
     for (int i = 0; i < num_circles; ++i) {
@@ -157,7 +213,11 @@ std::vector<int> PixelCanvas::drawCirclesOnReal(
             for (int y = y_min; y < y_max; ++y) {
                 const double dy2 = (y - cy) * (y - cy);
                 if (dx2 + dy2 <= r2) {
-                    local_idx.push_back(x * RealNumCols + y);
+                    int reali = sub2ind(RealNumRows, RealNumCols, x, y);
+                    int patterni = Real2PatternIndex[reali];
+                    if (patterni != -1) {
+                        local_idx.push_back(patterni);    
+                    }                    
                 }
             }
         }
@@ -180,10 +240,44 @@ std::vector<uint8_t> PixelCanvas::getDynamicMemoryRGB(int index, bool use_parall
     return std::vector<uint8_t>();
 }
 
+// Get Real Canvas
+std::vector<uint32_t> PixelCanvas::getDynamicMemoryReal(int index, uint32_t background_color, bool use_parallel) {
+    if ((index < (int) DynamicMemory.size()) && (index >= 0)) {
+        return convertPattern2Real(DynamicMemory[index].data(), background_color, use_parallel);
+    }
+    return std::vector<uint32_t>();
+}
+
+// Get Real Canvas in RGB format
+std::vector<uint8_t> PixelCanvas::getDynamicMemoryRealRGB(int index, uint32_t background_color, bool use_parallel) {
+    if ((index < (int) DynamicMemory.size()) && (index >= 0)) {
+        std::vector<uint32_t> real_canvas = convertPattern2Real(DynamicMemory[index].data(), background_color, use_parallel);
+        return convertPattern2RGB(real_canvas.data(), RealNumRows, RealNumCols, RealNumCols * 4, use_parallel);
+    }
+    return std::vector<uint8_t>();
+}
+
 // Get Pattern Memory in RGB format
 std::vector<uint8_t> PixelCanvas::getPatternMemoryRGB(int index, bool use_parallel) {
     if ((index < (int) PatternMemory.size()) && (index >= 0)) {
         return convertPattern2RGB(PatternMemory[index].data(), NumRows, NumCols, NumCols * 4, use_parallel);
+    }
+    return std::vector<uint8_t>();
+}
+
+// Get Real Canvas from Pattern Memory
+std::vector<uint32_t> PixelCanvas::getPatternMemoryReal(int index, uint32_t background_color, bool use_parallel) {
+    if ((index < (int) PatternMemory.size()) && (index >= 0)) {
+        return convertPattern2Real(PatternMemory[index].data(), background_color, use_parallel);
+    }
+    return std::vector<uint32_t>();
+}
+
+// Get Real Canvas in RGB format from Pattern Memory
+std::vector<uint8_t> PixelCanvas::getPatternMemoryRealRGB(int index, uint32_t background_color, bool use_parallel) {
+    if ((index < (int) PatternMemory.size()) && (index >= 0)) {
+        std::vector<uint32_t> real_canvas = convertPattern2Real(PatternMemory[index].data(), background_color, use_parallel);
+        return convertPattern2RGB(real_canvas.data(), RealNumRows, RealNumCols, RealNumCols * 4, use_parallel);
     }
     return std::vector<uint8_t>();
 }

@@ -44,11 +44,16 @@ public:
     void resetDynamicMemory(uint32_t color, bool use_parallel);
     void clearDynamicMemoryAll();
     void clearPatternMemoryAll();
-    void drawPixelsDynamic(std::vector<int> real_idx, uint32_t color, bool use_parallel);
-    void drawPixelsDynamicBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel);
+    void drawPixelsDynamic(int index, std::vector<int> pattern_idx, uint32_t color, bool use_parallel);
+    void drawPixelsDynamicBit(int index, int bit_plane, std::vector<int> pattern_idx, bool color, bool use_parallel);
+    void generateBlackTweezerPattern(int num_tweezers, const double *x0, const double *y0, double r, double dx, double dy, int num_RGB_buffers, int num_frames, bool use_parallel);
     std::vector<int> drawCirclesOnReal(int num_circles, const double* x0, const double* y0, double r, bool use_parallel);
     std::vector<uint8_t> getDynamicMemoryRGB(int index, bool use_parallel);
+    std::vector<uint32_t> getDynamicMemoryReal(int index, uint32_t background_color, bool use_parallel);
+    std::vector<uint8_t> getDynamicMemoryRealRGB(int index, uint32_t background_color, bool use_parallel);
     std::vector<uint8_t> getPatternMemoryRGB(int index, bool use_parallel);
+    std::vector<uint32_t> getPatternMemoryReal(int index, uint32_t background_color, bool use_parallel);
+    std::vector<uint8_t> getPatternMemoryRealRGB(int index, uint32_t background_color, bool use_parallel);
     std::vector<uint32_t> convertPattern2Real(const uint32_t *pattern, uint32_t background_color, bool use_parallel);
     static std::vector<uint8_t> convertPattern2RGB(const uint32_t *pattern, int height, int width, int pitch, bool use_parallel);
     static std::vector<uint32_t> convertRGB2Pattern(const uint8_t *rgb, int height, int width, int pitch, bool use_parallel);

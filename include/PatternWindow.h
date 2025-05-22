@@ -19,7 +19,7 @@ class PatternWindow : public BaseWindow, public PixelCanvas {
         void loadPatternMemoryFromFile(const char *filepath, bool verbose, bool use_parallel);
         void selectAndLoadPatternMemory(const char *default_location, bool verbose, bool use_parallel);
         bool displayPatternMemory(const uint32_t * indices, size_t num_frames, uint32_t delay, bool verbose, bool use_parallel);
-        bool projectBlackTweezerPattern(int num_tweezers, const double *x0, const double *y0, double r, bool use_parallel);
+        bool projectBlackTweezerPattern(int num_tweezers, const double *x0, const double *y0, double r, double dx, double dy, int num_RGB_buffer, int num_frames, uint32_t delay, bool use_parallel);
 };
 
 #endif // PATTERNWINDOW_H
