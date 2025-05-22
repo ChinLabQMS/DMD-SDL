@@ -23,7 +23,7 @@ void PatternWindow::open2(std::string arrangement, bool verbose, bool use_parall
 void PatternWindow::updateStaticPatternProperties(bool use_parallel) {
     if (StaticPatternSurface) {
         StaticPatternRGB = convertPattern2RGB(
-            (uint8_t *) StaticPatternSurface->pixels, 
+            (uint32_t *) StaticPatternSurface->pixels, 
             StaticPatternSurface->h,
             StaticPatternSurface->w,
             StaticPatternSurface->pitch, 
@@ -32,7 +32,7 @@ void PatternWindow::updateStaticPatternProperties(bool use_parallel) {
             (uint32_t *) StaticPatternSurface->pixels, 
             0xFFFF0000, use_parallel);
         StaticPatternRealRGB = convertPattern2RGB(
-            (uint8_t *) StaticPatternReal.data(), 
+            StaticPatternReal.data(), 
             RealNumRows, 
             RealNumCols, 
             RealNumCols * 4,
@@ -138,13 +138,4 @@ bool PatternWindow::displayPatternMemory(const uint32_t * indices, size_t num_fr
         return false;
     }
     return true;
-}
-
-void PatternWindow::selectAndSavePatternAsBMP(const char *default_location, bool verbose) {
-    if (PatternCanvas.empty()) {
-        error("Pattern canvas is empty.");
-        return;
-    }
-    int pitch = NumCols * 4;
-    selectAndSavePixelsAsBMP(default_location, (void *) PatternCanvas.data(), NumCols, NumRows, pitch, verbose);
 }

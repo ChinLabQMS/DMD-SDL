@@ -7,6 +7,7 @@
 #include <cmath>
 #include <vector>
 #include <numeric>
+#include <algorithm>
 #include <omp.h>
 
 // Convert subscripts to linear indices, use C-style indexing
@@ -25,7 +26,7 @@ inline int realDiamondY(int nrows, int ncols, int x, int y) {
 }
 
 class PixelCanvas {
-protected:
+public:
     int NumRows = 0; // Number of rows in the pattern canvas
     int NumCols = 0; // Number of columns in the pattern canvas
     int RealNumRows = 0; // Number of rows in the real canvas
@@ -36,7 +37,6 @@ protected:
     std::string PixelArrangement = "Diamond"; // Pixel arrangement, default to Diamond
     std::vector<int> Pattern2RealIndex; // Pattern to Real index mapping, size = PatternNumPixels
     std::vector<int> Real2PatternIndex; // Real to Pattern index mapping, size = RealNumPixels
-public:
     std::vector<std::vector<uint32_t>> PatternMemory; // Pattern memory, resizable, to store patterns loaded from files
     std::vector<std::vector<uint32_t>> DynamicMemory; // Dynamic memory, resizable, to store patterns computed on the fly
     void initCanvas(int nrows, int ncols, std::string arrangement, bool use_parallel);
@@ -46,7 +46,7 @@ public:
     void clearPatternMemoryAll();
     void drawPixelsDynamic(std::vector<int> real_idx, uint32_t color, bool use_parallel);
     void drawPixelsDynamicBit(std::vector<int> real_idx, int bit_plane, bool color, bool use_parallel);
-    std::vector<int> drawCirclesOnReal(const std::vector<double>& x0, const std::vector<double>& y0, double r, bool use_parallel);
+    std::vector<int> drawCirclesOnReal(int num_circles, const double* x0, const double* y0, double r, bool use_parallel);
     std::vector<uint8_t> getDynamicMemoryRGB(int index, bool use_parallel);
     std::vector<uint8_t> getPatternMemoryRGB(int index, bool use_parallel);
     std::vector<uint32_t> convertPattern2Real(const uint32_t *pattern, uint32_t background_color, bool use_parallel);

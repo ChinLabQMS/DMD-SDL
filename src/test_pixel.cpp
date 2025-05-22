@@ -25,13 +25,14 @@ int main() {
 
     measureExecutionTime("Reset dynamic memory", &PixelCanvas::resetDynamicMemory, canvas, (uint32_t) 0xFFFFFFFF, true);
     measureExecutionTime("Close canvas", &PixelCanvas::closeCanvas, canvas);
-
-    // Reinitialize canvas
-    measureExecutionTime("Initialize canvas", &PixelCanvas::initCanvas, canvas, 5, 5, (std::string) "Diamond", true);
+ 
+    // Reinitialize canvas with much smaller size
+    measureExecutionTime("Initialize canvas", &PixelCanvas::initCanvas, canvas, 4, 4, (std::string) "Diamond", true);
     std::vector<uint32_t>& dynamic = canvas.DynamicMemory[0];
 
     std::vector<int> real_idx = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     measureExecutionTime("Draw pixels on real", &PixelCanvas::drawPixelsDynamic, canvas, (std::vector<int>) real_idx, (uint32_t) 0x000000FF, false);
+
     
     std::vector<uint8_t> pattern_rgb = measureExecutionTime("Get PatternCanvas RGB", &PixelCanvas::getDynamicMemoryRGB, canvas, 0, true);
     pattern_rgb = measureExecutionTime("Get PatternCanvas RGB (no parallel)", &PixelCanvas::getDynamicMemoryRGB, canvas, 0, false);
@@ -42,6 +43,19 @@ int main() {
 
     for (size_t i = 0; i < real_pattern.size(); i++) {
         std::cout << "Real pattern[" << i << "] = " << real_pattern[i] << std::endl;
+    }
+
+    canvas.resetDynamicMemory(0xFFFFFFFF, true);
+    std::vector<double> x0 = {0, 2, 4};
+    std::vector<double> y0 = {0, 2, 4};
+    std::vector<int> pixel_idx = canvas.drawCirclesOnReal(5, x0.data(), y0.data(), 1.0, true);
+    std::cout<< "RealNumRows = " << canvas.RealNumRows << std::endl;
+    std::cout<< "RealNumCols = " << canvas.RealNumCols << std::endl;
+    std::cout << "Pixel indices drawn: ";
+    for (size_t i = 0; i < pixel_idx.size(); i++) {
+        int row = pixel_idx[i] / canvas.RealNumCols;
+        int col = pixel_idx[i] % canvas.RealNumCols;
+        std::cout << "(" << row << ", " << col << ") ";
     }
 
     return 0;

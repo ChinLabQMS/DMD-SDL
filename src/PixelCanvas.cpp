@@ -135,36 +135,40 @@ void PixelCanvas::drawPixelsDynamicBit(std::vector<int> real_idx, int bit_plane,
 }
 
 std::vector<int> PixelCanvas::drawCirclesOnReal(
-                                    const std::vector<double>& x0, 
-                                    const std::vector<double>& y0, 
+                                    int num_circles,
+                                    const double* x0, 
+                                    const double* y0, 
                                     double r, 
                                     bool use_parallel) {
-    std::vector<uint8_t> mask(RealNumPixels, 0);  // binary mask
     const double r2 = r * r;
-    const int n_circles = static_cast<int>(x0.size());
-    #pragma omp parallel for if(use_parallel)
-    for (int i = 0; i < n_circles; ++i) {
+    std::vector<int> idx_to_draw;
+    #pragma omp parallel if(use_parallel) {
+    std::vector<int> local_idx;
+    #pragma omp for nowait
+    for (int i = 0; i < num_circles; ++i) {
         const double cx = x0[i];
         const double cy = y0[i];
-        int x_min = std::max(0, static_cast<int>(std::floor(cx - r)));
-        int x_max = std::min(RealNumRows, static_cast<int>(std::ceil(cx + r)));
-        int y_min = std::max(0, static_cast<int>(std::floor(cy - r)));
-        int y_max = std::min(RealNumCols, static_cast<int>(std::ceil(cy + r)));
+        const int x_min = std::max(0, int(cx - r));
+        const int x_max = std::min(RealNumRows, int(cx + r) + 1);
+        const int y_min = std::max(0, int(cy - r));
+        const int y_max = std::min(RealNumCols, int(cy + r) + 1);
         for (int x = x_min; x < x_max; ++x) {
-            double dx2 = (x - cx) * (x - cx);
+            const double dx2 = (x - cx) * (x - cx);
             for (int y = y_min; y < y_max; ++y) {
-                double dy2 = (y - cy) * (y - cy);
+                const double dy2 = (y - cy) * (y - cy);
                 if (dx2 + dy2 <= r2) {
-                    int idx = x * RealNumCols + y;
-                    mask[idx] = 1;
+                    local_idx.push_back(x * RealNumCols + y);
                 }
             }
         }
     }
-    std::vector<int> idx_to_draw;
-    for (int idx = 0; idx < RealNumPixels; ++idx) {
-        if (mask[idx]) idx_to_draw.push_back(idx);
+    // Thread-safe appending of results
+    #pragma omp critical
+    idx_to_draw.insert(idx_to_draw.end(), local_idx.begin(), local_idx.end());
     }
+    // Remove duplicates
+    std::sort(idx_to_draw.begin(), idx_to_draw.end());
+    idx_to_draw.erase(std::unique(idx_to_draw.begin(), idx_to_draw.end()), idx_to_draw.end());
     return idx_to_draw;
 }
 
