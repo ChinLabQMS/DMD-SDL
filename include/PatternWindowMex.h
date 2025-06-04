@@ -31,6 +31,8 @@ private:
     TypedArray<uint8_t> StaticPatternRealRGBMex = factory.createArray({0, 0, 3},
                                               (uint8_t *) nullptr, (uint8_t *) nullptr);                                      
     void checkArguments(ArgumentList outputs, ArgumentList inputs);
+protected:
+    virtual void updateStaticPatternProperties(bool use_parallel) override; 
 public:
     MexFunction();
     void printf(const char* format, ...) override;
@@ -38,7 +40,6 @@ public:
     void error(const char* format, ...) override;
     void lock();
     void unlock();
-    void setStaticPatternPath2(const char* filepath, bool verbose, bool use_parallel) override;
     CharArray getOperationMode();
     CharArray getBaseDirectory();
     CharArray getStaticPatternPath();
@@ -54,8 +55,14 @@ public:
     TypedArray<uint8_t> getDynamicMemoryRealRGB(int index, uint32_t background_color, bool use_parallel);
     TypedArray<uint8_t> convertPattern2RGBMex(const TypedArray<uint32_t> pattern, bool use_parallel);
     TypedArray<uint32_t> convertRGB2PatternMex(const TypedArray<uint8_t> rgb, bool use_parallel);
-    // Overload the displayPatternMemory function to accept MATLAB arrays
     TypedArray<bool> displayPatternMemory(const TypedArray<double> indices, uint32_t delay, bool verbose, bool use_parallel);
+    TypedArray<bool> displayDynamicMemory(const TypedArray<double> indices, uint32_t delay, bool verbose, bool use_parallel);
+    void generateBlackTweezerPattern(TypedArray<double> coords, 
+                                     TypedArray<double> radius,
+                                     TypedArray<double> shift,
+                                     int num_RGB_buffers,
+                                     int num_bin_frames, 
+                                     bool use_parallel);
     void operator()(ArgumentList outputs, ArgumentList inputs) override;
 };
 

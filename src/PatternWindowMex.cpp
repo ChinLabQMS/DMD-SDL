@@ -51,9 +51,8 @@ void MexFunction::unlock() {
     }
 }
 
-// Set the path to the static pattern image file
-void MexFunction::setStaticPatternPath2(const char* filepath, bool verbose, bool use_parallel) {
-    PatternWindow::setStaticPatternPath2(filepath, verbose, use_parallel);
+void MexFunction::updateStaticPatternProperties(bool use_parallel) {
+    PatternWindow::updateStaticPatternProperties(use_parallel);
     // Update the Matlab array of the static pattern
     if (StaticPatternSurface) {
         uint32_t * pixels = (uint32_t*) StaticPatternSurface->pixels;
@@ -220,11 +219,38 @@ TypedArray<uint8_t> MexFunction::getDynamicMemoryRealRGB(int index, uint32_t bac
 }
 
 TypedArray<bool> MexFunction::displayPatternMemory(const TypedArray<double> indices, uint32_t delay, bool verbose, bool use_parallel) {
-    std::vector<uint32_t> index_vector(indices.getNumberOfElements());
-    for (int i = 0; i < indices.getNumberOfElements(); i++) {
-        index_vector[i] = (uint32_t) indices[i];
+    std::vector<uint32_t> index_vector;
+    for (size_t i = 0; i < indices.getNumberOfElements(); ++i) {
+        index_vector.push_back(static_cast<uint32_t>(indices[i]));
     }
-    return factory.createScalar(PatternWindow::displayPatternMemory(index_vector.data(), index_vector.size(), delay, verbose, use_parallel));
+    return factory.createScalar(PatternWindow::displayPatternMemory(index_vector.size(), index_vector.data(), delay, verbose, use_parallel));
+}
+
+TypedArray<bool> MexFunction::displayDynamicMemory(const TypedArray<double> indices, uint32_t delay, bool verbose, bool use_parallel) {
+    std::vector<uint32_t> index_vector;
+    for (size_t i = 0; i < indices.getNumberOfElements(); ++i) {
+        index_vector.push_back(static_cast<uint32_t>(indices[i]));
+    }
+    return factory.createScalar(PatternWindow::displayDynamicMemory(index_vector.size(), index_vector.data(), delay, verbose, use_parallel));
+}
+void MexFunction::generateBlackTweezerPattern(TypedArray<double> coords, 
+                                     TypedArray<double> radius,
+                                     TypedArray<double> shift,
+                                     int num_RGB_buffers,
+                                     int num_bin_frames, 
+                                     bool use_parallel) {
+    if (coords.getDimensions()[1]!= 2) {
+        error("Second input must be a 2D array with two columns.");
+    }
+    int num_tweezers = coords.getDimensions()[0];
+    std::vector<double> x0(num_tweezers);
+    std::vector<double> y0(num_tweezers);
+    for (int i = 0; i < num_tweezers; i++) {
+        x0[i] = coords[i][0];
+        y0[i] = coords[i][1];
+    }
+    PatternWindow::generateBlackTweezerPattern(num_tweezers, x0.data(), y0.data(), 
+        radius[0], shift[0], shift[1], num_RGB_buffers, num_bin_frames, use_parallel);
 }
 
 // Check the arguments of the MEX function
@@ -340,6 +366,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             selectAndLoadPatternMemory(NULL, true, true);
         } else if (func[0] == "clearPatternMemory") {
             clearPatternMemoryAll();
+        } else if (func[0] == "clearDynamicMemory") {
+            clearDynamicMemoryAll();
+        } else if (func[0] == "displayDynamicMemoryAll") {
+            displayDynamicMemoryAll(0, true, true);
         } else {
             error("Invalid function name with zero input.");
         }
@@ -384,6 +414,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             selectAndLoadPatternMemory(NULL, inputs[1][0], true);
         } else if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], 0, true, true);
+        } else if (func[0] == "displayDynamicMemory") {
+            outputs[0] = displayDynamicMemory(inputs[1], 0, true, true);
+        } else if (func[0] == "displayDynamicMemoryAll") {
+            displayDynamicMemoryAll(inputs[1][0], true, true);
         } else if (func[0] == "convertPattern2RGB") {
             outputs[0] = convertPattern2RGBMex(inputs[1], true);
         } else if (func[0] == "convertRGB2Pattern") {
@@ -423,6 +457,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             selectAndLoadPatternMemory(NULL, inputs[1][0], inputs[2][0]);
         } else if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], true, true);
+        } else if (func[0] == "displayDynamicMemory") {
+            outputs[0] = displayDynamicMemory(inputs[1], inputs[2][0], true, true);
+        } else if (func[0] == "displayDynamicMemoryAll") {
+            displayDynamicMemoryAll(inputs[1][0], inputs[2][0], true);
         } else if (func[0] == "convertPattern2RGB") {
             outputs[0] = convertPattern2RGBMex(inputs[1], inputs[2][0]);
         } else if (func[0] == "convertRGB2Pattern") {
@@ -448,6 +486,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             loadPatternMemoryFromFile(std::string(filename[0]).c_str(), inputs[2][0], inputs[3][0]);
         } else if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], inputs[3][0], true);
+        } else if (func[0] == "displayDynamicMemory") {
+            outputs[0] = displayDynamicMemory(inputs[1], inputs[2][0], inputs[3][0], true);
+        } else if (func[0] == "displayDynamicMemoryAll") {
+            displayDynamicMemoryAll(inputs[1][0], inputs[2][0], inputs[3][0]);
         } else {
             error("Invalid function name with three inputs.");
         }
@@ -457,24 +499,17 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
     if (inputs.size() == 5) {
         if (func[0] == "displayPatternMemory") {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], inputs[3][0], inputs[4][0]);
+        } else if (func[0] == "displayDynamicMemory") {
+            outputs[0] = displayDynamicMemory(inputs[1], inputs[2][0], inputs[3][0], inputs[4][0]);
+        } else {
+            error("Invalid function name with four inputs.");
         }
         return;
     }
 
     if (inputs.size() == 6) {
-        if (func[0] == "projectBlackTweezerPattern") {
-            if (inputs[1].getDimensions()[1]!= 2) {
-                error("Second input must be a 2D array with two columns.");
-            }
-            int num_tweezers = inputs[1].getDimensions()[0];
-            std::vector<double> x0(num_tweezers);
-            std::vector<double> y0(num_tweezers);
-            for (int i = 0; i < num_tweezers; i++) {
-                x0[i] = inputs[1][i][0];
-                y0[i] = inputs[1][i][1];
-            }
-            projectBlackTweezerPattern(num_tweezers, x0.data(), y0.data(), 
-                inputs[2][0], inputs[3][0], inputs[3][1], inputs[4][0], inputs[5][0], 0, true);
+        if (func[0] == "generateBlackTweezerPattern") {
+            generateBlackTweezerPattern(inputs[1], inputs[2], inputs[3], inputs[4][0], inputs[5][0], true);
         } else {
             error("Invalid function name with five inputs.");
         }
@@ -482,41 +517,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
     }
 
     if (inputs.size() == 7) {
-        if (func[0] == "projectBlackTweezerPattern") {
-            if (inputs[1].getDimensions()[1]!= 2) {
-                error("Second input must be a 2D array with two columns.");
-            }
-            int num_tweezers = inputs[1].getDimensions()[0];
-            std::vector<double> x0(num_tweezers);
-            std::vector<double> y0(num_tweezers);
-            for (int i = 0; i < num_tweezers; i++) {
-                x0[i] = inputs[1][i][0];
-                y0[i] = inputs[1][i][1];
-            }
-            projectBlackTweezerPattern(num_tweezers, x0.data(), y0.data(), 
-                inputs[2][0], inputs[3][0], inputs[3][1], inputs[4][0], inputs[5][0], inputs[6][0], true);
+        if (func[0] == "generateBlackTweezerPattern") {
+            generateBlackTweezerPattern(inputs[1], inputs[2], inputs[3], inputs[4][0], inputs[5][0], inputs[6][0]);
         } else {
             error("Invalid function name with six inputs.");
-        }
-        return;
-    }
-
-    if (inputs.size() == 8) {
-        if (func[0] == "projectBlackTweezerPattern") {
-            if (inputs[1].getDimensions()[1]!= 2) {
-                error("Second input must be a 2D array with two columns.");
-            }
-            int num_tweezers = inputs[1].getDimensions()[0];
-            std::vector<double> x0(num_tweezers);
-            std::vector<double> y0(num_tweezers);
-            for (int i = 0; i < num_tweezers; i++) {
-                x0[i] = inputs[1][i][0];
-                y0[i] = inputs[1][i][1];
-            }
-            projectBlackTweezerPattern(num_tweezers, x0.data(), y0.data(), 
-                inputs[2][0], inputs[3][0], inputs[3][1], inputs[4][0], inputs[5][0], inputs[6][0], inputs[7][0]);
-        } else {
-            error("Invalid function name with eight inputs.");
         }
         return;
     }
