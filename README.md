@@ -106,7 +106,7 @@ or the pre-built `PatternWindowMex.mexw64` file for windows system under [mex](/
 - `PatternWindowMex("getStaticPatternRGB")` - get the static pattern in RGB format
 - `PatternWindowMex("getStaticPatternReal")` - get the static pattern in real-space format
 - `PatternWindowMex("getStaticPatternRealRGB")` - get the static pattern in real-space RGB format
-- `PatternWindowMex("getNumLoadedPatterns")` - get the number of patterns loaded to the pattern memory
+- `PatternWindowMex("getPatternMemorySize")` - get the number of patterns loaded to the pattern memory
 - `PatternWindowMex("getPatternMemory", index)` - get the pattern memory at the specified index, index is an integer
 - `PatternWindowMex("getPatternMemoryRGB", index, use_parallel=true)` - get the pattern memory at the specified index in RGB format, index is an integer
 - `PatternWindowMex("getPatternMemoryReal", index, bg_color=0xFFFF0000, use_parallel=true)` - get the pattern memory at the specified index in real-space format, index is an integer

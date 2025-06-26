@@ -47,6 +47,10 @@ public:
     void drawPixelsDynamic(int index, std::vector<int> pattern_idx, uint32_t color, bool use_parallel);
     void drawPixelsDynamicBit(int index, int bit_plane, std::vector<int> pattern_idx, bool color, bool use_parallel);
     void generateBlackTweezerPattern(int num_tweezers, const double *x0, const double *y0, double r, double dx, double dy, int num_RGB_buffers, int num_frames, bool use_parallel);
+    void generateBlackTweezerPatternStatic(std::vector<double> calib, 
+                                           std::vector<double> x0, 
+                                           std::vector<double> y0,
+                                           double radius);
     std::vector<int> drawCirclesOnReal(int num_circles, const double* x0, const double* y0, double r, bool use_parallel);
     std::vector<uint8_t> getDynamicMemoryRGB(int index, bool use_parallel);
     std::vector<uint32_t> getDynamicMemoryReal(int index, uint32_t background_color, bool use_parallel);

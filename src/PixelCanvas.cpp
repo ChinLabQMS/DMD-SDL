@@ -139,7 +139,7 @@ void PixelCanvas::generateBlackTweezerPattern(int num_tweezers,
                                               const double *y0, 
                                               double r, 
                                               double dx, 
-                                              double dy,
+                                              double dy, 
                                               int num_RGB_buffers,
                                               int num_frames,
                                               bool use_parallel) {
@@ -149,7 +149,7 @@ void PixelCanvas::generateBlackTweezerPattern(int num_tweezers,
     DynamicMemory.resize(num_RGB_buffers + num_RGB);
     #pragma omp parallel for if(use_parallel)
     for (int i = 0; i < num_RGB_buffers; i++) {
-        // Draw buffer frames
+        // Draw buffer frames in the beginning
         DynamicMemory[i].resize(PatternNumPixels, 0xFFFFFFFF);
         drawPixelsDynamic(i, start_indices, 0xFF000000, use_parallel);
     }
@@ -187,6 +187,29 @@ void PixelCanvas::generateBlackTweezerPattern(int num_tweezers,
     }
     delete[] x;
     delete[] y;
+}
+
+void PixelCanvas::generateBlackTweezerPatternStatic(std::vector<double> calib, 
+                                                    std::vector<double> x0,
+                                                    std::vector<double> y0, 
+                                                    double radius) {
+    double v11 = calib[0];
+    double v12 = calib[1];
+    double v21 = calib[2];
+    double v22 = calib[3];
+    double r1 = calib[4];
+    double r2 = calib[5];
+    std::vector<double> site_x(x0.size());
+    std::vector<double> site_y(x0.size());
+    for (size_t i = 0; i < x0.size(); ++i) {
+        // -1 to convert 1-index to 0-index
+        site_x[i] = x0[i] * v11 + y0[i] * v21 + r1 - 1;
+        site_y[i] = x0[i] * v12 + y0[i] * v22 + r2 - 1;
+    }
+    std::vector<int> indices = drawCirclesOnReal(x0.size(), site_x.data(), site_y.data(), radius, true);
+    DynamicMemory.resize(1);
+    DynamicMemory[0].resize(PatternNumPixels, 0xFFFFFFFF);
+    drawPixelsDynamic(0, indices, 0xFF000000, true);
 }
 
 std::vector<int> PixelCanvas::drawCirclesOnReal(

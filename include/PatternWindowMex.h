@@ -44,7 +44,8 @@ public:
     CharArray getBaseDirectory();
     CharArray getStaticPatternPath();
     StructArray getDisplayModes();
-    TypedArray<double> getNumLoadedPatterns();
+    TypedArray<double> getDynamicMemorySize();
+    TypedArray<double> getPatternMemorySize();
     TypedArray<uint32_t> getPatternMemory(int index);
     TypedArray<uint32_t> getPatternMemoryReal(int index, uint32_t background_color, bool use_parallel);
     TypedArray<uint8_t> getPatternMemoryRGB(int index, bool use_parallel);
@@ -63,6 +64,10 @@ public:
                                      int num_RGB_buffers,
                                      int num_bin_frames, 
                                      bool use_parallel);
+    void generateBlackTweezerPatternStatic(TypedArray<double> V, 
+                                           TypedArray<double> R, 
+                                           TypedArray<double> sites, 
+                                           double radius);
     void operator()(ArgumentList outputs, ArgumentList inputs) override;
 };
 

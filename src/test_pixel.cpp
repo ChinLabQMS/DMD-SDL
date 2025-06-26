@@ -77,5 +77,20 @@ int main() {
         }
     }
 
+    std::vector<double> calib = {0, 1, 1, 0, 3, 3};
+    canvas.generateBlackTweezerPatternStatic(calib, x0, y0, 1);
+    for (size_t i = 0; i < canvas.DynamicMemory.size(); i++) {
+        std::vector<uint32_t>& pattern = canvas.DynamicMemory[i];
+        std::vector<uint32_t> real_pattern = canvas.convertPattern2Real(pattern.data(), 0x000000FF, false);
+        std::cout << std::endl;
+        std::cout << "DynamicMemory[" << i << "] size: " << pattern.size() << std::endl;
+        for (size_t j = 0; j < real_pattern.size(); j++) {
+            int row = j / canvas.RealNumCols;
+            int col = j % canvas.RealNumCols;
+            std::cout << "Row = " << row << ", Col = " << col << std::endl;
+            std::cout << "Dynamic pattern[" << i << "][" << j << "] = " << real_pattern[j] << std::endl;
+        }
+    }
+
     return 0;
 }

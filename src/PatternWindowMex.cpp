@@ -124,7 +124,11 @@ StructArray MexFunction::getDisplayModes() {
     return display_modes;
 }
 
-TypedArray<double> MexFunction::getNumLoadedPatterns() {
+TypedArray<double> MexFunction::getDynamicMemorySize() {
+    return factory.createScalar((double) DynamicMemory.size());
+}
+
+TypedArray<double> MexFunction::getPatternMemorySize() {
     return factory.createScalar((double) PatternMemory.size());
 }
 
@@ -253,6 +257,26 @@ void MexFunction::generateBlackTweezerPattern(TypedArray<double> coords,
         radius[0], shift[0], shift[1], num_RGB_buffers, num_bin_frames, use_parallel);
 }
 
+void MexFunction::generateBlackTweezerPatternStatic(TypedArray<double> V, 
+                                                    TypedArray<double> R, 
+                                                    TypedArray<double> sites, 
+                                                    double radius) {
+    std::vector<double> calib(6);
+    calib[0] = V[0][0];
+    calib[1] = V[0][1];
+    calib[2] = V[1][0];
+    calib[3] = V[1][1];
+    calib[4] = R[0];
+    calib[5] = R[1];
+    std::vector<double> x0(sites.getDimensions()[0]);
+    std::vector<double> y0(sites.getDimensions()[0]);
+    for (int i = 0; i < sites.getDimensions()[0]; ++i) {
+        x0[i] = sites[i][0];
+        y0[i] = sites[i][1];
+    }
+    PatternWindow::generateBlackTweezerPatternStatic(calib, x0, y0, radius);
+}
+
 // Check the arguments of the MEX function
 void MexFunction::checkArguments(ArgumentList outputs, ArgumentList inputs) {
     // Check number of arguments: if empty, assume init function
@@ -356,8 +380,10 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             outputs[0] = StaticPatternRealMex;
         } else if (func[0] == "getStaticPatternRealRGB") {
             outputs[0] = StaticPatternRealRGBMex;
-        } else if (func[0] == "getNumLoadedPatterns") {
-            outputs[0] = getNumLoadedPatterns();
+        } else if (func[0] == "getDynamicMemorySize") {
+            outputs[0] = getDynamicMemorySize(); 
+        } else if (func[0] == "getPatternMemorySize") {
+            outputs[0] = getPatternMemorySize(); 
         } else if (func[0] == "displayColor") {
             displayColor(0, 0, 0, true);
         } else if (func[0] == "selectAndProject") {
@@ -501,6 +527,8 @@ void MexFunction::operator()(ArgumentList outputs, ArgumentList inputs) {
             outputs[0] = displayPatternMemory(inputs[1], inputs[2][0], inputs[3][0], inputs[4][0]);
         } else if (func[0] == "displayDynamicMemory") {
             outputs[0] = displayDynamicMemory(inputs[1], inputs[2][0], inputs[3][0], inputs[4][0]);
+        } else if (func[0] == "generateBlackTweezerPatternStatic") {
+            generateBlackTweezerPatternStatic(inputs[1], inputs[2], inputs[3], inputs[4][0]);
         } else {
             error("Invalid function name with four inputs.");
         }
